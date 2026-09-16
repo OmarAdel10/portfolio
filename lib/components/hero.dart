@@ -11,44 +11,37 @@ class Hero extends StatelessComponent {
         div(classes: 'hero-content', [
           div(classes: 'hero-badge', [
             span(classes: 'badge-dot', []),
-            text('Available for freelance projects'),
+            text('Available for freelance & open source'),
           ]),
-          
-          h1(classes: 'hero-name', [text('YOUR NAME')]),
-          
+          h1(classes: 'hero-name', [text('Omar Adel 10')]),
           h2(classes: 'hero-title', [
-            text('SOFTWARE ENGINEER, '),
+            text('Full Stack Developer'),
             br(),
-            text('FRONTEND & APP DEVELOPER.'),
+            text('Mobile • Web • AI • Open Source'),
           ]),
-          
           p(classes: 'hero-description', [
-            text('Building scalable web and mobile applications with modern technologies. '),
-            text('Passionate about clean code, great UX, and solving complex problems.'),
+            text('Building scalable applications with Flutter, Python, and modern web technologies. '),
+            text('Passionate about clean architecture, developer experience, and open source.'),
           ]),
-          
           div(classes: 'hero-cta', [
-            a(href: '#contact', classes: 'btn btn-primary', [text('Get In Touch')]),
-            a(href: '#projects', classes: 'btn btn-secondary', [text('View Projects')]),
+            a(href: '#projects', classes: 'btn btn-primary', [text('View Projects')]),
+            a(href: '#contact', classes: 'btn btn-secondary', [text('Get In Touch')]),
+            a(href: 'https://github.com/OmarAdel10', classes: 'btn btn-ghost', [text('GitHub')]),
           ]),
-          
           div(classes: 'hero-featured', [
-            text('AS FEATURED IN'),
+            text('FEATURED IN'),
             div(classes: 'featured-logos', [
-              _buildLogo('Company One'),
-              _buildLogo('Company Two'),
-              _buildLogo('Company Three'),
-              _buildLogo('Company Four'),
-              _buildLogo('Company Five'),
-              _buildLogo('Company Six'),
+              _buildLogo('Flutter'),
+              _buildLogo('Dart'),
+              _buildLogo('Python'),
+              _buildLogo('TypeScript'),
+              _buildLogo('Open Source'),
             ]),
           ]),
-          
           div(classes: 'hero-social', [
-            a(href: 'https://github.com', classes: 'social-link', [text('GitHub')]),
-            a(href: 'https://linkedin.com', classes: 'social-link', [text('LinkedIn')]),
-            a(href: 'https://twitter.com', classes: 'social-link', [text('Twitter')]),
-            a(href: 'mailto:you@example.com', classes: 'social-link', [text('Email')]),
+            a(href: 'https://github.com/OmarAdel10', classes: 'social-link', [text('GitHub')]),
+            a(href: 'https://linkedin.com/in/omaradel10', classes: 'social-link', [text('LinkedIn')]),
+            a(href: 'mailto:omaradel10.dev@gmail.com', classes: 'social-link', [text('Email')]),
           ]),
         ]),
       ]),
@@ -64,120 +57,49 @@ class Hero extends StatelessComponent {
     css('.hero', [
       css('&').styles(
         minHeight: 100.vh,
-        display: .flex,
-        alignItems: .center,
-        padding: .symmetric(vertical: 64.px),
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        padding: Padding.symmetric(vertical: 64.px),
       ),
-      
-      css('.hero-content', [
-        css('&').styles(
-          display: .flex,
-          flexDirection: .column,
-        ),
-      ]),
-      
-      css('.hero-badge', [
-        css('&').styles(
-          display: .inlineFlex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 4.px, horizontal: 16.px),
-          backgroundColor: Color('#FFFFFF10'),
-          border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          fontSize: 0.875.rem,
-          color: Color('#888888'),
-        ),
-      ]),
-      
-      css('.badge-dot', [
-        css('&').styles(
-          width: 8.px,
-          height: 8.px,
-          backgroundColor: Color('#FFFFFF'),
-          margin: .symmetric(horizontal: 8.px),
-        ),
-      ]),
-      
-      css('.hero-name', [
-        css('&').styles(
-          fontSize: 4.rem,
-          fontWeight: .w700,
-          lineHeight: 1.1.em,
-          fontFamily: .list([FontFamily('Space Grotesk'), FontFamilies.sansSerif]),
-          color: Color('#FFFFFF'),
-        ),
-      ]),
-      
-      css('.hero-title', [
-        css('&').styles(
-          fontSize: 1.5.rem,
-          fontWeight: .w500,
-          color: Color('#888888'),
-          lineHeight: 1.4.em,
-          maxWidth: 600.px,
-        ),
-      ]),
-      
-      css('.hero-description', [
-        css('&').styles(
-          fontSize: 1.125.rem,
-          color: Color('#888888'),
-          maxWidth: 600.px,
-          padding: .symmetric(vertical: 16.px),
-        ),
-      ]),
-      
-      css('.hero-cta', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 16.px),
-        ),
-      ]),
-      
-      css('.hero-featured', [
-        css('&').styles(
-          padding: .symmetric(vertical: 10.px),
-        ),
-      ]),
-      
-      css('.featured-logos', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 10.px),
-          opacity: 0.4,
-        ),
-      ]),
-      
-      css('.featured-logo', [
-        css('&').styles(
-          fontSize: 0.875.rem,
-          fontWeight: .w500,
-          color: Color('#888888'),
-          padding: .symmetric(horizontal: 16.px),
-        ),
-      ]),
-      
-      css('.hero-social', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 10.px),
-          maxWidth: 400.px,
-        ),
-      ]),
-      
-      css('.social-link', [
-        css('&').styles(
-          color: Color('#888888'),
-          fontSize: 0.875.rem,
-          fontWeight: .w500,
-          padding: .symmetric(horizontal: 16.px),
-        ),
-        css('&:hover').styles(
-          color: Color('#FFFFFF'),
-        ),
-      ]),
+      css('.hero-content').styles(
+        display: Display.flex,
+        flexDirection: FlexDirection.column,
+        alignItems: AlignItems.center,
+        textAlign: TextAlign.center,
+      ),
+      css('.hero-name').styles(
+        fontSize: 4.rem,
+        fontWeight: FontWeight.w700,
+        color: Color('#FFFFFF'),
+        fontFamily: FontFamily('Space Grotesk'),
+        margin: Margin.only(bottom: 8.px),
+      ),
+      css('.hero-title').styles(
+        fontSize: 2.rem,
+        color: Color('#888888'),
+        margin: Margin.only(bottom: 16.px),
+      ),
+      css('.hero-description').styles(
+        fontSize: 1.125.rem,
+        color: Color('#AAAAAA'),
+        maxWidth: 600.px,
+        margin: Margin.only(bottom: 24.px),
+      ),
+      css('.hero-cta').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        justifyContent: JustifyContent.center,
+        margin: Margin.only(top: 16.px, bottom: 24.px),
+      ),
+      css('.hero-featured').styles(
+        margin: Margin.symmetric(vertical: 24.px),
+      ),
+      css('.hero-social').styles(
+        display: Display.flex,
+        justifyContent: JustifyContent.center,
+        padding: Padding.only(top: 24.px),
+        border: Border.all(color: Color('#333333'), width: 1.px),
+      ),
     ]),
   ];
 }
