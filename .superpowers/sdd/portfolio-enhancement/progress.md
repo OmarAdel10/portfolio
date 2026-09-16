@@ -2,4 +2,6 @@
 
 BASE_COMMIT: ed81144
 
-Task 1: Create Data Models for GitHub Projects - STARTED
+Task 1: Create Data Models for GitHub Projects - COMPLETE (commits ed81144..935de4c, review clean)
+
+Task 3: Create Project Cards Component - STARTED
