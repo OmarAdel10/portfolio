@@ -4,8 +4,8 @@ import 'package:jaspr/jaspr.dart';
 import 'components/header.dart';
 import 'components/hero.dart';
 import 'components/expertise.dart';
-import 'components/featured_project.dart';
-import 'components/experience.dart';
+import 'components/featured_projects.dart';
+import 'components/all_projects.dart';
 import 'components/testimonials.dart';
 import 'components/contact.dart';
 import 'components/footer.dart';
@@ -45,8 +45,8 @@ class AppState extends State<App> {
       div(classes: 'main-content', [
         const Hero(),
         const Expertise(),
-        const FeaturedProject(),
-        const Experience(),
+        const FeaturedProjects(),
+        const AllProjects(),
         const Testimonials(),
         const Contact(),
       ]),

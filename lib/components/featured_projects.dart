@@ -28,14 +28,14 @@ class FeaturedProjects extends StatelessComponent {
   static List<StyleRule> get styles => [
     css('.featured-projects', [
       css('&').styles(
-        padding: Padding.symmetric(vertical: 64.px),
+        padding: .symmetric(vertical: 64.px),
       ),
       
       css('.section-header').styles(
         textAlign: TextAlign.center,
         maxWidth: 600.px,
-        margin: Margin.auto,
-        padding: Padding.only(bottom: 48.px),
+        margin: .symmetric(horizontal: 0.px),
+        padding: .only(bottom: 48.px),
       ),
       
       css('.section-title').styles(
@@ -48,14 +48,13 @@ class FeaturedProjects extends StatelessComponent {
       css('.section-subtitle').styles(
         fontSize: 1.125.rem,
         color: Color('#888888'),
-        padding: Padding.only(top: 16.px),
+        padding: .only(top: 16.px),
       ),
       
       css('.projects-grid').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
         justifyContent: JustifyContent.center,
-        gap: 24.px,
       ),
     ]),
   ];

@@ -48,6 +48,12 @@ List<StyleRule> get styles => [
     fontSize: 16.px,
   ),
   
+  css('*').styles(
+  ),
+  
+  css('*:focus-visible').styles(
+  ),
+  
   css('body').styles(
     width: 100.percent,
     minHeight: 100.vh,

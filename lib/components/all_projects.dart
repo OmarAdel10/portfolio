@@ -14,15 +14,15 @@ class AllProjects extends StatefulComponent {
   static List<StyleRule> get styles => [
     css('.all-projects', [
       css('&').styles(
-        padding: Padding.symmetric(vertical: 64.px),
+        padding: .symmetric(vertical: 64.px),
         backgroundColor: Color('#111111'),
       ),
       
       css('.section-header').styles(
         textAlign: TextAlign.center,
         maxWidth: 600.px,
-        margin: Margin.auto,
-        padding: Padding.only(bottom: 48.px),
+        margin: .symmetric(horizontal: 0.px),
+        padding: .only(bottom: 48.px),
       ),
       
       css('.section-title').styles(
@@ -35,22 +35,20 @@ class AllProjects extends StatefulComponent {
       css('.section-subtitle').styles(
         fontSize: 1.125.rem,
         color: Color('#888888'),
-        padding: Padding.only(top: 16.px),
+        padding: .only(top: 16.px),
       ),
       
       css('.projects-filters', [
         css('&').styles(
           display: Display.flex,
           flexWrap: FlexWrap.wrap,
-          gap: 24.px,
           justifyContent: JustifyContent.center,
-          margin: Margin.only(bottom: 48.px),
+          padding: .only(bottom: 48.px),
         ),
         
         css('.filter-group').styles(
           display: Display.flex,
           flexDirection: FlexDirection.column,
-          gap: 8.px,
           minWidth: 200.px,
         ),
         
@@ -58,20 +56,21 @@ class AllProjects extends StatefulComponent {
           fontSize: 0.875.rem,
           fontWeight: FontWeight.w500,
           color: Color('#CCCCCC'),
+          margin: .only(bottom: 8.px),
         ),
         
         css('.filter-select, .filter-input').styles(
-          padding: Padding.symmetric(vertical: 10.px, horizontal: 16.px),
+          padding: .symmetric(vertical: 10.px, horizontal: 16.px),
           backgroundColor: Color('#1A1A1A'),
           border: Border.all(color: Color('#333333'), width: 1.px),
-          radius: BorderRadius.all(Radius.circular(8.px)),
+          radius: .all(.circular(8.px)),
           color: Color('#FFFFFF'),
           fontSize: 0.9375.rem,
           fontFamily: FontFamily('Inter'),
         ),
         
         css('.filter-select:focus, .filter-input:focus').styles(
-          borderColor: Color('#0175C2'),
+          border: Border.all(color: Color('#0175C2'), width: 1.px),
         ),
       ]),
       
@@ -79,12 +78,11 @@ class AllProjects extends StatefulComponent {
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
         justifyContent: JustifyContent.center,
-        gap: 24.px,
       ),
       
       css('.empty-state').styles(
         textAlign: TextAlign.center,
-        padding: Padding.symmetric(vertical: 64.px),
+        padding: .symmetric(vertical: 64.px),
         color: Color('#888888'),
         fontSize: 1.125.rem,
       ),
@@ -142,7 +140,7 @@ class _AllProjectsState extends State<AllProjects> {
             select(
               classes: 'filter-select',
               value: _selectedLanguage,
-              onChange: (e) => setState(() => _selectedLanguage = e.target.value),
+              onChange: (value) => setState(() => _selectedLanguage = value as String),
               [
                 for (final lang in _languages)
                   option(value: lang, [text(lang)]),
@@ -157,7 +155,7 @@ class _AllProjectsState extends State<AllProjects> {
               classes: 'filter-input',
               type: InputType.text,
               attributes: {'placeholder': 'Search projects...'},
-              onInput: (e) => setState(() => _searchQuery = e.target.value),
+              onInput: (value) => setState(() => _searchQuery = value as String),
             ),
           ]),
         ]),
