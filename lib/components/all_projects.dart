@@ -1,8 +1,10 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+
+import '../constants/theme.dart';
 import '../data/projects.dart';
 import '../models/project.dart';
-import '../components/project_card.dart';
+import 'project_card.dart';
 
 class AllProjects extends StatefulComponent {
   const AllProjects({super.key});
@@ -13,164 +15,151 @@ class AllProjects extends StatefulComponent {
   @css
   static List<StyleRule> get styles => [
     css('.all-projects', [
-      css('&').styles(
-        padding: .symmetric(vertical: 64.px),
-        backgroundColor: Color('#111111'),
-      ),
-      
-      css('.section-header').styles(
-        textAlign: TextAlign.center,
-        maxWidth: 600.px,
-        margin: .symmetric(horizontal: 0.px),
-        padding: .only(bottom: 48.px),
-      ),
-      
-      css('.section-title').styles(
-        fontSize: 2.5.rem,
-        fontWeight: FontWeight.w600,
-        color: Color('#FFFFFF'),
-        fontFamily: FontFamily('Space Grotesk'),
-      ),
-      
-      css('.section-subtitle').styles(
-        fontSize: 1.125.rem,
-        color: Color('#888888'),
-        padding: .only(top: 16.px),
-      ),
-      
-      css('.projects-filters', [
-        css('&').styles(
-          display: Display.flex,
-          flexWrap: FlexWrap.wrap,
-          justifyContent: JustifyContent.center,
-          padding: .only(bottom: 48.px),
-        ),
-        
-        css('.filter-group').styles(
-          display: Display.flex,
-          flexDirection: FlexDirection.column,
-          minWidth: 200.px,
-        ),
-        
-        css('.filter-label').styles(
-          fontSize: 0.875.rem,
-          fontWeight: FontWeight.w500,
-          color: Color('#CCCCCC'),
-          margin: .only(bottom: 8.px),
-        ),
-        
-        css('.filter-select, .filter-input').styles(
-          padding: .symmetric(vertical: 10.px, horizontal: 16.px),
-          backgroundColor: Color('#1A1A1A'),
-          border: Border.all(color: Color('#333333'), width: 1.px),
-          radius: .all(.circular(8.px)),
-          color: Color('#FFFFFF'),
-          fontSize: 0.9375.rem,
-          fontFamily: FontFamily('Inter'),
-        ),
-        
-        css('.filter-select:focus, .filter-input:focus').styles(
-          border: Border.all(color: Color('#0175C2'), width: 1.px),
-        ),
-      ]),
-      
-      css('.projects-grid').styles(
+      css('.projects-toolbar').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
-        justifyContent: JustifyContent.center,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.spaceBetween,
+        gap: Gap.all(16.px),
+        margin: .only(bottom: 28.px),
       ),
-      
+      css('.project-pills').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        gap: Gap.all(8.px),
+      ),
+      css('.search-box').styles(
+        position: Position.relative(),
+        minWidth: 220.px,
+      ),
+      css('.search-input').styles(
+        width: 100.percent,
+        height: 40.px,
+        padding: .symmetric(horizontal: 40.px),
+        fontSize: 15.px,
+        fontFamily: fSansStack,
+        color: cInk,
+        backgroundColor: cCard,
+        border: Border.all(color: cHairline, width: 1.px),
+        radius: .all(.circular(radiusFull.px)),
+      ),
+      css('.search-input:focus').styles(
+        outline: Outline(color: cFocus, style: OutlineStyle.solid, width: OutlineWidth(2.px), offset: 1.px),
+        border: Border.all(color: cLinkBlue, width: 1.px),
+      ),
+      css('.search-icon').styles(
+        position: Position.absolute(top: 10.px, left: 14.px),
+        fontSize: 14.px,
+        color: cMute,
+        pointerEvents: PointerEvents.none,
+      ),
+      css('.projects-grid').styles(
+        display: Display.grid,
+        gridTemplate: GridTemplate(columns: GridTracks([
+          GridTrack(TrackSize.fr(1)),
+          GridTrack(TrackSize.fr(1)),
+          GridTrack(TrackSize.fr(1)),
+        ])),
+        gap: Gap.all(20.px),
+      ),
       css('.empty-state').styles(
         textAlign: TextAlign.center,
-        padding: .symmetric(vertical: 64.px),
-        color: Color('#888888'),
-        fontSize: 1.125.rem,
+        color: cMute,
+        fontSize: 16.px,
+        padding: Padding.all(48.px),
       ),
+      css('.projects-count').styles(
+        fontSize: 14.px,
+        color: cMute,
+        whiteSpace: .noWrap,
+      ),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 1000.px), [
+      css('.all-projects .projects-grid').styles(
+        gridTemplate: GridTemplate(columns: GridTracks([
+          GridTrack(TrackSize.fr(1)),
+          GridTrack(TrackSize.fr(1)),
+        ])),
+      ),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 700.px), [
+      css('.all-projects .projects-grid').styles(
+        gridTemplate: GridTemplate(columns: GridTracks([GridTrack(TrackSize.fr(1))])),
+      ),
+      css('.all-projects .projects-toolbar').styles(
+        flexDirection: FlexDirection.column,
+        alignItems: AlignItems.stretch,
+      ),
+      css('.all-projects .search-box').styles(minWidth: 0.px),
     ]),
   ];
 }
 
 class _AllProjectsState extends State<AllProjects> {
-  String _selectedLanguage = 'All';
-  String _searchQuery = '';
+  String _category = 'All';
+  String _query = '';
 
-  List<Project> get _filteredProjects {
-    var projects = additionalProjects;
-    
-    if (_selectedLanguage != 'All') {
-      projects = projects.where((p) => p.language == _selectedLanguage).toList();
+  List<Project> get _filtered {
+    var projects = allProjects;
+    if (_category != 'All') {
+      projects = projects.where((proj) => proj.category == _category).toList();
     }
-    
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      projects = projects.where((p) => 
-        p.name.toLowerCase().contains(query) ||
-        p.description.toLowerCase().contains(query) ||
-        p.topics.any((t) => t.toLowerCase().contains(query))
-      ).toList();
+    if (_query.trim().isNotEmpty) {
+      final q = _query.trim().toLowerCase();
+      projects = projects
+          .where((proj) =>
+              proj.name.toLowerCase().contains(q) ||
+              proj.description.toLowerCase().contains(q) ||
+              proj.topics.any((t) => t.toLowerCase().contains(q)))
+          .toList();
     }
-    
     return projects;
-  }
-
-  List<String> get _languages {
-    final langs = <String>{'All'};
-    for (final p in additionalProjects) {
-      langs.add(p.language);
-    }
-    return langs.toList()..sort();
   }
 
   @override
   Component build(BuildContext context) {
-    return section(classes: 'all-projects', id: 'all-projects', [
+    final filtered = _filtered;
+    return section(classes: 'all-projects section', id: 'projects-work', [
       div(classes: 'container', [
-        div(classes: 'section-header', [
-          h2(classes: 'section-title', [text('All Projects')]),
+        div(classes: 'section-head', [
+          span(classes: 'eyebrow', [Component.text('Portfolio')]),
+          h2(classes: 'section-title', [Component.text('My Work')]),
           p(classes: 'section-subtitle', [
-            text('Complete portfolio of projects'),
+            Component.text('A selection of projects across mobile, web, and AI. Deployed with Flutter, React, Python, and more.'),
           ]),
         ]),
-        
-        // Filters
-        div(classes: 'projects-filters', [
-          // Language filter
-          div(classes: 'filter-group', [
-            label(classes: 'filter-label', [text('Language')]),
-            select(
-              classes: 'filter-select',
-              value: _selectedLanguage,
-              onChange: (value) => setState(() => _selectedLanguage = value as String),
-              [
-                for (final lang in _languages)
-                  option(value: lang, [text(lang)]),
-              ],
-            ),
+
+        div(classes: 'projects-toolbar', [
+          div(classes: 'project-pills', [
+            for (final cat in projectCategories)
+              button(
+                classes: 'pill ${_category == cat ? 'pill-active' : ''}',
+                onClick: () => setState(() => _category = cat),
+                [Component.text(cat)],
+              ),
           ]),
-          
-          // Search
-          div(classes: 'filter-group', [
-            label(classes: 'filter-label', [text('Search')]),
+          div(classes: 'search-box', [
+            span(classes: 'search-icon', [Component.text('🔍')]),
             input(
-              classes: 'filter-input',
-              type: InputType.text,
-              attributes: {'placeholder': 'Search projects...'},
-              onInput: (value) => setState(() => _searchQuery = value as String),
+              classes: 'search-input',
+              type: InputType.search,
+              attributes: {'placeholder': 'Search projects…'},
+              onInput: (value) => setState(() => _query = value as String),
             ),
           ]),
         ]),
-        
-        // Projects grid
+
+        div(classes: 'projects-count', [
+          Component.text('${filtered.length} ${filtered.length == 1 ? 'project' : 'projects'}'),
+        ]),
+
         div(classes: 'projects-grid', [
-          for (final project in _filteredProjects)
+          for (final project in filtered)
             ProjectCard(project: project, isFeatured: false),
         ]),
-        
-        // Empty state
-        if (_filteredProjects.isEmpty)
-          div(classes: 'empty-state', [
-            text('No projects found matching your criteria.'),
-          ]),
+
+        if (filtered.isEmpty)
+          div(classes: 'empty-state', [Component.text('No projects found matching your criteria.')]),
       ]),
     ]);
   }

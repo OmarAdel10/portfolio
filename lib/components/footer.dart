@@ -1,117 +1,165 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import '../constants/theme.dart';
+
 class Footer extends StatelessComponent {
   const Footer({super.key});
 
   @override
   Component build(BuildContext context) {
-    return footer(classes: 'footer', [
+    return footer(classes: 'site-footer', [
       div(classes: 'container', [
-        div(classes: 'footer-content', [
-          p(classes: 'footer-copyright', [
-            text('© 2024 Omar Adel. All rights reserved.'),
-          ]),
-          div(classes: 'footer-links', [
-            a(href: 'https://github.com/OmarAdel10', classes: 'footer-link', [
-              text('GitHub'),
-              span(classes: 'footer-stat', [text('32 repos')]),
+        div(classes: 'footer-grid', [
+          div(classes: 'footer-brand', [
+            a(href: '#top', classes: 'footer-logo', [Component.text('Omar Adel')]),
+            p(classes: 'footer-tagline', [
+              Component.text('Software Engineer · Front-end & App Developer'),
             ]),
-            a(href: 'https://linkedin.com/in/omaradel10', classes: 'footer-link', [text('LinkedIn')]),
-            a(href: 'mailto:omaradel10.dev@gmail.com', classes: 'footer-link', [text('Email')]),
+            div(classes: 'footer-socials', [
+              a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),
+              a(href: linkedinUrl, classes: 'social-badge', [Component.text('LinkedIn')]),
+              a(href: emailUrl, classes: 'social-badge', [Component.text('Email')]),
+            ]),
+          ]),
+          _column('Explore', [
+            ('Expertise', '#expertise'),
+            ('Projects', '#projects'),
+            ('Experience', '#experience'),
+            ('Contact', '#contact'),
+          ]),
+          _column('Projects', [
+            ('Mobile', '#projects-work'),
+            ('Web', '#projects-work'),
+            ('AI / Data', '#projects-work'),
+            ('Tools', '#projects-work'),
+          ]),
+          _column('Connect', [
+            ('GitHub', githubUrl),
+            ('LinkedIn', linkedinUrl),
+            (emailAddress, emailUrl),
           ]),
         ]),
-        div(classes: 'footer-stats', [
-          span(classes: 'stat-item', [
-            span(classes: 'stat-value', [text('32')]),
-            span(classes: 'stat-label', [text('Repositories')]),
-          ]),
-          span(classes: 'stat-item', [
-            span(classes: 'stat-value', [text('5+')]),
-            span(classes: 'stat-label', [text('Languages')]),
-          ]),
-          span(classes: 'stat-item', [
-            span(classes: 'stat-value', [text('10+')]),
-            span(classes: 'stat-label', [text('Projects')]),
-          ]),
+        div(classes: 'footer-bottom', [
+          span(classes: 'footer-copy', [Component.text('© $_year Omar Adel. All rights reserved.')]),
+          span(classes: 'footer-made', [Component.text('Built with Jaspr')]),
         ]),
+      ]),
+    ]);
+  }
+
+  String get _year => '2024';
+
+  Component _column(String title, List<(String, String)> links) {
+    return div(classes: 'footer-col', [
+      h4(classes: 'footer-col-title', [Component.text(title)]),
+      div(classes: 'footer-col-links', [
+        for (final (label, href) in links) a(href: href, classes: 'footer-link', [Component.text(label)]),
       ]),
     ]);
   }
 
   @css
   static List<StyleRule> get styles => [
-    css('.footer', [
+    css('.site-footer', [
       css('&').styles(
-        padding: .symmetric(vertical: 32.px),
-        backgroundColor: Color('#0A0A0A'),
-        border: Border.all(color: Color('#333333'), width: 1.px),
+        backgroundColor: cCanvas,
+        border: Border.only(top: BorderSide.solid(color: cHairline, width: 1.px)),
+        padding: Padding.symmetric(vertical: 40.px),
+        margin: .only(top: 24.px),
       ),
-      
-      css('.footer-content').styles(
+      css('.footer-grid').styles(
+        display: Display.grid,
+        gridTemplate: GridTemplate(columns: GridTracks([
+          GridTrack(TrackSize.fr(3)),
+          GridTrack(TrackSize.fr(1.5)),
+          GridTrack(TrackSize.fr(1.5)),
+          GridTrack(TrackSize.fr(1.5)),
+        ])),
+        gap: Gap.all(28.px),
+        padding: .only(bottom: 28.px),
+        border: Border.only(bottom: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+      ),
+      css('.footer-logo').styles(
+        fontSize: 20.px,
+        fontWeight: FontWeight.w700,
+        color: cInk,
+        textDecoration: .none,
+        fontFamily: fSansStack,
+      ),
+      css('.footer-logo:hover').styles(textDecoration: .none),
+      css('.footer-tagline').styles(
+        fontSize: 14.px,
+        color: cMute,
+        lineHeight: 1.6.em,
+        margin: .symmetric(vertical: 12.px),
+        maxWidth: 300.px,
+      ),
+      css('.footer-socials').styles(
         display: Display.flex,
-        justifyContent: JustifyContent.spaceBetween,
-        alignItems: AlignItems.center,
         flexWrap: FlexWrap.wrap,
-        padding: .only(bottom: 24.px),
-        border: Border.all(color: Color('#333333'), width: 1.px),
+        gap: Gap.all(8.px),
+        margin: .only(top: 6.px),
       ),
-      
-      css('.footer-copyright').styles(
-        fontSize: 0.875.rem,
-        color: Color('#666666'),
+      css('.social-badge').styles(
+        display: .inlineFlex,
+        alignItems: .center,
+        fontSize: 13.px,
+        fontWeight: FontWeight.w600,
+        color: cBody,
+        backgroundColor: cSoft,
+        padding: .symmetric(vertical: 6.px, horizontal: 12.px),
+        radius: .all(.circular(radiusFull.px)),
+        textDecoration: .none,
       ),
-      
-      css('.footer-links').styles(
-        display: Display.flex,
-        flexWrap: FlexWrap.wrap,
+      css('.social-badge:hover').styles(
+        color: cInk,
+        textDecoration: .none,
       ),
-      
-      css('.footer-link').styles(
-        fontSize: 0.875.rem,
-        color: Color('#888888'),
-        display: Display.flex,
-        alignItems: AlignItems.center,
-        margin: .symmetric(horizontal: 12.px),
+      css('.footer-col-title').styles(
+        fontSize: 12.px,
+        fontWeight: FontWeight.w700,
+        textTransform: .upperCase,
+        letterSpacing: 0.08.em,
+        color: cAsh,
+        margin: .only(bottom: 14.px),
       ),
-      
-      css('.footer-link:hover').styles(
-        color: Color('#FFFFFF'),
-      ),
-      
-      css('.footer-stat').styles(
-        fontSize: 0.75.rem,
-        color: Color('#0175C2'),
-        backgroundColor: Color('#0175C220'),
-        padding: .symmetric(vertical: 2.px, horizontal: 8.px),
-        radius: .all(.circular(9999.px)),
-        margin: .only(left: 8.px),
-      ),
-      
-      css('.footer-stats').styles(
-        display: Display.flex,
-        justifyContent: JustifyContent.center,
-        flexWrap: FlexWrap.wrap,
-      ),
-      
-      css('.stat-item').styles(
+      css('.footer-col-links').styles(
         display: Display.flex,
         flexDirection: FlexDirection.column,
+        gap: Gap.all(10.px),
+      ),
+      css('.footer-link').styles(
+        fontSize: 14.5.px,
+        color: cBody,
+        textDecoration: .none,
+      ),
+      css('.footer-link:hover').styles(
+        color: cInk,
+        textDecoration: .none,
+      ),
+      css('.footer-bottom').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        justifyContent: JustifyContent.spaceBetween,
         alignItems: AlignItems.center,
-        margin: .symmetric(horizontal: 24.px),
+        gap: Gap.all(12.px),
+        padding: .only(top: 20.px),
+        fontSize: 13.5.px,
+        color: cAsh,
       ),
-      
-      css('.stat-value').styles(
-        fontSize: 1.5.rem,
-        fontWeight: FontWeight.w700,
-        color: Color('#FFFFFF'),
-        fontFamily: FontFamily('Space Grotesk'),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 900.px), [
+      css('.site-footer .footer-grid').styles(
+        gridTemplate: GridTemplate(columns: GridTracks([
+          GridTrack(TrackSize.fr(1)),
+          GridTrack(TrackSize.fr(1)),
+        ])),
       ),
-      
-      css('.stat-label').styles(
-        fontSize: 0.875.rem,
-        color: Color('#888888'),
-        margin: .only(top: 4.px),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 560.px), [
+      css('.site-footer .footer-grid').styles(
+        gridTemplate: GridTemplate(columns: GridTracks([GridTrack(TrackSize.fr(1))])),
       ),
     ]),
   ];

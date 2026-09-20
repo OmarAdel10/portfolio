@@ -7,9 +7,10 @@
 import 'package:jaspr/server.dart';
 import 'package:portfolio/components/all_projects.dart' as _all_projects;
 import 'package:portfolio/components/contact.dart' as _contact;
+import 'package:portfolio/components/experience.dart' as _experience;
 import 'package:portfolio/components/expertise.dart' as _expertise;
-import 'package:portfolio/components/featured_projects.dart'
-    as _featured_projects;
+import 'package:portfolio/components/featured_project.dart'
+    as _featured_project;
 import 'package:portfolio/components/footer.dart' as _footer;
 import 'package:portfolio/components/header.dart' as _header;
 import 'package:portfolio/components/hero.dart' as _hero;
@@ -42,8 +43,9 @@ ServerOptions get defaultServerOptions => ServerOptions(
     ..._app.AppState.styles,
     ..._all_projects.AllProjects.styles,
     ..._contact.Contact.styles,
+    ..._experience.Experience.styles,
     ..._expertise.Expertise.styles,
-    ..._featured_projects.FeaturedProjects.styles,
+    ..._featured_project.FeaturedProject.styles,
     ..._footer.Footer.styles,
     ..._header.HeaderState.styles,
     ..._hero.Hero.styles,

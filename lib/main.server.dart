@@ -14,6 +14,11 @@ import 'app.dart';
 // This file is generated automatically by Jaspr, do not remove or edit.
 import 'main.server.options.dart';
 
+/// Applies the saved theme before first paint so the site never flashes from
+/// light to dark. The default (no saved value) is the light PostHog theme.
+const String _themeInitJs = "(function(){try{var t=localStorage.getItem('portfolio-theme');"
+    "if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();";
+
 void main() {
   // Initializes the server environment with the generated default options.
   Jaspr.initializeApp(
@@ -21,28 +26,20 @@ void main() {
   );
 
   // Starts the app.
-  //
-  // [Document] renders the root document structure (<html>, <head> and <body>)
-  // with the provided parameters and components.
   runApp(Document(
-    title: 'portfolio',
-    styles: [
-      // Special import rule to include to another css file.
-      css.import('https://fonts.googleapis.com/css?family=Roboto'),
-      // Each style rule takes a valid css selector and a set of styles.
-      // Styles are defined using type-safe css bindings and can be freely chained and nested.
-      css('html, body').styles(
-        width: 100.percent,
-        minHeight: 100.vh,
-        padding: .zero,
-        margin: .zero,
-        fontFamily: const .list([FontFamily('Roboto'), FontFamilies.sansSerif]),
-      ),
-      css('h1').styles(
-        margin: .unset,
-        fontSize: 4.rem,
-      ),
+    title: 'Omar Adel — Software Engineer & App Developer',
+    lang: 'en',
+    meta: {
+      'description':
+          'Personal portfolio of Omar Adel — software engineer specializing in Flutter mobile apps, responsive web front-ends, and practical AI tooling.',
+      'theme-color': '#eeefe9',
+      'og:title': 'Omar Adel — Software Engineer & App Developer',
+      'og:type': 'website',
+      'og:url': 'https://github.com/OmarAdel10',
+    },
+    head: [
+      script(content: _themeInitJs),
     ],
-    body: App(),
+    body: const App(),
   ));
 }

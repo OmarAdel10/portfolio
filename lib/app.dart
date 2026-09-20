@@ -4,19 +4,18 @@ import 'package:jaspr/jaspr.dart';
 import 'components/header.dart';
 import 'components/hero.dart';
 import 'components/expertise.dart';
-import 'components/featured_projects.dart';
+import 'components/featured_project.dart';
 import 'components/all_projects.dart';
+import 'components/experience.dart';
 import 'components/testimonials.dart';
 import 'components/contact.dart';
 import 'components/footer.dart';
 
 // The main component of your application.
 //
-// By using the @client annotation this component will be automatically compiled to javascript and mounted
-// on the client. Therefore:
-// - this file and any imported file must be compilable for both server and client environments.
-// - this component and any child components will be built once on the server during pre-rendering and then
-//   again on the client during normal rendering.
+// By using the @client annotation this component is automatically compiled to
+// JavaScript and mounted on the client. It is pre-rendered on the server and
+// hydrated on the client.
 @client
 class App extends StatefulComponent {
   const App({super.key});
@@ -26,27 +25,16 @@ class App extends StatefulComponent {
 }
 
 class AppState extends State<App> {
-
-  @override
-  void initState() {
-    super.initState();
-    // Run code depending on the rendering environment.
-    if (kIsWeb) {
-      print("Hello client");
-    } else {
-      print("Hello server");
-    }
-  }
-
   @override
   Component build(BuildContext context) {
-    return div([
+    return div(classes: 'app', [
       const Header(),
       div(classes: 'main-content', [
         const Hero(),
         const Expertise(),
-        const FeaturedProjects(),
+        const FeaturedProject(),
         const AllProjects(),
+        const Experience(),
         const Testimonials(),
         const Contact(),
       ]),
@@ -56,8 +44,14 @@ class AppState extends State<App> {
 
   @css
   static List<StyleRule> get styles => [
+    css('.app').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      minHeight: 100.vh,
+    ),
     css('.main-content').styles(
       width: 100.percent,
+      flex: Flex.grow(1),
     ),
   ];
 }

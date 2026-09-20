@@ -11,9 +11,9 @@ class FeaturedProjects extends StatelessComponent {
     return section(classes: 'featured-projects', id: 'projects', [
       div(classes: 'container', [
         div(classes: 'section-header', [
-          h2(classes: 'section-title', [text('Featured Projects')]),
+          h2(classes: 'section-title', [Component.text('Featured Projects')]),
           p(classes: 'section-subtitle', [
-            text('A selection of my recent work'),
+            Component.text('A selection of my recent work'),
           ]),
         ]),
         div(classes: 'projects-grid', [

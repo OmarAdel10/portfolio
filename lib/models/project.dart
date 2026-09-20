@@ -2,6 +2,7 @@ class Project {
   final String name;
   final String description;
   final String language;
+  final String category;
   final int stars;
   final int forks;
   final String url;
@@ -9,11 +10,12 @@ class Project {
   final List<String> topics;
   final bool isFeatured;
   final String? thumbnailUrl;
-  
+
   const Project({
     required this.name,
     required this.description,
     required this.language,
+    this.category = 'Other',
     required this.stars,
     required this.forks,
     required this.url,
@@ -23,5 +25,3 @@ class Project {
     this.thumbnailUrl,
   });
 }
-
-enum ProjectCategory { main, additional }
