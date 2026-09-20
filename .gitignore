@@ -1,4 +1,12 @@
+# Generated & tooling artifacts — never commit.
+.build/
+.web/
+.dart_tool/
+build/
 .omo/
 .codegraph/
-.dart_tool/
 .superpowers/
+
+# OS / editor crud
+.DS_Store
+*.log
