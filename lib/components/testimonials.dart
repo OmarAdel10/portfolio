@@ -11,53 +11,52 @@ class Testimonials extends StatelessComponent {
 
   @override
   Component build(BuildContext context) {
-    final testimonials = [
-      _Testimonial(
+    final principles = [
+      _Principle(
         quote:
-            'Worked with Omar on a cross-platform product and was impressed by the speed and attention to detail. Clear communicator and a reliable engineer.',
-        author: 'Client Name',
-        role: 'Founder, Company',
-        avatar: 'CN',
+            'I treat every project like my own product — from architecture trade-offs down to the last pixel and the final deployment.',
+        title: 'Own the outcome',
+        tag: 'Working principle',
+        glyph: '01',
       ),
-      _Testimonial(
+      _Principle(
         quote:
-            'Omar brings strong technical judgment and a genuine care for the user experience. A great collaborator on every project we shipped together.',
-        author: 'Colleague Name',
-        role: 'Product Manager, Agency',
-        avatar: 'CL',
+            'I reach for boring, reliable technology and clean boundaries over cleverness. Simple systems are the ones that actually ship and scale.',
+        title: 'Simple over clever',
+        tag: 'Working principle',
+        glyph: '02',
       ),
-      _Testimonial(
+      _Principle(
         quote:
-            'Responsive, organized, and thoughtful under pressure. Would happily work with Omar again on a future engagement.',
-        author: 'Client Name',
-        role: 'CTO, Startup',
-        avatar: 'CT',
+            'Clear updates, early risk calls, and decisions you can follow. I believe honest communication is half the craft.',
+        title: 'A teammate, not a vendor',
+        tag: 'Working principle',
+        glyph: '03',
       ),
     ];
 
     return section(classes: 'testimonials section', id: 'testimonials', [
       div(classes: 'container', [
-        div(classes: 'section-head', [
-          span(classes: 'eyebrow', [Component.text('Testimonials')]),
-          h2(classes: 'section-title', [Component.text('What People Say')]),
-          p(classes: 'section-subtitle', [Component.text('Feedback from clients and colleagues')]),
+        div(classes: 'section-head reveal', [
+          span(classes: 'eyebrow', [Component.text('Principles')]),
+          h2(classes: 'section-title', [Component.text('How I Work')]),
+          p(classes: 'section-subtitle', [Component.text('A few principles that shape how I build and collaborate')]),
         ]),
         div(classes: 'testimonials-grid', [
-          for (final t in testimonials) _buildCard(t),
+          for (final principle in principles) _buildCard(principle),
         ]),
       ]),
     ]);
   }
 
-  Component _buildCard(_Testimonial t) {
-    return div(classes: 'testimonial-card card', [
-      div(classes: 'quote-mark', [Component.text('“')]),
-      p(classes: 'testimonial-quote', [Component.text(t.quote)]),
+  Component _buildCard(_Principle principle) {
+    return div(classes: 'testimonial-card card reveal', [
+      p(classes: 'testimonial-quote', [Component.text(principle.quote)]),
       div(classes: 'testimonial-author', [
-        div(classes: 'author-avatar', [Component.text(t.avatar)]),
+        div(classes: 'author-avatar', [Component.text(principle.glyph)]),
         div(classes: 'author-info', [
-          h4(classes: 'author-name', [Component.text(t.author)]),
-          p(classes: 'author-role', [Component.text(t.role)]),
+          h4(classes: 'author-name', [Component.text(principle.title)]),
+          p(classes: 'author-role', [Component.text(principle.tag)]),
         ]),
       ]),
     ]);
@@ -133,16 +132,16 @@ class Testimonials extends StatelessComponent {
   ];
 }
 
-class _Testimonial {
+class _Principle {
   final String quote;
-  final String author;
-  final String role;
-  final String avatar;
+  final String title;
+  final String tag;
+  final String glyph;
 
-  const _Testimonial({
+  const _Principle({
     required this.quote,
-    required this.author,
-    required this.role,
-    required this.avatar,
+    required this.title,
+    required this.tag,
+    required this.glyph,
   });
 }

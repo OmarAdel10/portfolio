@@ -10,7 +10,7 @@ class Contact extends StatelessComponent {
   Component build(BuildContext context) {
     return section(classes: 'contact section', id: 'contact', [
       div(classes: 'container', [
-        div(classes: 'contact-card card', [
+        div(classes: 'contact-card card reveal', [
           span(classes: 'eyebrow', [Component.text('Get in touch')]),
           h2(classes: 'contact-title', [Component.text('Available for select freelance opportunities')]),
           p(classes: 'contact-desc', [
@@ -33,6 +33,11 @@ class Contact extends StatelessComponent {
               span(classes: 'contact-link-icon', [Component.text('✉')]),
               span(classes: 'contact-link-label', [Component.text('Email')]),
               span(classes: 'contact-link-value', [Component.text(emailAddress)]),
+            ]),
+            a(href: whatsappUrl, classes: 'contact-link', [
+              span(classes: 'contact-link-icon', [Component.text('✆')]),
+              span(classes: 'contact-link-label', [Component.text('WhatsApp')]),
+              span(classes: 'contact-link-value', [Component.text(phoneNumber)]),
             ]),
           ]),
         ]),

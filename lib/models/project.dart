@@ -10,6 +10,9 @@ class Project {
   final List<String> topics;
   final bool isFeatured;
   final String? thumbnailUrl;
+  /// Absolute path (e.g. `/images/logos/budgetwise.png`) to the product logo
+  /// shown in the card instead of the language fallback. `null` falls back.
+  final String? logoUrl;
 
   const Project({
     required this.name,
@@ -23,5 +26,6 @@ class Project {
     this.topics = const [],
     this.isFeatured = false,
     this.thumbnailUrl,
+    this.logoUrl,
   });
 }

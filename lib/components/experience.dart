@@ -13,40 +13,40 @@ class Experience extends StatelessComponent {
   Component build(BuildContext context) {
     final experiences = [
       _Experience(
-        title: 'Full Stack Developer',
-        company: 'Company Name',
-        location: 'Remote',
-        period: '2022 – Present',
+        title: 'BSc in Computer Science',
+        company: 'New Mansoura University',
+        location: 'Egypt',
+        period: '2023 – 2027',
         description:
-            'Designing and shipping scalable web and mobile applications across the stack, with a focus on clean architecture, responsive UI, and developer experience.',
-        technologies: ['Dart', 'Flutter', 'Python', 'TypeScript', 'Firebase'],
+            'Relevant coursework in Computer Networks, Machine Learning, Artificial Neural Networks, Cloud Computing, Data Warehousing, Digital Logic Design, Deep Learning, and Databases.',
+        technologies: ['Computer Networks', 'Machine Learning', 'Deep Learning', 'Cloud Computing', 'Databases'],
       ),
       _Experience(
-        title: 'Mobile Developer',
-        company: 'Agency Name',
-        location: 'Remote',
-        period: '2020 – 2022',
+        title: 'Professional Training · Flutter & Dart Development',
+        company: 'Route IT Academy',
+        location: 'Specialization',
+        period: 'Certification',
         description:
-            'Built and maintained cross-platform mobile apps for Android and iOS with Flutter, collaborating closely with design and product teams.',
-        technologies: ['Flutter', 'Dart', 'Swift', 'REST', 'Git'],
+            'Intensive training on building production-ready Flutter applications — Dart fundamentals, state management, API integration, and cross-platform deployment.',
+        technologies: ['Flutter', 'Dart', 'State Management', 'REST'],
       ),
       _Experience(
-        title: 'Junior Front-end Developer',
-        company: 'Startup Name',
-        location: 'Remote',
-        period: '2018 – 2020',
+        title: 'Mastering Clean Architecture & SOLID Principles',
+        company: 'Usama Elgendy',
+        location: 'Architecture',
+        period: 'Certification',
         description:
-            'Implemented responsive, accessible interfaces with modern HTML, CSS, and JavaScript, contributing to a rapid product development cycle.',
-        technologies: ['HTML', 'CSS', 'JavaScript', 'React'],
+            'Deep-dive into layered, testable application architecture — SOLID principles, dependency injection, and Clean Architecture patterns applied to real mobile codebases.',
+        technologies: ['Clean Architecture', 'SOLID', 'DI', 'Testing'],
       ),
     ];
 
     return section(classes: 'experience section', id: 'experience', [
       div(classes: 'container', [
-        div(classes: 'section-head', [
-          span(classes: 'eyebrow', [Component.text('Experience')]),
-          h2(classes: 'section-title', [Component.text('Professional Experience')]),
-          p(classes: 'section-subtitle', [Component.text('A snapshot of my professional journey')]),
+        div(classes: 'section-head reveal', [
+          span(classes: 'eyebrow', [Component.text('Education')]),
+          h2(classes: 'section-title', [Component.text('Education & Training')]),
+          p(classes: 'section-subtitle', [Component.text('Computer science foundation and hands-on professional certification')]),
         ]),
 
         div(classes: 'experience-list', [
@@ -57,7 +57,7 @@ class Experience extends StatelessComponent {
   }
 
   Component _buildCard(_Experience exp) {
-    return div(classes: 'experience-card card', [
+    return div(classes: 'experience-card card reveal', [
       div(classes: 'experience-head', [
         div(classes: 'experience-meta', [
           h3(classes: 'experience-title', [Component.text(exp.title)]),

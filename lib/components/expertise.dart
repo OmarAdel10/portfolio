@@ -10,28 +10,28 @@ class Expertise extends StatelessComponent {
   Component build(BuildContext context) {
     final skills = [
       _Skill(
-        title: 'Software Development',
+        title: 'Cross-Platform App Development',
         description:
-            'Experienced in both functional and object-oriented programming: Dart, Python, C++, JavaScript and TypeScript.',
-        icon: '💻',
-      ),
-      _Skill(
-        title: 'Front-end & Web Development',
-        description:
-            'Passionate about UI/UX. Building responsive, accessible interfaces with HTML, CSS, JavaScript and modern web frameworks.',
-        icon: '🎨',
-      ),
-      _Skill(
-        title: 'Flutter & Mobile Development',
-        description:
-            'Skilled in building cross-platform mobile apps for Android and iOS with the Flutter framework and Dart.',
+            'Offline-first Flutter apps for Android, iOS, Windows, and Linux — BLoC/HydratedBLOC state, Firebase, Shorebird updates, SQLite, and local speech recognition built into the flow.',
         icon: '📱',
+      ),
+      _Skill(
+        title: 'Backend, Cloud & Payments',
+        description:
+            '.NET Core and Python services, Turso and Cloud Firestore databases, Cloudflare Workers gateways, and payment-terminal SDK integrations that reconcile invoices automatically.',
+        icon: '☁️',
+      ),
+      _Skill(
+        title: 'AI & Agentic Tooling',
+        description:
+            'Deep learning and offline speech-to-text models, plus agent-driven development with Claude Code, Codex, and Gemini CLI workflows that ship faster without cutting corners.',
+        icon: '🤖',
       ),
     ];
 
     return section(classes: 'expertise section', id: 'expertise', [
       div(classes: 'container', [
-        div(classes: 'section-head', [
+        div(classes: 'section-head reveal', [
           span(classes: 'eyebrow', [Component.text('Expertise')]),
           h2(classes: 'section-title', [Component.text('My Expertise')]),
           p(classes: 'section-subtitle', [Component.text('Technologies and areas I specialize in')]),
@@ -44,7 +44,7 @@ class Expertise extends StatelessComponent {
   }
 
   Component _buildSkillCard(_Skill s) {
-    return div(classes: 'skill-card card', [
+    return div(classes: 'skill-card card reveal', [
       div(classes: 'skill-icon', [Component.text(s.icon)]),
       h3(classes: 'skill-title', [Component.text(s.title)]),
       p(classes: 'skill-description', [Component.text(s.description)]),

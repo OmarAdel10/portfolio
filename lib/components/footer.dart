@@ -14,7 +14,7 @@ class Footer extends StatelessComponent {
           div(classes: 'footer-brand', [
             a(href: '#top', classes: 'footer-logo', [Component.text('Omar Adel')]),
             p(classes: 'footer-tagline', [
-              Component.text('Software Engineer · Front-end & App Developer'),
+              Component.text('Software Engineer · Flutter, C# .NET & AI Tooling'),
             ]),
             div(classes: 'footer-socials', [
               a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),

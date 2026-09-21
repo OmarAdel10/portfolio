@@ -81,8 +81,11 @@ const double bpLarge = 1280;
 // --- External data / constants --------------------------------------------------
 const String githubUrl = 'https://github.com/OmarAdel10';
 const String linkedinUrl = 'https://www.linkedin.com/in/omaradel10';
-const String emailUrl = 'mailto:omaradel10.dev@gmail.com';
-const String emailAddress = 'omaradel10.dev@gmail.com';
+const String emailUrl = 'mailto:omaradel1.dev@gmail.com';
+const String emailAddress = 'omaradel1.dev@gmail.com';
+const String phoneNumber = '+20 155 221 0048';
+const String phoneUrl = 'tel:+201552210048';
+const String whatsappUrl = 'https://wa.me/201552210048';
 
 /// CSS custom properties that define the **light** (PostHog cream) theme.
 const Map<String, String> lightVars = {
@@ -156,7 +159,36 @@ const Map<String, String> darkVars = {
 List<StyleRule> get styles => [
   css.import(
       'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap'),
-  // Silence the standard fallback fonts preload for a cleaner emit.
+  // ---------- Keyframes (premium minimal motion) ----------
+  css.keyframes('heroAvatarFloat', {
+    '0%': Styles(raw: {'transform': 'translateY(0)'}),
+    '50%': Styles(raw: {'transform': 'translateY(-7px)'}),
+    '100%': Styles(raw: {'transform': 'translateY(0)'}),
+  }),
+  css.keyframes('heroRingPulse', {
+    '0%': Styles(raw: {'opacity': '0.30', 'transform': 'scale(1)'}),
+    '50%': Styles(raw: {'opacity': '0', 'transform': 'scale(1.07)'}),
+    '100%': Styles(raw: {'opacity': '0.30', 'transform': 'scale(1)'}),
+  }),
+  css.keyframes('heroRise', {
+    'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(16px)'}),
+    'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
+  }),
+  css.keyframes('fadeUp', {
+    'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(20px)'}),
+    'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
+  }),
+
+  // ---------- Scroll reveal (driven by IntersectionObserver in the head) ----------
+  css('html.js-enabled .reveal').styles(raw: const {
+    'opacity': '0',
+    'transform': 'translateY(22px)',
+    'transition': 'opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1)',
+  }),
+  css('html.js-enabled .reveal.in').styles(raw: const {
+    'opacity': '1',
+    'transform': 'translateY(0)',
+  }),
 
   // ---------- Theme variables ----------
   css(':root').styles(raw: lightVars),
@@ -177,6 +209,10 @@ List<StyleRule> get styles => [
     fontFamily: fSansStack,
     fontSize: 16.px,
     lineHeight: 1.5.em,
+    transition: Transition.combine([
+      Transition('background-color', duration: Duration(milliseconds: 320), curve: Curve.easeOut),
+      Transition('color', duration: Duration(milliseconds: 320), curve: Curve.easeOut),
+    ]),
   ),
   css('h1, h2, h3, h4, h5, h6').styles(
     margin: .zero,
@@ -285,7 +321,14 @@ List<StyleRule> get styles => [
     border: Border.all(color: Colors.transparent, width: 1.px),
     textDecoration: .none,
     whiteSpace: .noWrap,
+    transition: Transition.combine([
+      Transition('background-color', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
+      Transition('color', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
+      Transition('border-color', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
+      Transition('transform', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
+    ]),
   ),
+  css('.btn:hover').styles(raw: const {'transform': 'translateY(-1px)'}),
   css('.btn-primary').styles(
     backgroundColor: cPrimary,
     color: cOnPrimary,
@@ -332,7 +375,17 @@ List<StyleRule> get styles => [
     backgroundColor: cCard,
     border: Border.all(color: cHairline, width: 1.px),
     radius: .all(.circular(radiusMd.px)),
+    transition: Transition.combine([
+      Transition('transform', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
+      Transition('border-color', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
+      Transition('box-shadow', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
+      Transition('background-color', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
+    ]),
   ),
+  css('.card:hover').styles(raw: const {
+    'transform': 'translateY(-3px)',
+    'border-color': 'var(--primary)',
+  }),
 
   // ---------- Inline chip / tag ----------
   css('.tag').styles(
@@ -368,6 +421,10 @@ List<StyleRule> get styles => [
     radius: .all(.circular(radiusFull.px)),
     border: Border.all(color: Colors.transparent, width: 1.px),
     cursor: .pointer,
+    transition: Transition.combine([
+      Transition('background-color', duration: Duration(milliseconds: 150), curve: Curve.easeOut),
+      Transition('color', duration: Duration(milliseconds: 150), curve: Curve.easeOut),
+    ]),
   ),
   css('.pill:hover').styles(
     color: cInk,
@@ -375,11 +432,11 @@ List<StyleRule> get styles => [
   ),
   css('.pill-active').styles(
     backgroundColor: cInk,
-    color: cOnDark,
+    color: cCanvas,
   ),
   css('.pill-active:hover').styles(
     backgroundColor: cInk,
-    color: cOnDark,
+    color: cCanvas,
   ),
 
   // ---------- Responsive ----------
@@ -398,5 +455,19 @@ List<StyleRule> get styles => [
     ),
     css('.container').styles(padding: .symmetric(horizontal: 18.px)),
     css('.section-title').styles(fontSize: 26.px),
+  ]),
+
+  // Respect users who prefer reduced motion.
+  css.media(MediaQuery.raw('(prefers-reduced-motion: reduce)'), [
+    css('*, *::before, *::after').styles(raw: const {
+      'animation-duration': '0.001ms !important',
+      'animation-iteration-count': '1 !important',
+      'transition-duration': '0.001ms !important',
+      'scroll-behavior': 'auto !important',
+    }),
+    css('html.js-enabled .reveal').styles(raw: const {
+      'opacity': '1',
+      'transform': 'none',
+    }),
   ]),
 ];

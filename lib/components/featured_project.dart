@@ -17,16 +17,21 @@ class FeaturedProject extends StatelessComponent {
 
     return section(classes: 'featured-project section', id: 'projects', [
       div(classes: 'container', [
-        div(classes: 'section-head', [
+        div(classes: 'section-head reveal', [
           span(classes: 'eyebrow', [Component.text('Project')]),
           h2(classes: 'section-title', [Component.text('Featured Project')]),
           p(classes: 'section-subtitle', [Component.text('A selection of my recent work')]),
         ]),
 
-        div(classes: 'fp-card card', [
+        div(classes: 'fp-card card reveal', [
           div(classes: 'fp-media', [
             span(classes: 'fp-media-badge', [Component.text(project.language)]),
-            div(classes: 'fp-media-glyph', [Component.text('🖼️')]),
+            if (project.logoUrl case final logo?)
+              div(classes: 'fp-logo-wrap', [
+                img(src: logo, alt: project.name, classes: 'fp-logo'),
+              ])
+            else
+              div(classes: 'fp-media-glyph', [Component.text('🖼️')]),
           ]),
           div(classes: 'fp-body', [
             span(classes: 'tag', [Component.text('Featured')]),
@@ -84,6 +89,26 @@ class FeaturedProject extends StatelessComponent {
       css('.fp-media-glyph').styles(
         fontSize: 64.px,
       ),
+      css('.fp-logo-wrap').styles(
+        width: 168.px,
+        height: 168.px,
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        padding: Padding.all(20.px),
+        backgroundColor: cCard,
+        border: Border.all(color: cHairline, width: 1.px),
+        radius: .all(.circular(radiusMd.px)),
+      ),
+      css('.fp-logo-wrap').styles(raw: const {
+        'box-shadow': '0 16px 24px -14px rgba(35, 37, 29, 0.18)',
+      }),
+      css('.fp-logo').styles(raw: const {
+        'width': '100%',
+        'height': '100%',
+        'object-fit': 'contain',
+        'object-position': 'center',
+      }),
 
       css('.fp-body').styles(
         padding: Padding.all(32.px),

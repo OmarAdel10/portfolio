@@ -19,7 +19,12 @@ class ProjectCard extends StatelessComponent {
         if (isFeatured || project.isFeatured) span(classes: 'tag tag-accent', [Component.text('Featured')]),
       ]),
 
-      div(classes: 'pcard-icon', [Component.text(_getLanguageIcon(project.language))]),
+      div(classes: 'pcard-icon', [
+        if (project.logoUrl case final logo?)
+          img(src: logo, alt: project.name, classes: 'pcard-logo')
+        else
+          Component.text(_getLanguageIcon(project.language)),
+      ]),
 
       h3(classes: 'pcard-title', [Component.text(project.name)]),
       p(classes: 'pcard-desc', [Component.text(project.description)]),
@@ -74,17 +79,23 @@ class ProjectCard extends StatelessComponent {
       ),
 
       css('.pcard-icon').styles(
-        width: 48.px,
-        height: 48.px,
+        width: 72.px,
+        height: 72.px,
         display: Display.flex,
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.center,
-        fontSize: 24.px,
-        backgroundColor: cSoft,
+        padding: Padding.all(10.px),
+        backgroundColor: cCard,
         border: Border.all(color: cHairlineSoft, width: 1.px),
-        radius: .all(.circular(radiusMd.px)),
+        radius: .all(.circular(radiusSm.px)),
         margin: .only(bottom: 16.px),
       ),
+      css('.pcard-logo').styles(raw: const {
+        'width': '100%',
+        'height': '100%',
+        'object-fit': 'contain',
+        'object-position': 'center',
+      }),
 
       css('.pcard-title').styles(
         fontSize: 20.px,

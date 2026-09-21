@@ -19,6 +19,26 @@ import 'main.server.options.dart';
 const String _themeInitJs = "(function(){try{var t=localStorage.getItem('portfolio-theme');"
     "if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();";
 
+/// Marks JS as enabled and reveals `.reveal` elements as they scroll into view.
+/// Reveal state is set with inline styles (not classes) so Jaspr re-renders
+/// never wipe it. A MutationObserver rescan means hydration swapping DOM nodes
+/// can't strand an element hidden. Skipped when the user prefers reduced motion.
+const String _motionJs = "(function(){"
+    "var d=document.documentElement;d.classList.add('js-enabled');"
+    "if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;"
+    "var revealed=[];"
+    "function revealVisible(){"
+    "var sheet='opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';"
+    "var els=[].slice.call(document.querySelectorAll('.reveal'));"
+    "var vh=window.innerHeight||document.documentElement.clientHeight;"
+    "for(var i=0;i<els.length;i++){var el=els[i];if(revealed.indexOf(el)>=0)continue;var r=el.getBoundingClientRect();"
+    "if(r.top<vh*0.94&&r.bottom>0){el.style.transition=sheet;el.style.opacity='1';el.style.transform='translateY(0)';revealed.push(el);}}}"
+    "window.addEventListener('scroll',revealVisible,{passive:true});"
+    "window.addEventListener('resize',revealVisible);"
+    "var mut=new MutationObserver(revealVisible);mut.observe(document.documentElement,{childList:true,subtree:true});"
+    "revealVisible();setTimeout(revealVisible,500);setTimeout(revealVisible,1500);"
+    "})();";
+
 void main() {
   // Initializes the server environment with the generated default options.
   Jaspr.initializeApp(
@@ -39,6 +59,7 @@ void main() {
     },
     head: [
       script(content: _themeInitJs),
+      script(content: _motionJs),
     ],
     body: const App(),
   ));

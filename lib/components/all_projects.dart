@@ -28,31 +28,6 @@ class AllProjects extends StatefulComponent {
         flexWrap: FlexWrap.wrap,
         gap: Gap.all(8.px),
       ),
-      css('.search-box').styles(
-        position: Position.relative(),
-        minWidth: 220.px,
-      ),
-      css('.search-input').styles(
-        width: 100.percent,
-        height: 40.px,
-        padding: .symmetric(horizontal: 40.px),
-        fontSize: 15.px,
-        fontFamily: fSansStack,
-        color: cInk,
-        backgroundColor: cCard,
-        border: Border.all(color: cHairline, width: 1.px),
-        radius: .all(.circular(radiusFull.px)),
-      ),
-      css('.search-input:focus').styles(
-        outline: Outline(color: cFocus, style: OutlineStyle.solid, width: OutlineWidth(2.px), offset: 1.px),
-        border: Border.all(color: cLinkBlue, width: 1.px),
-      ),
-      css('.search-icon').styles(
-        position: Position.absolute(top: 10.px, left: 14.px),
-        fontSize: 14.px,
-        color: cMute,
-        pointerEvents: PointerEvents.none,
-      ),
       css('.projects-grid').styles(
         display: Display.grid,
         gridTemplate: GridTemplate(columns: GridTracks([
@@ -86,34 +61,16 @@ class AllProjects extends StatefulComponent {
       css('.all-projects .projects-grid').styles(
         gridTemplate: GridTemplate(columns: GridTracks([GridTrack(TrackSize.fr(1))])),
       ),
-      css('.all-projects .projects-toolbar').styles(
-        flexDirection: FlexDirection.column,
-        alignItems: AlignItems.stretch,
-      ),
-      css('.all-projects .search-box').styles(minWidth: 0.px),
     ]),
   ];
 }
 
 class _AllProjectsState extends State<AllProjects> {
   String _category = 'All';
-  String _query = '';
 
   List<Project> get _filtered {
-    var projects = allProjects;
-    if (_category != 'All') {
-      projects = projects.where((proj) => proj.category == _category).toList();
-    }
-    if (_query.trim().isNotEmpty) {
-      final q = _query.trim().toLowerCase();
-      projects = projects
-          .where((proj) =>
-              proj.name.toLowerCase().contains(q) ||
-              proj.description.toLowerCase().contains(q) ||
-              proj.topics.any((t) => t.toLowerCase().contains(q)))
-          .toList();
-    }
-    return projects;
+    if (_category == 'All') return allProjects;
+    return allProjects.where((proj) => proj.category == _category).toList();
   }
 
   @override
@@ -121,11 +78,11 @@ class _AllProjectsState extends State<AllProjects> {
     final filtered = _filtered;
     return section(classes: 'all-projects section', id: 'projects-work', [
       div(classes: 'container', [
-        div(classes: 'section-head', [
+        div(classes: 'section-head reveal', [
           span(classes: 'eyebrow', [Component.text('Portfolio')]),
           h2(classes: 'section-title', [Component.text('My Work')]),
           p(classes: 'section-subtitle', [
-            Component.text('A selection of projects across mobile, web, and AI. Deployed with Flutter, React, Python, and more.'),
+            Component.text('Selected projects across app development, backend services, and AI tooling.'),
           ]),
         ]),
 
@@ -137,15 +94,6 @@ class _AllProjectsState extends State<AllProjects> {
                 onClick: () => setState(() => _category = cat),
                 [Component.text(cat)],
               ),
-          ]),
-          div(classes: 'search-box', [
-            span(classes: 'search-icon', [Component.text('🔍')]),
-            input(
-              classes: 'search-input',
-              type: InputType.search,
-              attributes: {'placeholder': 'Search projects…'},
-              onInput: (value) => setState(() => _query = value as String),
-            ),
           ]),
         ]),
 
@@ -159,7 +107,7 @@ class _AllProjectsState extends State<AllProjects> {
         ]),
 
         if (filtered.isEmpty)
-          div(classes: 'empty-state', [Component.text('No projects found matching your criteria.')]),
+          div(classes: 'empty-state', [Component.text('No projects in this category yet.')]),
       ]),
     ]);
   }
