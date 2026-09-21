@@ -93,7 +93,7 @@ final List<Project> additionalProjects = [
   Project(
     name: 'Evently',
     description: 'Event management app with SwiftUI — discover, RSVP, and manage events.',
-    language: 'Swift',
+    language: 'Dart',
     category: 'Mobile',
     stars: 0,
     forks: 0,
