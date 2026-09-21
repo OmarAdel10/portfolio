@@ -17,7 +17,7 @@ class Contact extends StatelessComponent {
             Component.text(
                 'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
           ]),
-          a(href: emailUrl, classes: 'contact-email', [Component.text(emailAddress)]),
+          a(href: mailtoUrl, classes: 'contact-email', [Component.text(emailAddress)]),
           div(classes: 'contact-links', [
             a(href: githubUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('⌘')]),
@@ -29,7 +29,7 @@ class Contact extends StatelessComponent {
               span(classes: 'contact-link-label', [Component.text('LinkedIn')]),
               span(classes: 'contact-link-value', [Component.text('linkedin.com/in/omaradel10')]),
             ]),
-            a(href: emailUrl, classes: 'contact-link', [
+            a(href: mailtoUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('✉')]),
               span(classes: 'contact-link-label', [Component.text('Email')]),
               span(classes: 'contact-link-value', [Component.text(emailAddress)]),

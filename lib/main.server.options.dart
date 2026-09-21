@@ -41,6 +41,7 @@ ServerOptions get defaultServerOptions => ServerOptions(
   styles: () => [
     ..._theme.styles,
     ..._app.AppState.styles,
+    ..._app.MarqStrip.styles,
     ..._all_projects.AllProjects.styles,
     ..._contact.Contact.styles,
     ..._experience.Experience.styles,

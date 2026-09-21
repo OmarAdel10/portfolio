@@ -19,7 +19,7 @@ class Footer extends StatelessComponent {
             div(classes: 'footer-socials', [
               a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),
               a(href: linkedinUrl, classes: 'social-badge', [Component.text('LinkedIn')]),
-              a(href: emailUrl, classes: 'social-badge', [Component.text('Email')]),
+              a(href: mailtoUrl, classes: 'social-badge', [Component.text('Email')]),
             ]),
           ]),
           _column('Explore', [
@@ -30,14 +30,14 @@ class Footer extends StatelessComponent {
           ]),
           _column('Projects', [
             ('Mobile', '#projects-work'),
-            ('Web', '#projects-work'),
+            ('Apps', '#projects-work'),
             ('AI / Data', '#projects-work'),
             ('Tools', '#projects-work'),
           ]),
           _column('Connect', [
             ('GitHub', githubUrl),
             ('LinkedIn', linkedinUrl),
-            (emailAddress, emailUrl),
+            ('Email Address', mailtoUrl),
           ]),
         ]),
         div(classes: 'footer-bottom', [
@@ -48,7 +48,7 @@ class Footer extends StatelessComponent {
     ]);
   }
 
-  String get _year => '2024';
+  String get _year => '${DateTime.now().year}';
 
   Component _column(String title, List<(String, String)> links) {
     return div(classes: 'footer-col', [
@@ -64,21 +64,27 @@ class Footer extends StatelessComponent {
     css('.site-footer', [
       css('&').styles(
         backgroundColor: cCanvas,
-        border: Border.only(top: BorderSide.solid(color: cHairline, width: 1.px)),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairline, width: 1.px),
+        ),
         padding: Padding.symmetric(vertical: 40.px),
         margin: .only(top: 24.px),
       ),
       css('.footer-grid').styles(
         display: Display.grid,
-        gridTemplate: GridTemplate(columns: GridTracks([
-          GridTrack(TrackSize.fr(3)),
-          GridTrack(TrackSize.fr(1.5)),
-          GridTrack(TrackSize.fr(1.5)),
-          GridTrack(TrackSize.fr(1.5)),
-        ])),
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(3)),
+            GridTrack(TrackSize.fr(1.5)),
+            GridTrack(TrackSize.fr(1.5)),
+            GridTrack(TrackSize.fr(1.5)),
+          ]),
+        ),
         gap: Gap.all(28.px),
         padding: .only(bottom: 28.px),
-        border: Border.only(bottom: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          bottom: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
       ),
       css('.footer-logo').styles(
         fontSize: 20.px,
@@ -151,10 +157,12 @@ class Footer extends StatelessComponent {
     ]),
     css.media(MediaQuery.all(maxWidth: 900.px), [
       css('.site-footer .footer-grid').styles(
-        gridTemplate: GridTemplate(columns: GridTracks([
-          GridTrack(TrackSize.fr(1)),
-          GridTrack(TrackSize.fr(1)),
-        ])),
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+          ]),
+        ),
       ),
     ]),
     css.media(MediaQuery.all(maxWidth: 560.px), [

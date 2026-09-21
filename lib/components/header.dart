@@ -79,9 +79,9 @@ class HeaderState extends State<Header> {
         // Desktop nav
         nav(classes: 'header-nav', [
           a(href: '#expertise', classes: 'nav-link', [Component.text('Expertise')]),
-          a(href: '#projects', classes: 'nav-link', [Component.text('Projects')]),
-          a(href: '#experience', classes: 'nav-link', [Component.text('Experience')]),
-          a(href: '#testimonials', classes: 'nav-link', [Component.text('Testimonials')]),
+          a(href: '#projects-work', classes: 'nav-link', [Component.text('Projects')]),
+          a(href: '#experience', classes: 'nav-link', [Component.text('Education')]),
+          a(href: '#testimonials', classes: 'nav-link', [Component.text('How I Work')]),
           a(href: '#contact', classes: 'nav-link', [Component.text('Contact')]),
           button(
             classes: 'theme-toggle',
@@ -97,9 +97,9 @@ class HeaderState extends State<Header> {
         div(classes: 'mobile-drawer', [
           div(classes: 'container mobile-drawer-inner', [
             a(href: '#expertise', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Expertise')]),
-            a(href: '#projects', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Projects')]),
-            a(href: '#experience', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Experience')]),
-            a(href: '#testimonials', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Testimonials')]),
+            a(href: '#projects-work', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Projects')]),
+            a(href: '#experience', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Education')]),
+            a(href: '#testimonials', classes: 'drawer-link', onClick: _closeMenu, [Component.text('How I Work')]),
             a(href: '#contact', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Contact')]),
             a(href: '#contact', classes: 'btn btn-primary drawer-cta', onClick: _closeMenu, [
               Component.text('Get in touch'),

@@ -85,7 +85,10 @@ class ProjectCard extends StatelessComponent {
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.center,
         padding: Padding.all(10.px),
-        backgroundColor: cCard,
+        fontSize: 26.px,
+        // Fixed light tile: product logos are designed for a light surface, so
+        // this contrasts correctly in both the light and dark themes.
+        backgroundColor: Colors.white,
         border: Border.all(color: cHairlineSoft, width: 1.px),
         radius: .all(.circular(radiusSm.px)),
         margin: .only(bottom: 16.px),

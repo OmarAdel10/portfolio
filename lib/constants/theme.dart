@@ -83,6 +83,11 @@ const String githubUrl = 'https://github.com/OmarAdel10';
 const String linkedinUrl = 'https://www.linkedin.com/in/omaradel10';
 const String emailUrl = 'mailto:omaradel1.dev@gmail.com';
 const String emailAddress = 'omaradel1.dev@gmail.com';
+// Pre-filled mailto template (opens the default mail app).
+const String mailtoUrl =
+    'mailto:omaradel1.dev@gmail.com?subject=Project%20inquiry%20%E2%80%93%20portfolio'
+    '&body=Hi%20Omar%2C%0A%0A'
+    'I%20came%20across%20your%20portfolio%20and%20would%20like%20to%20discuss%20a%20potential%20project.%0A%0A';
 const String phoneNumber = '+20 155 221 0048';
 const String phoneUrl = 'tel:+201552210048';
 const String whatsappUrl = 'https://wa.me/201552210048';
@@ -201,6 +206,14 @@ List<StyleRule> get styles => [
   css('html').styles(
     fontSize: 16.px,
   ),
+  css('html').styles(raw: const {
+    'scroll-behavior': 'smooth',
+    'scroll-padding-top': '78px',
+    '-webkit-text-size-adjust': '100%',
+  }),
+  css('section[id]').styles(raw: const {
+    'scroll-margin-top': '78px',
+  }),
   css('body').styles(
     margin: .zero,
     minHeight: 100.vh,
@@ -300,11 +313,12 @@ List<StyleRule> get styles => [
     color: cInk,
   ),
   css('.section-subtitle').styles(
-    margin: .only(top: 14.px),
+    margin: .only(left: .auto, right: .auto, top: 14.px),
     fontSize: 17.px,
     lineHeight: 1.6.em,
     color: cMute,
     maxWidth: 620.px,
+    textAlign: TextAlign.center,
   ),
 
   // ---------- Buttons ----------
@@ -457,6 +471,81 @@ List<StyleRule> get styles => [
     css('.section-title').styles(fontSize: 26.px),
   ]),
 
+  // ---------- Marquee ticker ----------
+  css.keyframes('marquee', {
+    '0%': Styles(raw: {'transform': 'translateX(0)'}),
+    '100%': Styles(raw: {'transform': 'translateX(-50%)'}),
+  }),
+
+  // ---------- Interactive background canvas (dot-matrix constellation) ----------
+  css('.app-shell').styles(raw: const {'position': 'relative', 'min-height': '100vh'}),
+  css('.bg-canvas').styles(raw: const {
+    'position': 'fixed',
+    'inset': '0',
+    'z-index': '0',
+    'pointer-events': 'none',
+    'display': 'block',
+  }),
+  css('.app').styles(raw: const {'position': 'relative', 'z-index': '1'}),
+
+  // ---------- Custom animated cursor ----------
+  css('html.has-custom-cursor, html.has-custom-cursor *').styles(raw: const {
+    'cursor': 'none',
+  }),
+  css('.cursor-dot, .cursor-ring').styles(raw: const {
+    'position': 'fixed',
+    'top': '0',
+    'left': '0',
+    'pointer-events': 'none',
+    'z-index': '9999',
+    'opacity': '0',
+    'border-radius': '50%',
+    'will-change': 'transform',
+  }),
+  css('html.has-custom-cursor .cursor-dot').styles(raw: const {
+    'width': '8px',
+    'height': '8px',
+    'background': 'var(--primary)',
+    'transform': 'translate(-50%, -50%)',
+    'opacity': '1',
+  }),
+  css('html.has-custom-cursor .cursor-ring').styles(raw: const {
+    'width': '34px',
+    'height': '34px',
+    'border': '1.5px solid var(--hairline)',
+    'transform': 'translate(-50%, -50%)',
+    'opacity': '1',
+    'transition': 'width 180ms ease-out, height 180ms ease-out, border-color 180ms ease-out, opacity 200ms ease-out',
+  }),
+  css('html.has-custom-cursor .cursor-ring.is-hover').styles(raw: const {
+    'width': '54px',
+    'height': '54px',
+    'border-color': 'var(--primary)',
+  }),
+
+  // ---------- Marquee ticker ----------
+  css('.marquee').styles(raw: const {
+    'overflow': 'hidden',
+    'white-space': 'nowrap',
+    'user-select': 'none',
+    'width': '100%',
+  }),
+  css('.marquee-track').styles(raw: const {
+    'display': 'inline-flex',
+    'align-items': 'center',
+    'animation': 'marquee 34s linear infinite',
+    'will-change': 'transform',
+  }),
+  css('.marquee-track:hover').styles(raw: const {'animation-play-state': 'paused'}),
+  css('.marquee-item').styles(raw: const {
+    'padding': '0 14px',
+    'color': 'var(--mute)',
+    'font-size': '15px',
+    'font-weight': '600',
+    'letter-spacing': '0.02em',
+  }),
+  css('.marquee-sep').styles(raw: const {'color': 'var(--primary)'}),
+
   // Respect users who prefer reduced motion.
   css.media(MediaQuery.raw('(prefers-reduced-motion: reduce)'), [
     css('*, *::before, *::after').styles(raw: const {
@@ -468,6 +557,13 @@ List<StyleRule> get styles => [
     css('html.js-enabled .reveal').styles(raw: const {
       'opacity': '1',
       'transform': 'none',
+    }),
+    // Keep the native cursor under reduced motion.
+    css('html.has-custom-cursor, html.has-custom-cursor *').styles(raw: const {
+      'cursor': 'auto',
+    }),
+    css('.cursor-dot, .cursor-ring').styles(raw: const {
+      'display': 'none',
     }),
   ]),
 ];

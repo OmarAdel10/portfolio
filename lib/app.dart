@@ -31,6 +31,7 @@ class AppState extends State<App> {
       const Header(),
       div(classes: 'main-content', [
         const Hero(),
+        const MarqStrip(),
         const Expertise(),
         const FeaturedProject(),
         const AllProjects(),
@@ -53,5 +54,50 @@ class AppState extends State<App> {
       width: 100.percent,
       flex: Flex.grow(1),
     ),
+  ];
+}
+
+const List<String> _marqueeTerms = [
+  'Flutter',
+  'Dart',
+  'C# .NET',
+  'Python',
+  'TypeScript',
+  'Cloudflare Workers',
+  'Turso',
+  'Firebase',
+  'BLoC',
+  'SQLite',
+  'GitHub Actions',
+  'Docker',
+  'AI Agents',
+];
+
+/// Animated scrolling tech ticker between the hero and the expertise section.
+class MarqStrip extends StatelessComponent {
+  const MarqStrip({super.key});
+
+  @override
+  Component build(BuildContext context) {
+    return div(classes: 'marquee', [
+      div(classes: 'marquee-track', [
+        for (var rep = 0; rep < 2; rep++) ...[
+          for (final t in _marqueeTerms)
+            span(classes: 'marquee-item', [
+              Component.text(t),
+              span(classes: 'marquee-sep', [Component.text('·')]),
+            ]),
+        ],
+      ]),
+    ]);
+  }
+
+  @css
+  static List<StyleRule> get styles => [
+    css('.marquee').styles(raw: const {
+      'padding': '22px 0',
+      'border-top': '1px solid var(--hairline-soft)',
+      'border-bottom': '1px solid var(--hairline-soft)',
+    }),
   ];
 }

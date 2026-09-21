@@ -96,7 +96,7 @@ class FeaturedProject extends StatelessComponent {
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.center,
         padding: Padding.all(20.px),
-        backgroundColor: cCard,
+        backgroundColor: Colors.white,
         border: Border.all(color: cHairline, width: 1.px),
         radius: .all(.circular(radiusMd.px)),
       ),
