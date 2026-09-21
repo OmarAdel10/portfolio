@@ -3,6 +3,34 @@ import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
 
+/// Copies the email to clipboard and shows a brief toast.
+/// Jaspr-friendly: uses a tiny inline script so it works in both SSR and client.
+Component _copyEmailButton() {
+  const String js = """
+(function(){
+  var btn = document.currentScript.previousElementSibling;
+  var copied = btn.querySelector('.copied');
+  var label = btn.querySelector('.label');
+  btn.addEventListener('click', async function(){
+    try{
+      await navigator.clipboard.writeText('omaradel1.dev@gmail.com');
+      if(copied) copied.style.display = 'inline';
+      if(label) label.style.display = 'none';
+      setTimeout(function(){
+        if(copied) copied.style.display = 'none';
+        if(label) label.style.display = 'inline';
+      }, 1800);
+    }catch(e){}
+  });
+})();
+""";
+  return div(classes: 'copy-email-btn', [
+    span(classes: 'label', [Component.text('Copy email')]),
+    span(classes: 'copied', [Component.text('Copied!')]),
+    script(content: js),
+  ]);
+}
+
 class Contact extends StatelessComponent {
   const Contact({super.key});
 
@@ -18,6 +46,7 @@ class Contact extends StatelessComponent {
                 'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
           ]),
           a(href: mailtoUrl, classes: 'contact-email', [Component.text(emailAddress)]),
+          _copyEmailButton(),
           div(classes: 'contact-links', [
             a(href: githubUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('⌘')]),
@@ -81,6 +110,23 @@ class Contact extends StatelessComponent {
         margin: .only(bottom: 28.px),
       ),
       css('.contact-email:hover').styles(textDecoration: TextDecoration(line: TextDecorationLine.underline)),
+      css('.copy-email-btn').styles(raw: const {
+        'display': 'inline-flex',
+        'align-items': 'center',
+        'gap': '8px',
+        'padding': '8px 14px',
+        'margin-bottom': '16px',
+        'background': 'var(--soft)',
+        'border': '1px solid var(--hairline)',
+        'border-radius': '6px',
+        'font-size': '14px',
+        'font-weight': '600',
+        'color': 'var(--mute)',
+        'cursor': 'pointer',
+        'user-select': 'none',
+      }),
+      css('.copy-email-btn .copied').styles(raw: const {'display': 'none'}),
+      css('.copy-email-btn:hover').styles(raw: const {'background': 'var(--hairline-soft)'}),
       css('.contact-links').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,

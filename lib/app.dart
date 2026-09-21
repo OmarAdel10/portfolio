@@ -79,9 +79,11 @@ class MarqStrip extends StatelessComponent {
 
   @override
   Component build(BuildContext context) {
+    // Render 3 copies so the -33.333% translate always leaves a full cycle
+    // visible at the seam, eliminating the visible gap on loop.
     return div(classes: 'marquee', [
       div(classes: 'marquee-track', [
-        for (var rep = 0; rep < 2; rep++) ...[
+        for (var rep = 0; rep < 3; rep++) ...[
           for (final t in _marqueeTerms)
             span(classes: 'marquee-item', [
               Component.text(t),

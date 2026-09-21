@@ -474,7 +474,7 @@ List<StyleRule> get styles => [
   // ---------- Marquee ticker ----------
   css.keyframes('marquee', {
     '0%': Styles(raw: {'transform': 'translateX(0)'}),
-    '100%': Styles(raw: {'transform': 'translateX(-50%)'}),
+    '100%': Styles(raw: {'transform': 'translateX(-33.333%)'}),
   }),
 
   // ---------- Interactive background canvas (dot-matrix constellation) ----------
