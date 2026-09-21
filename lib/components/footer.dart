@@ -19,7 +19,33 @@ class Footer extends StatelessComponent {
             div(classes: 'footer-socials', [
               a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),
               a(href: linkedinUrl, classes: 'social-badge', [Component.text('LinkedIn')]),
-              a(href: mailtoUrl, classes: 'social-badge', [Component.text('Email')]),
+              a(
+                href: '#',
+                classes: 'social-badge email-link',
+                [
+                  Component.text('Email'),
+                  script(content: """
+(function(){
+  var link = document.currentScript.previousElementSibling;
+  var email = 'omaradel1.dev@gmail.com';
+  var subject = 'Project inquiry – portfolio';
+  var body = 'Hi Omar,\\n\\nI came across your portfolio and would like to discuss a potential project.\\n\\n';
+  var mailto = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  var gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+  link.addEventListener('click', function(e){
+    e.preventDefault();
+    window.location.href = mailto;
+    setTimeout(function(){
+      if(document.hasFocus()){
+        window.open(gmail, '_blank', 'noopener,noreferrer');
+      }
+    }, 1500);
+  });
+})();
+"""),
+                ],
+              ),
             ]),
           ]),
           _column('Explore', [
@@ -37,7 +63,7 @@ class Footer extends StatelessComponent {
           _column('Connect', [
             ('GitHub', githubUrl),
             ('LinkedIn', linkedinUrl),
-            ('Email Address', mailtoUrl),
+            ('Email Address', '#'),  // handled by _emailLink
           ]),
         ]),
         div(classes: 'footer-bottom', [

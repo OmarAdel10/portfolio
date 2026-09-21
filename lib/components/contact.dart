@@ -3,32 +3,41 @@ import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
 
-/// Copies the email to clipboard and shows a brief toast.
-/// Jaspr-friendly: uses a tiny inline script so it works in both SSR and client.
-Component _copyEmailButton() {
+/// Email link that tries mailto first, then falls back to Gmail web compose.
+/// The click handler opens mailto, then after 1.5s if the page still has focus
+/// (meaning no mail app launched), opens Gmail compose in a new tab.
+Component _emailLink() {
   const String js = """
 (function(){
-  var btn = document.currentScript.previousElementSibling;
-  var copied = btn.querySelector('.copied');
-  var label = btn.querySelector('.label');
-  btn.addEventListener('click', async function(){
-    try{
-      await navigator.clipboard.writeText('omaradel1.dev@gmail.com');
-      if(copied) copied.style.display = 'inline';
-      if(label) label.style.display = 'none';
-      setTimeout(function(){
-        if(copied) copied.style.display = 'none';
-        if(label) label.style.display = 'inline';
-      }, 1800);
-    }catch(e){}
+  var link = document.currentScript.previousElementSibling;
+  var email = 'omaradel1.dev@gmail.com';
+  var subject = 'Project inquiry – portfolio';
+  var body = 'Hi Omar,\\n\\nI came across your portfolio and would like to discuss a potential project.\\n\\n';
+  var mailto = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  var gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+  link.addEventListener('click', function(e){
+    e.preventDefault();
+    // Try native mail app
+    window.location.href = mailto;
+    // If still here after 1.5s, no app handled it -> open Gmail
+    setTimeout(function(){
+      if(document.hasFocus()){
+        window.open(gmail, '_blank', 'noopener,noreferrer');
+      }
+    }, 1500);
   });
 })();
 """;
-  return div(classes: 'copy-email-btn', [
-    span(classes: 'label', [Component.text('Copy email')]),
-    span(classes: 'copied', [Component.text('Copied!')]),
-    script(content: js),
-  ]);
+
+  return a(
+    href: '#',
+    classes: 'contact-email',
+    [
+      Component.text(emailAddress),
+      script(content: js),
+    ],
+  );
 }
 
 class Contact extends StatelessComponent {
@@ -45,8 +54,7 @@ class Contact extends StatelessComponent {
             Component.text(
                 'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
           ]),
-          a(href: mailtoUrl, classes: 'contact-email', [Component.text(emailAddress)]),
-          _copyEmailButton(),
+          _emailLink(),
           div(classes: 'contact-links', [
             a(href: githubUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('⌘')]),
@@ -58,11 +66,7 @@ class Contact extends StatelessComponent {
               span(classes: 'contact-link-label', [Component.text('LinkedIn')]),
               span(classes: 'contact-link-value', [Component.text('linkedin.com/in/omaradel10')]),
             ]),
-            a(href: mailtoUrl, classes: 'contact-link', [
-              span(classes: 'contact-link-icon', [Component.text('✉')]),
-              span(classes: 'contact-link-label', [Component.text('Email')]),
-              span(classes: 'contact-link-value', [Component.text(emailAddress)]),
-            ]),
+            _emailLink(),
             a(href: whatsappUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('✆')]),
               span(classes: 'contact-link-label', [Component.text('WhatsApp')]),
@@ -110,23 +114,6 @@ class Contact extends StatelessComponent {
         margin: .only(bottom: 28.px),
       ),
       css('.contact-email:hover').styles(textDecoration: TextDecoration(line: TextDecorationLine.underline)),
-      css('.copy-email-btn').styles(raw: const {
-        'display': 'inline-flex',
-        'align-items': 'center',
-        'gap': '8px',
-        'padding': '8px 14px',
-        'margin-bottom': '16px',
-        'background': 'var(--soft)',
-        'border': '1px solid var(--hairline)',
-        'border-radius': '6px',
-        'font-size': '14px',
-        'font-weight': '600',
-        'color': 'var(--mute)',
-        'cursor': 'pointer',
-        'user-select': 'none',
-      }),
-      css('.copy-email-btn .copied').styles(raw: const {'display': 'none'}),
-      css('.copy-email-btn:hover').styles(raw: const {'background': 'var(--hairline-soft)'}),
       css('.contact-links').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
