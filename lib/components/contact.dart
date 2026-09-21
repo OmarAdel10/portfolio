@@ -3,43 +3,6 @@ import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
 
-/// Email link that tries mailto first, then falls back to Gmail web compose.
-/// The click handler opens mailto, then after 1.5s if the page still has focus
-/// (meaning no mail app launched), opens Gmail compose in a new tab.
-Component _emailLink() {
-  const String js = """
-(function(){
-  var link = document.currentScript.previousElementSibling;
-  var email = 'omaradel1.dev@gmail.com';
-  var subject = 'Project inquiry – portfolio';
-  var body = 'Hi Omar,\\n\\nI came across your portfolio and would like to discuss a potential project.\\n\\n';
-  var mailto = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  var gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-
-  link.addEventListener('click', function(e){
-    e.preventDefault();
-    // Try native mail app
-    window.location.href = mailto;
-    // If still here after 1.5s, no app handled it -> open Gmail
-    setTimeout(function(){
-      if(document.hasFocus()){
-        window.open(gmail, '_blank', 'noopener,noreferrer');
-      }
-    }, 1500);
-  });
-})();
-""";
-
-  return a(
-    href: '#',
-    classes: 'contact-email',
-    [
-      Component.text(emailAddress),
-      script(content: js),
-    ],
-  );
-}
-
 class Contact extends StatelessComponent {
   const Contact({super.key});
 
@@ -54,7 +17,7 @@ class Contact extends StatelessComponent {
             Component.text(
                 'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
           ]),
-          _emailLink(),
+          a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
           div(classes: 'contact-links', [
             a(href: githubUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('⌘')]),
@@ -66,7 +29,11 @@ class Contact extends StatelessComponent {
               span(classes: 'contact-link-label', [Component.text('LinkedIn')]),
               span(classes: 'contact-link-value', [Component.text('linkedin.com/in/omaradel10')]),
             ]),
-            _emailLink(),
+            a(href: 'javascript:void(0)', classes: 'contact-link email-fallback', [
+              span(classes: 'contact-link-icon', [Component.text('✉')]),
+              span(classes: 'contact-link-label', [Component.text('Email')]),
+              span(classes: 'contact-link-value', [Component.text(emailAddress)]),
+            ]),
             a(href: whatsappUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('✆')]),
               span(classes: 'contact-link-label', [Component.text('WhatsApp')]),

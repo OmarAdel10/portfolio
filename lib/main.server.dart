@@ -24,11 +24,9 @@ const String _themeInitJs =
     "(function(){try{var t=localStorage.getItem('portfolio-theme');"
     "if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();";
 
-/// Marks JS as enabled and reveals `.reveal` elements as they scroll into view.
-/// Reveal state is set with inline styles (not classes) so Jaspr re-renders
-/// never wipe it. An element is revealed the moment its top edge reaches the
-/// viewport bottom (`r.top < vh`), so fast scrolling can never strand a section
-/// permanently hidden. A MutationObserver handles hydration swapping DOM nodes.
+/// Marks JS as enabled, reveals `.reveal` elements, and handles email fallback.
+/// Direct click handlers on all `.email-fallback` links:
+/// tries mailto, then after 1.5s if page still has focus -> Gmail compose.
 const String _motionJs = """
 (function(){
   var d=document.documentElement;
@@ -50,6 +48,34 @@ const String _motionJs = """
   window.addEventListener('resize',request);
   var mut=new MutationObserver(request); mut.observe(d,{childList:true,subtree:true});
   revealVisible(); setTimeout(revealVisible,500); setTimeout(revealVisible,1600);
+
+  // ---- Email fallback (mailto -> Gmail) ----
+  var EMAIL = 'omaradel1.dev@gmail.com';
+  var SUBJ = 'Project inquiry – portfolio';
+  var BODY = 'Hi Omar,\\n\\nI came across your portfolio and would like to discuss a potential project.\\n\\n';
+  var MAILTO = 'mailto:' + EMAIL + '?subject=' + encodeURIComponent(SUBJ) + '&body=' + encodeURIComponent(BODY);
+  var GMAIL = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(EMAIL) + '&su=' + encodeURIComponent(SUBJ) + '&body=' + encodeURIComponent(BODY);
+  
+  function attachEmailFallback(){
+    var links = document.querySelectorAll('.email-fallback');
+    for(var i=0;i<links.length;i++){
+      var link = links[i];
+      if(link._fallbackAttached) continue;
+      link._fallbackAttached = true;
+      link.addEventListener('click', function(e){
+        e.preventDefault();
+        window.location.href = MAILTO;
+        setTimeout(function(){
+          if(document.hasFocus()){
+            window.open(GMAIL, '_blank', 'noopener,noreferrer');
+          }
+        }, 1500);
+      });
+    }
+  }
+  attachEmailFallback();
+  // Re-attach on DOM changes (hydration)
+  new MutationObserver(attachEmailFallback).observe(d,{childList:true,subtree:true});
 })();
 """;
 
