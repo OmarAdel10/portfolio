@@ -17,7 +17,7 @@ class Contact extends StatelessComponent {
             Component.text(
                 'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
           ]),
-          a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
+          // a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
           div(classes: 'contact-links', [
             a(href: githubUrl, classes: 'contact-link', [
               span(classes: 'contact-link-icon', [Component.text('⌘')]),

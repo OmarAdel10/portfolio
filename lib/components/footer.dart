@@ -16,11 +16,11 @@ class Footer extends StatelessComponent {
             p(classes: 'footer-tagline', [
               Component.text('Software Engineer · Flutter, C# .NET & AI Tooling'),
             ]),
-            div(classes: 'footer-socials', [
-              a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),
-              a(href: linkedinUrl, classes: 'social-badge', [Component.text('LinkedIn')]),
-              a(href: 'javascript:void(0)', classes: 'social-badge email-fallback', [Component.text('Email')]),
-            ]),
+            // div(classes: 'footer-socials', [
+            //   a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),
+            //   a(href: linkedinUrl, classes: 'social-badge', [Component.text('LinkedIn')]),
+            //   a(href: 'javascript:void(0)', classes: 'social-badge email-fallback', [Component.text('Email')]),
+            // ]),
           ]),
           _column('Explore', [
             ('Expertise', '#expertise'),
@@ -35,10 +35,11 @@ class Footer extends StatelessComponent {
             ('Tools', '#projects-work'),
           ]),
           _column('Connect', [
-                      ('GitHub', githubUrl),
-                      ('LinkedIn', linkedinUrl),
-                      ('Email Address', 'javascript:void(0)'), // email-fallback handler
-                    ]),
+            ('GitHub', githubUrl),
+            ('LinkedIn', linkedinUrl),
+            ('WhatsApp', whatsappUrl),
+            ('Email Address', 'javascript:void(0)'), // email-fallback handler
+          ]),
         ]),
         div(classes: 'footer-bottom', [
           span(classes: 'footer-copy', [Component.text('© $_year Omar Adel. All rights reserved.')]),

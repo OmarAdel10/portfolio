@@ -20,10 +20,7 @@ class ProjectCard extends StatelessComponent {
       ]),
 
       div(classes: 'pcard-icon', [
-        if (project.logoUrl case final logo?)
-          img(src: logo, alt: project.name, classes: 'pcard-logo')
-        else
-          Component.text(_getLanguageIcon(project.language)),
+        _buildLogo(),
       ]),
 
       h3(classes: 'pcard-title', [Component.text(project.name)]),
@@ -34,11 +31,30 @@ class ProjectCard extends StatelessComponent {
       ]),
 
       div(classes: 'pcard-links', [
-        a(href: project.url, classes: 'btn btn-secondary', [Component.text('View on GitHub'), span([Component.text('→')])]),
+        a(href: project.url, classes: 'btn btn-secondary', [
+          Component.text('View on GitHub'),
+          span([Component.text('→')]),
+        ]),
         if (project.homepage != null && project.homepage!.isNotEmpty)
           a(href: project.homepage!, classes: 'btn btn-tertiary', [Component.text('Live Demo →')]),
       ]),
     ]);
+  }
+
+  Component _buildLogo() {
+    if (project.logoUrl != null) {
+      // Theme-aware logos: show light logo in light mode, dark logo in dark mode
+      if (project.logoUrlLight != null || project.logoUrlDark != null) {
+        return div(classes: 'pcard-logo-wrap', [
+          if (project.logoUrlLight != null)
+            img(src: project.logoUrlLight!, alt: project.name, classes: 'pcard-logo pcard-logo-light'),
+          if (project.logoUrlDark != null)
+            img(src: project.logoUrlDark!, alt: project.name, classes: 'pcard-logo pcard-logo-dark'),
+        ]);
+      }
+      return img(src: project.logoUrl!, alt: project.name, classes: 'pcard-logo');
+    }
+    return Component.text(_getLanguageIcon(project.language));
   }
 
   String _getLanguageIcon(String language) {
@@ -88,17 +104,39 @@ class ProjectCard extends StatelessComponent {
         fontSize: 26.px,
         // Fixed light tile: product logos are designed for a light surface, so
         // this contrasts correctly in both the light and dark themes.
-        backgroundColor: Colors.white,
+        // backgroundColor: Colors.white,
+        backgroundColor: cHairlineSoft,
         border: Border.all(color: cHairlineSoft, width: 1.px),
         radius: .all(.circular(radiusSm.px)),
         margin: .only(bottom: 16.px),
       ),
-      css('.pcard-logo').styles(raw: const {
-        'width': '100%',
-        'height': '100%',
-        'object-fit': 'contain',
-        'object-position': 'center',
-      }),
+      css('.pcard-logo-wrap').styles(
+        raw: const {
+          'position': 'relative',
+          'width': '100%',
+          'height': '100%',
+        },
+      ),
+      css('.pcard-logo').styles(
+        raw: const {
+          'width': '100%',
+          'height': '100%',
+          'object-fit': 'contain',
+          'object-position': 'center',
+        },
+      ),
+      css('.pcard-logo-light').styles(
+        raw: const {
+          // Visible in light theme, hidden in dark
+          // The CSS variable --canvas is light in light mode, dark in dark mode
+          // We use media query in CSS instead for cleaner handling
+        },
+      ),
+      css('.pcard-logo-dark').styles(
+        raw: const {
+          // Visible in dark theme, hidden in light
+        },
+      ),
 
       css('.pcard-title').styles(
         fontSize: 20.px,
@@ -128,8 +166,24 @@ class ProjectCard extends StatelessComponent {
         gap: Gap.all(10.px),
         alignItems: AlignItems.center,
         padding: .only(top: 16.px),
-        border: Border.only(top: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
       ),
     ]),
+    // Theme-based logo visibility
+    css.media(MediaQuery.raw('(prefers-color-scheme: light)'), [
+      css('.pcard-logo-light').styles(raw: const {'display': 'block'}),
+      css('.pcard-logo-dark').styles(raw: const {'display': 'none'}),
+    ]),
+    css.media(MediaQuery.raw('(prefers-color-scheme: dark)'), [
+      css('.pcard-logo-light').styles(raw: const {'display': 'none'}),
+      css('.pcard-logo-dark').styles(raw: const {'display': 'block'}),
+    ]),
+    // Also handle manual theme toggle via [data-theme]
+    css('html[data-theme="light"] .pcard-logo-light').styles(raw: const {'display': 'block'}),
+    css('html[data-theme="light"] .pcard-logo-dark').styles(raw: const {'display': 'none'}),
+    css('html[data-theme="dark"] .pcard-logo-light').styles(raw: const {'display': 'none'}),
+    css('html[data-theme="dark"] .pcard-logo-dark').styles(raw: const {'display': 'block'}),
   ];
 }

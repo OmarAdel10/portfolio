@@ -57,7 +57,7 @@ class HeaderState extends State<Header> {
   Component build(BuildContext context) {
     return header(classes: 'site-header', [
       div(classes: 'container header-inner', [
-        a(href: '#top', classes: 'logo', [Component.text('Omar Adel')]),
+        a(href: '#top', classes: 'logo', [Component.text('OmarAdel.dev')]),
         // Mobile hamburger / close button
         button(
           classes: 'mobile-toggle',

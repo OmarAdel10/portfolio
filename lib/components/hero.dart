@@ -24,35 +24,37 @@ class Hero extends StatelessComponent {
         p(classes: 'hero-role', [Component.text('Software Engineer · Flutter, C# .NET & AI Tooling')]),
         p(classes: 'hero-desc', [
           Component.text(
-              'I design and build polished cross-platform apps and the systems behind them — Flutter and C# .NET on the front, Python, edge databases, and practical AI integrations under the hood. Focused on clean architecture, great developer experience, and shipping products that feel premium.'),
+            'I design and build polished cross-platform apps and the systems behind them — Flutter and C# .NET on the front, Python, edge databases, and practical AI integrations under the hood. Focused on clean architecture, great developer experience, and shipping products that feel premium.',
+          ),
         ]),
         div(classes: 'hero-cta', [
           a(href: '#projects-work', classes: 'btn btn-primary', [Component.text('View Projects')]),
           a(href: '#contact', classes: 'btn btn-secondary', [Component.text('Get in Touch')]),
-          a(href: githubUrl, classes: 'btn btn-tertiary', [Component.text('GitHub →')]),
+          // a(href: githubUrl, classes: 'btn btn-tertiary', [Component.text('GitHub →')]),
         ]),
         div(classes: 'hero-featured', [
-          span(classes: 'featured-label', [Component.text('Built with')]),
-          div(classes: 'featured-logos', [
-            _logo('Flutter'),
-            _logo('Dart'),
-            _logo('C# .NET'),
-            _logo('Python'),
-            _logo('TypeScript'),
-            _logo('Firebase'),
-          ]),
+          span(classes: 'featured-label', [Component.text('Building with')]),
+          // div(classes: 'featured-logos', [
+          //   _logo('Flutter'),
+          //   _logo('Dart'),
+          //   _logo('C# .NET'),
+          //   _logo('Python'),
+          //   _logo('TypeScript'),
+          //   _logo('Firebase'),
+          //   _logo('RESTful APIs'),
+          // ]),
         ]),
       ]),
     ]);
   }
 
-  Component _logo(String name) => span(classes: 'featured-logo', [Component.text(name)]);
+  // Component _logo(String name) => span(classes: 'featured-logo', [Component.text(name)]);
 
   @css
   static List<StyleRule> get styles => [
     css('.hero', [
       css('&').styles(
-        padding: Padding.symmetric(vertical: 64.px),
+        padding: Padding.symmetric(vertical: 45.px),
         display: Display.flex,
         alignItems: AlignItems.center,
         backgroundColor: cCanvas,
@@ -79,26 +81,32 @@ class Hero extends StatelessComponent {
         backgroundColor: cCard,
         border: Border.all(color: cHairline, width: 1.px),
       ),
-      css('.hero-avatar-ring').styles(raw: const {
-        'box-shadow': '0 12px 34px -10px rgba(35, 37, 29, 0.18), 0 2px 10px -4px rgba(35, 37, 29, 0.10)',
-        'animation': 'heroAvatarFloat 6.2s ease-in-out infinite',
-      }),
-      css('.hero-avatar').styles(raw: const {
-        'width': '100%',
-        'height': '100%',
-        'border-radius': '50%',
-        'display': 'block',
-      }),
-      css('.hero-avatar-ring::after').styles(raw: const {
-        'position': 'absolute',
-        'inset': '-6px',
-        'content': '""',
-        'border-radius': '50%',
-        'border': '2px solid var(--primary)',
-        'opacity': '0.28',
-        'transform': 'scale(1)',
-        'animation': 'heroRingPulse 3.2s ease-in-out infinite',
-      }),
+      css('.hero-avatar-ring').styles(
+        raw: const {
+          'box-shadow': '0 12px 34px -10px rgba(35, 37, 29, 0.18), 0 2px 10px -4px rgba(35, 37, 29, 0.10)',
+          'animation': 'heroAvatarFloat 6.2s ease-in-out infinite',
+        },
+      ),
+      css('.hero-avatar').styles(
+        raw: const {
+          'width': '100%',
+          'height': '100%',
+          'border-radius': '50%',
+          'display': 'block',
+        },
+      ),
+      css('.hero-avatar-ring::after').styles(
+        raw: const {
+          'position': 'absolute',
+          'inset': '-6px',
+          'content': '""',
+          'border-radius': '50%',
+          'border': '2px solid var(--primary)',
+          'opacity': '0.28',
+          'transform': 'scale(1)',
+          'animation': 'heroRingPulse 3.2s ease-in-out infinite',
+        },
+      ),
 
       css('.hero-eyebrow').styles(
         margin: .only(bottom: 14.px),
@@ -177,7 +185,9 @@ class Hero extends StatelessComponent {
         alignItems: AlignItems.center,
         width: 100.percent,
         padding: .only(top: 24.px),
-        border: Border.only(top: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
         animation: Animation(
           name: 'heroRise',
           duration: Duration(milliseconds: 720),
@@ -193,35 +203,35 @@ class Hero extends StatelessComponent {
         textTransform: .upperCase,
         letterSpacing: 0.08.em,
         color: cAsh,
-        margin: .only(bottom: 18.px),
+        margin: .only(bottom: 0.px),
       ),
 
-      css('.featured-logos').styles(
-        display: Display.flex,
-        flexWrap: FlexWrap.wrap,
-        justifyContent: JustifyContent.center,
-        gap: Gap.all(12.px),
-      ),
+      // css('.featured-logos').styles(
+      //   display: Display.flex,
+      //   flexWrap: FlexWrap.wrap,
+      //   justifyContent: JustifyContent.center,
+      //   gap: Gap.all(12.px),
+      // ),
 
-      css('.featured-logo').styles(
-        padding: .symmetric(vertical: 8.px, horizontal: 18.px),
-        radius: .all(.circular(radiusFull.px)),
-        border: Border.all(color: cHairline, width: 1.px),
-        backgroundColor: cCard,
-        color: cMute,
-        fontSize: 14.px,
-        fontWeight: FontWeight.w600,
-        whiteSpace: .noWrap,
-        transition: Transition(
-          'color',
-          duration: Duration(milliseconds: 180),
-          curve: Curve.easeOut,
-        ),
-      ),
-      css('.featured-logo:hover').styles(
-        color: cInk,
-        border: Border.all(color: cPrimary, width: 1.px),
-      ),
+      // css('.featured-logo').styles(
+      //   padding: .symmetric(vertical: 8.px, horizontal: 18.px),
+      //   radius: .all(.circular(radiusFull.px)),
+      //   border: Border.all(color: cHairline, width: 1.px),
+      //   backgroundColor: cCard,
+      //   color: cMute,
+      //   fontSize: 14.px,
+      //   fontWeight: FontWeight.w600,
+      //   whiteSpace: .noWrap,
+      //   transition: Transition(
+      //     'color',
+      //     duration: Duration(milliseconds: 180),
+      //     curve: Curve.easeOut,
+      //   ),
+      // ),
+      // css('.featured-logo:hover').styles(
+      //   color: cInk,
+      //   border: Border.all(color: cPrimary, width: 1.px),
+      // ),
     ]),
 
     // Responsive
@@ -237,7 +247,9 @@ class Hero extends StatelessComponent {
       css('.hero .hero-name').styles(fontSize: 36.px),
       css('.hero .hero-role').styles(fontSize: 17.px),
       css('.hero .hero-cta .btn').styles(width: 100.percent, justifyContent: .center),
-      css('.hero .featured-logo').styles(padding: .symmetric(vertical: 7.px, horizontal: 14.px)),
+      css('.hero .featured-logo').styles(
+        padding: .symmetric(vertical: 7.px, horizontal: 14.px),
+      ),
       css('.hero .hero-avatar-ring').styles(width: 108.px, height: 108.px),
     ]),
   ];

@@ -56,8 +56,7 @@ final List<Project> mainProjects = [
   ),
   Project(
     name: 'Cashier Admin Key Gen',
-    description:
-        'Dart utility for generating and validating admin keys for the Cashier System with secure encryption.',
+    description: 'Dart utility for generating and validating admin keys for the Cashier System with secure encryption.',
     language: 'Dart',
     category: 'Tools',
     stars: 0,
@@ -110,12 +109,13 @@ final List<Project> additionalProjects = [
     forks: 0,
     url: 'https://github.com/OmarAdel10/news',
     topics: ['news', 'flutter', 'aggregator', 'offline-reading'],
-    logoUrl: '/images/logos/news.png',
+    logoUrl: '/images/logos/news_dark.png',
+    logoUrlLight: '/images/logos/news_light.png',
+    logoUrlDark: '/images/logos/news_dark.png',
   ),
   Project(
     name: 'Explainable Digit Recognizer',
-    description:
-        'MNIST digit classifier with SHAP explainability and interactive visualization.',
+    description: 'MNIST digit classifier with SHAP explainability and interactive visualization.',
     language: 'Python',
     category: 'AI / Data',
     stars: 0,

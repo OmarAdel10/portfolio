@@ -13,6 +13,10 @@ class Project {
   /// Absolute path (e.g. `/images/logos/budgetwise.png`) to the product logo
   /// shown in the card instead of the language fallback. `null` falls back.
   final String? logoUrl;
+  /// Light-theme variant of the logo. If null, falls back to `logoUrl`.
+  final String? logoUrlLight;
+  /// Dark-theme variant of the logo. If null, falls back to `logoUrl`.
+  final String? logoUrlDark;
 
   const Project({
     required this.name,
@@ -27,5 +31,7 @@ class Project {
     this.isFeatured = false,
     this.thumbnailUrl,
     this.logoUrl,
+    this.logoUrlLight,
+    this.logoUrlDark,
   });
 }

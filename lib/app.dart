@@ -60,17 +60,27 @@ class AppState extends State<App> {
 const List<String> _marqueeTerms = [
   'Flutter',
   'Dart',
+  'Jaspr',
   'C# .NET',
   'Python',
+  'JavaScript',
   'TypeScript',
   'Cloudflare Workers',
   'Turso',
   'Firebase',
+  'Clean Architecture',
   'BLoC',
+  'SQL',
   'SQLite',
+  'Serverless Gateways',
+  'Payments Gateways',
+  'Analytics',
+  'PostHog',
   'GitHub Actions',
+  'CI/CD',
   'Docker',
   'AI Agents',
+  'Agentic Workflows',
 ];
 
 /// Animated scrolling tech ticker between the hero and the expertise section.
@@ -96,10 +106,12 @@ class MarqStrip extends StatelessComponent {
 
   @css
   static List<StyleRule> get styles => [
-    css('.marquee').styles(raw: const {
-      'padding': '22px 0',
-      'border-top': '1px solid var(--hairline-soft)',
-      'border-bottom': '1px solid var(--hairline-soft)',
-    }),
+    css('.marquee').styles(
+      raw: const {
+        'padding': '22px 0',
+        'border-top': '1px solid var(--hairline-soft)',
+        'border-bottom': '1px solid var(--hairline-soft)',
+      },
+    ),
   ];
 }
