@@ -1,3 +1,4 @@
 .omo/
 .codegraph/
 .dart_tool/
+build/
