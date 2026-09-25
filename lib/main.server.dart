@@ -197,18 +197,8 @@ void main() {
       script(content: _bgJs),
       link(
         rel: 'icon',
-        href: '/favicon.ico',
-        attributes: {'type': 'image/x-icon'},
-      ),
-      link(
-        rel: 'icon',
-        href: '/images/favicon-32x32.png',
-        attributes: {'type': 'image/png', 'sizes': '32x32'},
-      ),
-      link(
-        rel: 'icon',
-        href: '/images/favicon-16x16.png',
-        attributes: {'type': 'image/png', 'sizes': '16x16'},
+        href: '/images/avatar.png',
+        attributes: {'type': 'image/png'},
       ),
       link(
         rel: 'apple-touch-icon',
