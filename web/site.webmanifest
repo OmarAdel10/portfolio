@@ -1,0 +1,27 @@
+{
+  "name": "Omar Adel — Software Engineer",
+  "short_name": "Omar Adel",
+  "description": "Personal portfolio of Omar Adel, a software engineer building cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eeefe9",
+  "theme_color": "#f7a501",
+  "icons": [
+    {
+      "src": "/images/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

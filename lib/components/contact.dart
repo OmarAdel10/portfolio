@@ -1,225 +1,137 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import '../constants/theme.dart';
+
 class Contact extends StatelessComponent {
   const Contact({super.key});
 
   @override
   Component build(BuildContext context) {
-    return section(classes: 'contact', id: 'contact', [
+    return section(classes: 'contact section', id: 'contact', [
       div(classes: 'container', [
-        div(classes: 'section-header', [
-          h2(classes: 'section-title', [text('Get In Touch')]),
-          p(classes: 'section-subtitle', [
-            text('Have a project in mind? Let\'s talk about it.'),
+        div(classes: 'contact-card card reveal', [
+          span(classes: 'eyebrow', [Component.text('Get in touch')]),
+          h2(classes: 'contact-title', [Component.text('Available for select freelance opportunities')]),
+          p(classes: 'contact-desc', [
+            Component.text(
+                'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
           ]),
-        ]),
-        
-        div(classes: 'contact-content', [
-          div(classes: 'contact-info', [
-            h3(classes: 'contact-title', [text('Let\'s work together')]),
-            p(classes: 'contact-description', [
-              text('I\'m always open to discussing new projects, creative ideas, or opportunities to be part of your vision. Feel free to reach out through any of the channels below.'),
+          // a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
+          div(classes: 'contact-links', [
+            a(href: githubUrl, classes: 'contact-link', [
+              span(classes: 'contact-link-icon', [Component.text('⌘')]),
+              span(classes: 'contact-link-label', [Component.text('GitHub')]),
+              span(classes: 'contact-link-value', [Component.text('github.com/OmarAdel10')]),
             ]),
-            
-            div(classes: 'contact-links', [
-              _buildContactLink('Email', 'you@example.com', 'mailto:you@example.com'),
-              _buildContactLink('GitHub', 'github.com/yourname', 'https://github.com/yourname'),
-              _buildContactLink('LinkedIn', 'linkedin.com/in/yourname', 'https://linkedin.com/in/yourname'),
-              _buildContactLink('Twitter', '@yourname', 'https://twitter.com/yourname'),
+            a(href: linkedinUrl, classes: 'contact-link', [
+              span(classes: 'contact-link-icon', [Component.text('in')]),
+              span(classes: 'contact-link-label', [Component.text('LinkedIn')]),
+              span(classes: 'contact-link-value', [Component.text('linkedin.com/in/omaradel10')]),
             ]),
-          ]),
-          
-          div(classes: 'contact-form-wrapper', [
-            form(classes: 'contact-form', [
-              div(classes: 'form-group', [
-                label(classes: 'form-label', [text('Name')]),
-                input(
-                  type: InputType.text, 
-                  attributes: {'placeholder': 'Your Name', 'required': 'true'},
-                  classes: 'form-input',
-                ),
-              ]),
-              div(classes: 'form-group', [
-                label(classes: 'form-label', [text('Email')]),
-                input(
-                  type: InputType.email, 
-                  attributes: {'placeholder': 'your@email.com', 'required': 'true'},
-                  classes: 'form-input',
-                ),
-              ]),
-              div(classes: 'form-group', [
-                label(classes: 'form-label', [text('Message')]),
-                textarea(
-                  [],
-                  placeholder: 'Your message...',
-                  required: true,
-                  classes: 'form-textarea',
-                ),
-              ]),
-              button(type: ButtonType.submit, classes: 'btn btn-primary form-submit', [text('Send Message')]),
+            a(href: 'javascript:void(0)', classes: 'contact-link email-fallback', [
+              span(classes: 'contact-link-icon', [Component.text('✉')]),
+              span(classes: 'contact-link-label', [Component.text('Email')]),
+              span(classes: 'contact-link-value', [Component.text(emailAddress)]),
+            ]),
+            a(href: whatsappUrl, classes: 'contact-link', [
+              span(classes: 'contact-link-icon', [Component.text('✆')]),
+              span(classes: 'contact-link-label', [Component.text('WhatsApp')]),
+              span(classes: 'contact-link-value', [Component.text(phoneNumber)]),
             ]),
           ]),
         ]),
       ]),
-    ]);
-  }
-
-  Component _buildContactLink(String label, String value, String href) {
-    return a(href: href, classes: 'contact-link', [
-      span(classes: 'contact-link-label', [text(label)]),
-      span(classes: 'contact-link-value', [text(value)]),
     ]);
   }
 
   @css
   static List<StyleRule> get styles => [
     css('.contact', [
-      css('&').styles(
-        padding: .symmetric(vertical: 64.px),
-        backgroundColor: Color('#111111'),
+      css('.contact-card').styles(
+        maxWidth: 760.px,
+        margin: .only(left: .auto, right: .auto),
+        padding: Padding.all(40.px),
+        textAlign: TextAlign.center,
+        display: Display.flex,
+        flexDirection: FlexDirection.column,
+        alignItems: AlignItems.center,
       ),
-      
-      css('.section-header', [
-        css('&').styles(
-          textAlign: .center,
-          maxWidth: 600.px,
-          margin: .zero,
-          padding: .only(bottom: 48.px),
-        ),
-        
-        css('.section-title').styles(
-          fontSize: 2.5.rem,
-          fontWeight: .w600,
-          color: Color('#FFFFFF'),
-          fontFamily: .list([FontFamily('Space Grotesk'), FontFamilies.sansSerif]),
-        ),
-        
-        css('.section-subtitle').styles(
-          fontSize: 1.125.rem,
-          color: Color('#888888'),
-        ),
-      ]),
-      
-      css('.contact-content', [
-        css('&').styles(
-          display: .flex,
-          flexWrap: .wrap,
-          justifyContent: .spaceBetween,
-        ),
-      ]),
-      
-      css('.contact-info', [
-        css('&').styles(
-          width: 100.percent,
-          maxWidth: 400.px,
-        ),
-      ]),
-      
       css('.contact-title').styles(
-        fontSize: 1.5.rem,
-        fontWeight: .w600,
-        color: Color('#FFFFFF'),
-        fontFamily: .list([FontFamily('Space Grotesk'), FontFamilies.sansSerif]),
-        padding: .only(bottom: 16.px),
+        fontSize: 30.px,
+        fontWeight: FontWeight.w800,
+        letterSpacing: (-0.5).px,
+        color: cInk,
+        maxWidth: 560.px,
+        margin: .only(bottom: 14.px),
       ),
-      
-      css('.contact-description').styles(
-        fontSize: 1.125.rem,
-        color: Color('#888888'),
-        padding: .only(bottom: 32.px),
-        maxWidth: 400.px,
+      css('.contact-desc').styles(
+        fontSize: 16.px,
+        lineHeight: 1.6.em,
+        color: cMute,
+        maxWidth: 520.px,
+        margin: .only(bottom: 24.px),
       ),
-      
-      css('.contact-links', [
-        css('&').styles(
-          display: .flex,
-          flexDirection: .column,
-        ),
-      ]),
-      
-      css('.contact-link', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 16.px, horizontal: 16.px),
-          backgroundColor: Color('#1A1A1A'),
-          border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          color: Color('#CCCCCC'),
-          fontSize: 1.rem,
-        ),
-        css('&:hover').styles(
-          border: .symmetric(vertical: .solid(color: Color('#FFFFFF33'), width: 1.px)),
-          color: Color('#FFFFFF'),
-        ),
-      ]),
-      
+      css('.contact-email').styles(
+        display: .inlineBlock,
+        fontSize: 20.px,
+        fontWeight: FontWeight.w700,
+        color: cLinkTeal,
+        textDecoration: .none,
+        margin: .only(bottom: 28.px),
+      ),
+      css('.contact-email:hover').styles(textDecoration: TextDecoration(line: TextDecorationLine.underline)),
+      css('.contact-links').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        justifyContent: JustifyContent.center,
+        gap: Gap.all(12.px),
+        width: 100.percent,
+      ),
+      css('.contact-link').styles(
+        display: Display.inlineFlex,
+        alignItems: AlignItems.center,
+        gap: Gap.all(10.px),
+        padding: .symmetric(vertical: 12.px, horizontal: 16.px),
+        border: Border.all(color: cHairline, width: 1.px),
+        radius: .all(.circular(radiusMd.px)),
+        backgroundColor: cCard,
+        textDecoration: .none,
+        color: cInk,
+      ),
+      css('.contact-link:hover').styles(
+        border: Border.all(color: cPrimary, width: 1.px),
+        textDecoration: .none,
+      ),
+      css('.contact-link-icon').styles(
+        width: 24.px,
+        height: 24.px,
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        fontSize: 13.px,
+        fontWeight: FontWeight.w700,
+        color: cOnPrimary,
+        backgroundColor: cPrimary,
+        radius: .all(.circular(radiusSm.px)),
+      ),
       css('.contact-link-label').styles(
-        fontWeight: .w500,
-        color: Color('#888888'),
-        minWidth: 80.px,
+        fontSize: 14.px,
+        fontWeight: FontWeight.w700,
+        color: cInk,
       ),
-      
       css('.contact-link-value').styles(
-        color: Color('#CCCCCC'),
+        fontSize: 13.5.px,
+        color: cMute,
       ),
-      
-      css('.contact-form-wrapper', [
-        css('&').styles(
-          width: 100.percent,
-          maxWidth: 500.px,
-        ),
-      ]),
-      
-      css('.contact-form', [
-        css('&').styles(
-          display: .flex,
-          flexDirection: .column,
-          backgroundColor: Color('#1A1A1A'),
-          border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          padding: .symmetric(vertical: 32.px, horizontal: 32.px),
-        ),
-      ]),
-      
-      css('.form-group', [
-        css('&').styles(
-          display: .flex,
-          flexDirection: .column,
-        ),
-      ]),
-      
-      css('.form-label').styles(
-        fontSize: 0.875.rem,
-        fontWeight: .w500,
-        color: Color('#CCCCCC'),
-        padding: .only(bottom: 8.px),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 480.px), [
+      css('.contact .contact-card').styles(padding: Padding.all(26.px)),
+      css('.contact .contact-title').styles(fontSize: 25.px),
+      css('.contact .contact-link').styles(
+        width: 100.percent,
+        justifyContent: JustifyContent.start,
       ),
-      
-      css('.form-input, .form-textarea', [
-        css('&').styles(
-          padding: .symmetric(vertical: 16.px, horizontal: 16.px),
-          backgroundColor: Color('#111111'),
-          border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          color: Color('#FFFFFF'),
-          fontSize: 1.rem,
-          fontFamily: .list([FontFamily('Inter'), FontFamilies.sansSerif]),
-        ),
-      ]),
-      
-      css('.form-textarea', [
-        css('&').styles(
-          minHeight: 150.px,
-        ),
-      ]),
-      
-      css('.form-submit', [
-        css('&').styles(
-          padding: .symmetric(vertical: 16.px, horizontal: 32.px),
-          fontSize: 1.rem,
-          fontWeight: .w500,
-          width: 100.percent,
-        ),
-      ]),
     ]),
   ];
 }

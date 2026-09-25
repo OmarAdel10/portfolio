@@ -1,6 +1,11 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import '../constants/theme.dart';
+
+// TODO(owner): Replace the placeholder role entries below with your real
+// professional history before deploying. They follow tamalsen.dev's structure
+// (title, company, location, period, description, technology chips).
 class Experience extends StatelessComponent {
   const Experience({super.key});
 
@@ -8,191 +13,121 @@ class Experience extends StatelessComponent {
   Component build(BuildContext context) {
     final experiences = [
       _Experience(
-        title: 'Senior Lead Software Engineer',
-        company: 'Saimon Global Ltd',
-        location: 'Dhaka, Bangladesh',
-        period: '2019 - 2024',
-        description: 'Led a frontend team to design and develop robust B2C and B2B Travel Tech solutions, utilizing React/Next.js for web applications and Flutter SDK for cross-platform mobile apps, with a focus on responsive design, scalability, and enhanced user experience.',
-        technologies: ['JavaScript', 'TypeScript', 'Dart', 'React', 'Next.js', 'Flutter'],
-        url: 'https://saimonglobal.com',
+        title: 'BSc in Computer Science',
+        company: 'New Mansoura University',
+        location: 'Egypt',
+        period: '2023 – 2027',
+        description:
+            'Relevant coursework in Computer Networks, Machine Learning, Artificial Neural Networks, Cloud Computing, Data Warehousing, Digital Logic Design, Deep Learning, and Databases.',
+        technologies: ['Computer Networks', 'Machine Learning', 'Deep Learning', 'Cloud Computing', 'Databases'],
       ),
       _Experience(
-        title: 'Web Developer',
-        company: 'influenceTHIS Canada',
-        location: 'Remote (Toronto, Canada)',
-        period: '2018 - 2019',
-        description: 'Developed the UI and UX eco-system for a conference event platform using modular component structures with JS, SCSS, Gulp on Node.',
-        technologies: ['JavaScript', 'Gulp', 'SCSS', 'Node.js'],
-        url: 'https://influencethis.ca',
+        title: 'Professional Training · Flutter & Dart Development',
+        company: 'Route IT Academy',
+        location: 'Specialization',
+        period: 'Certification',
+        description:
+            'Intensive training on building production-ready Flutter applications — Dart fundamentals, state management, API integration, and cross-platform deployment.',
+        technologies: ['Flutter', 'Dart', 'State Management', 'REST'],
       ),
       _Experience(
-        title: 'Top Rated Web Developer',
-        company: 'Upwork Inc.',
-        location: 'Remote',
-        period: '2017 - Present',
-        description: 'Top-Rated developer on Upwork specializing in Front-end (React, WordPress) technologies with a 100% job success rate and client satisfaction rating (based on 150+ Jobs, 2500+ hours).',
-        technologies: ['JavaScript', 'PHP', 'HTML', 'CSS', 'Figma'],
-        url: 'https://upwork.com',
+        title: 'Mastering Clean Architecture & SOLID Principles',
+        company: 'Usama Elgendy',
+        location: 'Architecture',
+        period: 'Certification',
+        description:
+            'Deep-dive into layered, testable application architecture — SOLID principles, dependency injection, and Clean Architecture patterns applied to real mobile codebases.',
+        technologies: ['Clean Architecture', 'SOLID', 'DI', 'Testing'],
       ),
     ];
 
-    return section(classes: 'experience', id: 'experience', [
+    return section(classes: 'experience section', id: 'experience', [
       div(classes: 'container', [
-        div(classes: 'section-header', [
-          h2(classes: 'section-title', [text('Experience')]),
-          p(classes: 'section-subtitle', [
-            text('My professional journey'),
-          ]),
+        div(classes: 'section-head reveal', [
+          span(classes: 'eyebrow', [Component.text('Education')]),
+          h2(classes: 'section-title', [Component.text('Education & Training')]),
+          p(classes: 'section-subtitle', [Component.text('Computer science foundation and hands-on professional certification')]),
         ]),
-        
-        div(classes: 'experience-timeline', [
-          for (final exp in experiences) _buildExperienceCard(exp),
+
+        div(classes: 'experience-list', [
+          for (final exp in experiences) _buildCard(exp),
         ]),
       ]),
     ]);
   }
 
-  Component _buildExperienceCard(_Experience exp) {
-    return div(classes: 'experience-card', [
-      div(classes: 'experience-header', [
-        div(classes: 'experience-title-row', [
-          div(classes: 'experience-title-group', [
-            h3(classes: 'experience-title', [text(exp.title)]),
-            p(classes: 'experience-company', [
-              text(exp.company),
-              text(' · '),
-              text(exp.period),
-            ]),
+  Component _buildCard(_Experience exp) {
+    return div(classes: 'experience-card card reveal', [
+      div(classes: 'experience-head', [
+        div(classes: 'experience-meta', [
+          h3(classes: 'experience-title', [Component.text(exp.title)]),
+          p(classes: 'experience-company', [
+            Component.text(exp.company),
+            Component.text(' · '),
+            Component.text(exp.location),
           ]),
-          a(href: exp.url, classes: 'experience-link', [text(exp.url.replaceAll('https://', ''))]),
         ]),
-        p(classes: 'experience-location', [text(exp.location)]),
+        span(classes: 'experience-period', [Component.text(exp.period)]),
       ]),
-      
-      p(classes: 'experience-description', [text(exp.description)]),
-      
-      div(classes: 'experience-tech', 
-        exp.technologies.map((tech) => span(classes: 'tech-tag', [text(tech)])).toList()
-      ),
+      p(classes: 'experience-desc', [Component.text(exp.description)]),
+      div(classes: 'experience-tech', [
+        for (final tech in exp.technologies) span(classes: 'tag tag-outline', [Component.text(tech)]),
+      ]),
     ]);
   }
 
   @css
   static List<StyleRule> get styles => [
     css('.experience', [
-      css('&').styles(
-        padding: .symmetric(vertical: 64.px),
-        backgroundColor: Color('#111111'),
+      css('.experience-list').styles(
+        display: Display.flex,
+        flexDirection: FlexDirection.column,
+        gap: Gap.all(20.px),
+        maxWidth: 900.px,
+        margin: .only(left: .auto, right: .auto),
       ),
-      
-      css('.section-header', [
-        css('&').styles(
-          textAlign: .center,
-          maxWidth: 600.px,
-          margin: .zero,
-          padding: .symmetric(vertical: 48.px),
-        ),
-        
-        css('.section-title').styles(
-          fontSize: 2.5.rem,
-          fontWeight: .w600,
-          color: Color('#FFFFFF'),
-          fontFamily: .list([FontFamily('Space Grotesk'), FontFamilies.sansSerif]),
-        ),
-        
-        css('.section-subtitle').styles(
-          fontSize: 1.125.rem,
-          color: Color('#888888'),
-        ),
-      ]),
-      
-      css('.experience-timeline', [
-        css('&').styles(
-          display: .flex,
-          flexDirection: .column,
-        ),
-      ]),
-      
-      css('.experience-card', [
-        css('&').styles(
-          backgroundColor: Color('#1A1A1A'),
-          border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          padding: .symmetric(vertical: 32.px, horizontal: 32.px),
-        ),
-        
-        css('.experience-header', [
-          css('&').styles(
-            display: .flex,
-            flexDirection: .column,
-            padding: .only(bottom: 20.px),
-            border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          ),
-          
-          css('.experience-title-row', [
-            css('&').styles(
-              display: .flex,
-              justifyContent: .spaceBetween,
-              flexWrap: .wrap,
-            ),
-            
-            css('.experience-title-group').styles(
-              width: 100.percent,
-            ),
-            
-            css('.experience-title').styles(
-              fontSize: 1.25.rem,
-              fontWeight: .w600,
-              color: Color('#FFFFFF'),
-              fontFamily: .list([FontFamily('Space Grotesk'), FontFamilies.sansSerif]),
-              padding: .only(bottom: 4.px),
-            ),
-            
-            css('.experience-company').styles(
-              fontSize: 1.rem,
-              color: Color('#888888'),
-            ),
-            
-            css('.experience-link').styles(
-              fontSize: 0.875.rem,
-              color: Color('#888888'),
-            ),
-            
-            css('.experience-link:hover').styles(
-              color: Color('#FFFFFF'),
-            ),
-          ]),
-          
-          css('.experience-location').styles(
-            fontSize: 0.875.rem,
-            color: Color('#666666'),
-          ),
-        ]),
-        
-        css('.experience-description').styles(
-          fontSize: 1.rem,
-          color: Color('#CCCCCC'),
-          padding: .symmetric(vertical: 20.px),
-        ),
-        
-        css('.experience-tech', [
-          css('&').styles(
-            display: .flex,
-            flexWrap: .wrap,
-          ),
-        ]),
-        
-        css('.tech-tag', [
-          css('&').styles(
-            fontSize: 0.75.rem,
-            fontWeight: .w500,
-            color: Color('#CCCCCC'),
-            backgroundColor: Color('#FFFFFF10'),
-            border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-            padding: .symmetric(vertical: 4.px, horizontal: 12.px),
-            radius: .all(.circular(4.px)),
-          ),
-        ]),
-      ]),
+      css('.experience-card').styles(
+        padding: Padding.all(28.px),
+      ),
+      css('.experience-head').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        justifyContent: JustifyContent.spaceBetween,
+        alignItems: AlignItems.start,
+        gap: Gap.all(10.px),
+        margin: .only(bottom: 12.px),
+      ),
+      css('.experience-title').styles(
+        fontSize: 20.px,
+        fontWeight: FontWeight.w700,
+        color: cInk,
+        margin: .only(bottom: 4.px),
+      ),
+      css('.experience-company').styles(
+        fontSize: 15.px,
+        color: cMute,
+      ),
+      css('.experience-period').styles(
+        fontSize: 13.px,
+        fontWeight: FontWeight.w600,
+        color: cMute,
+        padding: .symmetric(vertical: 4.px, horizontal: 10.px),
+        border: Border.all(color: cHairline, width: 1.px),
+        radius: .all(.circular(radiusFull.px)),
+        backgroundColor: cSoft,
+        whiteSpace: .noWrap,
+      ),
+      css('.experience-desc').styles(
+        fontSize: 15.px,
+        lineHeight: 1.65.em,
+        color: cBody,
+        margin: .only(bottom: 16.px),
+      ),
+      css('.experience-tech').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        gap: Gap.all(8.px),
+      ),
     ]),
   ];
 }
@@ -204,8 +139,7 @@ class _Experience {
   final String period;
   final String description;
   final List<String> technologies;
-  final String url;
-  
+
   const _Experience({
     required this.title,
     required this.company,
@@ -213,6 +147,5 @@ class _Experience {
     required this.period,
     required this.description,
     required this.technologies,
-    required this.url,
   });
 }

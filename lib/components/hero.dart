@@ -1,183 +1,256 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import '../constants/theme.dart';
+
 class Hero extends StatelessComponent {
   const Hero({super.key});
 
   @override
   Component build(BuildContext context) {
-    return section(classes: 'hero', [
-      div(classes: 'container', [
-        div(classes: 'hero-content', [
-          div(classes: 'hero-badge', [
-            span(classes: 'badge-dot', []),
-            text('Available for freelance projects'),
+    return section(classes: 'hero', id: 'top', [
+      div(classes: 'container hero-inner', [
+        div(classes: 'hero-avatar-wrap', [
+          div(classes: 'hero-avatar-ring', [
+            img(
+              src: '/images/avatar.png',
+              alt: 'Omar Adel',
+              classes: 'hero-avatar',
+            ),
           ]),
-          
-          h1(classes: 'hero-name', [text('YOUR NAME')]),
-          
-          h2(classes: 'hero-title', [
-            text('SOFTWARE ENGINEER, '),
-            br(),
-            text('FRONTEND & APP DEVELOPER.'),
-          ]),
-          
-          p(classes: 'hero-description', [
-            text('Building scalable web and mobile applications with modern technologies. '),
-            text('Passionate about clean code, great UX, and solving complex problems.'),
-          ]),
-          
-          div(classes: 'hero-cta', [
-            a(href: '#contact', classes: 'btn btn-primary', [text('Get In Touch')]),
-            a(href: '#projects', classes: 'btn btn-secondary', [text('View Projects')]),
-          ]),
-          
-          div(classes: 'hero-featured', [
-            text('AS FEATURED IN'),
-            div(classes: 'featured-logos', [
-              _buildLogo('Company One'),
-              _buildLogo('Company Two'),
-              _buildLogo('Company Three'),
-              _buildLogo('Company Four'),
-              _buildLogo('Company Five'),
-              _buildLogo('Company Six'),
-            ]),
-          ]),
-          
-          div(classes: 'hero-social', [
-            a(href: 'https://github.com', classes: 'social-link', [text('GitHub')]),
-            a(href: 'https://linkedin.com', classes: 'social-link', [text('LinkedIn')]),
-            a(href: 'https://twitter.com', classes: 'social-link', [text('Twitter')]),
-            a(href: 'mailto:you@example.com', classes: 'social-link', [text('Email')]),
-          ]),
+        ]),
+        span(classes: 'eyebrow hero-eyebrow', [Component.text('Hello, I am')]),
+        h1(classes: 'hero-name', [Component.text('Omar Adel')]),
+        p(classes: 'hero-role', [Component.text('Software Engineer · Flutter, C# .NET & AI Tooling')]),
+        p(classes: 'hero-desc', [
+          Component.text(
+            'I design and build polished cross-platform apps and the systems behind them — Flutter and C# .NET on the front, Python, edge databases, and practical AI integrations under the hood. Focused on clean architecture, great developer experience, and shipping products that feel premium.',
+          ),
+        ]),
+        div(classes: 'hero-cta', [
+          a(href: '#projects-work', classes: 'btn btn-primary', [Component.text('View Projects')]),
+          a(href: '#contact', classes: 'btn btn-secondary', [Component.text('Get in Touch')]),
+          // a(href: githubUrl, classes: 'btn btn-tertiary', [Component.text('GitHub →')]),
+        ]),
+        div(classes: 'hero-featured', [
+          span(classes: 'featured-label', [Component.text('Building with')]),
+          // div(classes: 'featured-logos', [
+          //   _logo('Flutter'),
+          //   _logo('Dart'),
+          //   _logo('C# .NET'),
+          //   _logo('Python'),
+          //   _logo('TypeScript'),
+          //   _logo('Firebase'),
+          //   _logo('RESTful APIs'),
+          // ]),
         ]),
       ]),
     ]);
   }
 
-  Component _buildLogo(String name) {
-    return span(classes: 'featured-logo', [text(name)]);
-  }
+  // Component _logo(String name) => span(classes: 'featured-logo', [Component.text(name)]);
 
   @css
   static List<StyleRule> get styles => [
     css('.hero', [
       css('&').styles(
-        minHeight: 100.vh,
-        display: .flex,
-        alignItems: .center,
-        padding: .symmetric(vertical: 64.px),
+        padding: Padding.symmetric(vertical: 45.px),
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        backgroundColor: cCanvas,
       ),
-      
-      css('.hero-content', [
-        css('&').styles(
-          display: .flex,
-          flexDirection: .column,
+
+      css('.hero-inner').styles(
+        display: Display.flex,
+        flexDirection: FlexDirection.column,
+        alignItems: AlignItems.center,
+        textAlign: TextAlign.center,
+        maxWidth: 840.px,
+      ),
+
+      // Animated avatar (Notion-style: rounded, hairline ring, gentle float)
+      css('.hero-avatar-wrap').styles(
+        margin: .only(bottom: 24.px),
+      ),
+      css('.hero-avatar-ring').styles(
+        width: 148.px,
+        height: 148.px,
+        position: Position.relative(),
+        padding: Padding.all(5.px),
+        radius: .all(.circular(radiusFull.px)),
+        backgroundColor: cCard,
+        border: Border.all(color: cHairline, width: 1.px),
+      ),
+      css('.hero-avatar-ring').styles(
+        raw: const {
+          'box-shadow': '0 12px 34px -10px rgba(35, 37, 29, 0.18), 0 2px 10px -4px rgba(35, 37, 29, 0.10)',
+          'animation': 'heroAvatarFloat 6.2s ease-in-out infinite',
+        },
+      ),
+      css('.hero-avatar').styles(
+        raw: const {
+          'width': '100%',
+          'height': '100%',
+          'border-radius': '50%',
+          'display': 'block',
+        },
+      ),
+      css('.hero-avatar-ring::after').styles(
+        raw: const {
+          'position': 'absolute',
+          'inset': '-6px',
+          'content': '""',
+          'border-radius': '50%',
+          'border': '2px solid var(--primary)',
+          'opacity': '0.28',
+          'transform': 'scale(1)',
+          'animation': 'heroRingPulse 3.2s ease-in-out infinite',
+        },
+      ),
+
+      css('.hero-eyebrow').styles(
+        margin: .only(bottom: 14.px),
+        animation: Animation(
+          name: 'heroRise',
+          duration: Duration(milliseconds: 680),
+          curve: Curve.easeOut,
+          delay: Duration(milliseconds: 0),
+          fillMode: AnimationFillMode.backwards,
         ),
-      ]),
-      
-      css('.hero-badge', [
-        css('&').styles(
-          display: .inlineFlex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 4.px, horizontal: 16.px),
-          backgroundColor: Color('#FFFFFF10'),
-          border: .symmetric(vertical: .solid(color: Color('#333333'), width: 1.px)),
-          fontSize: 0.875.rem,
-          color: Color('#888888'),
+      ),
+
+      css('.hero-name').styles(
+        fontSize: 60.px,
+        fontWeight: FontWeight.w800,
+        letterSpacing: (-1.2).px,
+        lineHeight: 1.05.em,
+        color: cInk,
+        margin: .only(bottom: 16.px),
+        animation: Animation(
+          name: 'heroRise',
+          duration: Duration(milliseconds: 720),
+          curve: Curve.easeOut,
+          delay: Duration(milliseconds: 80),
+          fillMode: AnimationFillMode.backwards,
         ),
-      ]),
-      
-      css('.badge-dot', [
-        css('&').styles(
-          width: 8.px,
-          height: 8.px,
-          backgroundColor: Color('#FFFFFF'),
-          margin: .symmetric(horizontal: 8.px),
+      ),
+
+      css('.hero-role').styles(
+        fontSize: 21.px,
+        fontWeight: FontWeight.w600,
+        color: cCharcoal,
+        margin: .only(bottom: 18.px),
+        animation: Animation(
+          name: 'heroRise',
+          duration: Duration(milliseconds: 720),
+          curve: Curve.easeOut,
+          delay: Duration(milliseconds: 160),
+          fillMode: AnimationFillMode.backwards,
         ),
-      ]),
-      
-      css('.hero-name', [
-        css('&').styles(
-          fontSize: 4.rem,
-          fontWeight: .w700,
-          lineHeight: 1.1.em,
-          fontFamily: .list([FontFamily('Space Grotesk'), FontFamilies.sansSerif]),
-          color: Color('#FFFFFF'),
+      ),
+
+      css('.hero-desc').styles(
+        fontSize: 17.px,
+        lineHeight: 1.6.em,
+        color: cMute,
+        maxWidth: 700.px,
+        margin: .only(bottom: 30.px),
+        animation: Animation(
+          name: 'heroRise',
+          duration: Duration(milliseconds: 720),
+          curve: Curve.easeOut,
+          delay: Duration(milliseconds: 240),
+          fillMode: AnimationFillMode.backwards,
         ),
-      ]),
-      
-      css('.hero-title', [
-        css('&').styles(
-          fontSize: 1.5.rem,
-          fontWeight: .w500,
-          color: Color('#888888'),
-          lineHeight: 1.4.em,
-          maxWidth: 600.px,
+      ),
+
+      css('.hero-cta').styles(
+        display: Display.flex,
+        flexWrap: FlexWrap.wrap,
+        justifyContent: JustifyContent.center,
+        gap: Gap.all(12.px),
+        margin: .only(bottom: 40.px),
+        animation: Animation(
+          name: 'heroRise',
+          duration: Duration(milliseconds: 720),
+          curve: Curve.easeOut,
+          delay: Duration(milliseconds: 320),
+          fillMode: AnimationFillMode.backwards,
         ),
-      ]),
-      
-      css('.hero-description', [
-        css('&').styles(
-          fontSize: 1.125.rem,
-          color: Color('#888888'),
-          maxWidth: 600.px,
-          padding: .symmetric(vertical: 16.px),
+      ),
+
+      css('.hero-featured').styles(
+        display: Display.flex,
+        flexDirection: FlexDirection.column,
+        alignItems: AlignItems.center,
+        width: 100.percent,
+        padding: .only(top: 24.px),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
         ),
-      ]),
-      
-      css('.hero-cta', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 16.px),
+        animation: Animation(
+          name: 'heroRise',
+          duration: Duration(milliseconds: 720),
+          curve: Curve.easeOut,
+          delay: Duration(milliseconds: 400),
+          fillMode: AnimationFillMode.backwards,
         ),
-      ]),
-      
-      css('.hero-featured', [
-        css('&').styles(
-          padding: .symmetric(vertical: 10.px),
-        ),
-      ]),
-      
-      css('.featured-logos', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 10.px),
-          opacity: 0.4,
-        ),
-      ]),
-      
-      css('.featured-logo', [
-        css('&').styles(
-          fontSize: 0.875.rem,
-          fontWeight: .w500,
-          color: Color('#888888'),
-          padding: .symmetric(horizontal: 16.px),
-        ),
-      ]),
-      
-      css('.hero-social', [
-        css('&').styles(
-          display: .flex,
-          alignItems: .center,
-          padding: .symmetric(vertical: 10.px),
-          maxWidth: 400.px,
-        ),
-      ]),
-      
-      css('.social-link', [
-        css('&').styles(
-          color: Color('#888888'),
-          fontSize: 0.875.rem,
-          fontWeight: .w500,
-          padding: .symmetric(horizontal: 16.px),
-        ),
-        css('&:hover').styles(
-          color: Color('#FFFFFF'),
-        ),
-      ]),
+      ),
+
+      css('.featured-label').styles(
+        fontSize: 13.px,
+        fontWeight: FontWeight.w700,
+        textTransform: .upperCase,
+        letterSpacing: 0.08.em,
+        color: cAsh,
+        margin: .only(bottom: 0.px),
+      ),
+
+      // css('.featured-logos').styles(
+      //   display: Display.flex,
+      //   flexWrap: FlexWrap.wrap,
+      //   justifyContent: JustifyContent.center,
+      //   gap: Gap.all(12.px),
+      // ),
+
+      // css('.featured-logo').styles(
+      //   padding: .symmetric(vertical: 8.px, horizontal: 18.px),
+      //   radius: .all(.circular(radiusFull.px)),
+      //   border: Border.all(color: cHairline, width: 1.px),
+      //   backgroundColor: cCard,
+      //   color: cMute,
+      //   fontSize: 14.px,
+      //   fontWeight: FontWeight.w600,
+      //   whiteSpace: .noWrap,
+      //   transition: Transition(
+      //     'color',
+      //     duration: Duration(milliseconds: 180),
+      //     curve: Curve.easeOut,
+      //   ),
+      // ),
+      // css('.featured-logo:hover').styles(
+      //   color: cInk,
+      //   border: Border.all(color: cPrimary, width: 1.px),
+      // ),
+    ]),
+
+    // Responsive
+    css.media(MediaQuery.all(maxWidth: 768.px), [
+      css('.hero').styles(padding: .symmetric(vertical: 52.px)),
+      css('.hero .hero-name').styles(fontSize: 44.px),
+      css('.hero .hero-role').styles(fontSize: 19.px),
+      css('.hero .hero-desc').styles(fontSize: 16.px),
+      css('.hero .hero-cta').styles(gap: Gap.all(10.px)),
+      css('.hero .hero-avatar-ring').styles(width: 124.px, height: 124.px),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 480.px), [
+      css('.hero .hero-name').styles(fontSize: 36.px),
+      css('.hero .hero-role').styles(fontSize: 17.px),
+      css('.hero .hero-cta .btn').styles(width: 100.percent, justifyContent: .center),
+      css('.hero .featured-logo').styles(
+        padding: .symmetric(vertical: 7.px, horizontal: 14.px),
+      ),
+      css('.hero .hero-avatar-ring').styles(width: 108.px, height: 108.px),
     ]),
   ];
 }

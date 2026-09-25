@@ -5,6 +5,7 @@
 // Generated with jaspr_builder
 
 import 'package:jaspr/server.dart';
+import 'package:portfolio/components/all_projects.dart' as _all_projects;
 import 'package:portfolio/components/contact.dart' as _contact;
 import 'package:portfolio/components/experience.dart' as _experience;
 import 'package:portfolio/components/expertise.dart' as _expertise;
@@ -13,6 +14,7 @@ import 'package:portfolio/components/featured_project.dart'
 import 'package:portfolio/components/footer.dart' as _footer;
 import 'package:portfolio/components/header.dart' as _header;
 import 'package:portfolio/components/hero.dart' as _hero;
+import 'package:portfolio/components/project_card.dart' as _project_card;
 import 'package:portfolio/components/testimonials.dart' as _testimonials;
 import 'package:portfolio/constants/theme.dart' as _theme;
 import 'package:portfolio/app.dart' as _app;
@@ -39,13 +41,16 @@ ServerOptions get defaultServerOptions => ServerOptions(
   styles: () => [
     ..._theme.styles,
     ..._app.AppState.styles,
+    ..._app.MarqStrip.styles,
+    ..._all_projects.AllProjects.styles,
     ..._contact.Contact.styles,
     ..._experience.Experience.styles,
     ..._expertise.Expertise.styles,
     ..._featured_project.FeaturedProject.styles,
     ..._footer.Footer.styles,
-    ..._header.Header.styles,
+    ..._header.HeaderState.styles,
     ..._hero.Hero.styles,
+    ..._project_card.ProjectCard.styles,
     ..._testimonials.Testimonials.styles,
   ],
 );
