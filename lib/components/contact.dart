@@ -15,7 +15,8 @@ class Contact extends StatelessComponent {
           h2(classes: 'contact-title', [Component.text('Available for select freelance opportunities')]),
           p(classes: 'contact-desc', [
             Component.text(
-                'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.'),
+              'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.',
+            ),
           ]),
           // a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
           div(classes: 'contact-links', [
@@ -123,6 +124,8 @@ class Contact extends StatelessComponent {
       css('.contact-link-value').styles(
         fontSize: 13.5.px,
         color: cMute,
+        flex: Flex(grow: 1, shrink: 1),
+        minWidth: 0.px,
       ),
     ]),
     css.media(MediaQuery.all(maxWidth: 480.px), [

@@ -58,24 +58,32 @@ class HeaderState extends State<Header> {
     return header(classes: 'site-header', [
       div(classes: 'container header-inner', [
         a(href: '#top', classes: 'logo', [Component.text('OmarAdel.dev')]),
-        // Mobile hamburger / close button
-        button(
-          classes: 'mobile-toggle',
-          onClick: _toggleMenu,
-          attributes: {
-            'aria-expanded': _isMenuOpen.toString(),
-            'aria-label': _isMenuOpen ? 'Close menu' : 'Open menu',
-          },
-          [
-            if (_isMenuOpen)
-              span(classes: 'x-mark', [Component.text('×')])
-            else ...[
-              span(classes: 'hamburger', []),
-              span(classes: 'hamburger', []),
-              span(classes: 'hamburger', []),
+        div(classes: 'mobile-actions', [
+          button(
+            classes: 'theme-toggle mobile-theme-toggle',
+            onClick: _toggleTheme,
+            attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
+            [Component.text(_dark ? '☀️' : '🌙')],
+          ),
+          // Mobile hamburger / close button
+          button(
+            classes: 'mobile-toggle',
+            onClick: _toggleMenu,
+            attributes: {
+              'aria-expanded': _isMenuOpen.toString(),
+              'aria-label': _isMenuOpen ? 'Close menu' : 'Open menu',
+            },
+            [
+              if (_isMenuOpen)
+                span(classes: 'x-mark', [Component.text('×')])
+              else ...[
+                span(classes: 'hamburger', []),
+                span(classes: 'hamburger', []),
+                span(classes: 'hamburger', []),
+              ],
             ],
-          ],
-        ),
+          ),
+        ]),
         // Desktop nav
         nav(classes: 'header-nav', [
           a(href: '#expertise', classes: 'nav-link', [Component.text('Expertise')]),
@@ -116,7 +124,9 @@ class HeaderState extends State<Header> {
         position: Position.sticky(top: 0.px),
         zIndex: ZIndex(1000),
         backgroundColor: cCanvas,
-        border: Border.only(bottom: BorderSide.solid(color: cHairline, width: 1.px)),
+        border: Border.only(
+          bottom: BorderSide.solid(color: cHairline, width: 1.px),
+        ),
       ),
 
       css('.header-inner').styles(
@@ -201,6 +211,11 @@ class HeaderState extends State<Header> {
         radius: .all(.circular(radiusSm.px)),
         flexDirection: FlexDirection.column,
       ),
+      css('.mobile-actions').styles(
+        display: Display.none,
+        alignItems: AlignItems.center,
+        gap: Gap.all(4.px),
+      ),
       css('.hamburger').styles(
         display: .block,
         width: 20.px,
@@ -216,7 +231,9 @@ class HeaderState extends State<Header> {
 
       css('.mobile-drawer').styles(
         backgroundColor: cCanvas,
-        border: Border.only(top: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
         padding: .only(bottom: 24.px),
       ),
       css('.mobile-drawer-inner').styles(
@@ -243,6 +260,7 @@ class HeaderState extends State<Header> {
     // Tablet / mobile
     css.media(MediaQuery.all(maxWidth: 900.px), [
       css('.site-header .header-nav').styles(display: Display.none),
+      css('.site-header .mobile-actions').styles(display: Display.flex),
       css('.site-header .mobile-toggle').styles(display: Display.flex),
       css('.site-header .header-inner').styles(height: 56.px),
     ]),
