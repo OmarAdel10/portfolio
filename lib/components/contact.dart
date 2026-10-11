@@ -11,6 +11,13 @@ class Contact extends StatelessComponent {
     return section(classes: 'contact section', id: 'contact', [
       div(classes: 'container', [
         div(classes: 'contact-card card reveal', [
+          // Cartoon mascot signing off the page above the CTA.
+          div(classes: 'contact-mascot', [
+            img(
+              src: '/images/avatar.png',
+              alt: '',
+            ),
+          ]),
           span(classes: 'eyebrow', [Component.text('Get in touch')]),
           h2(classes: 'contact-title', [Component.text('Available for select freelance opportunities')]),
           p(classes: 'contact-desc', [
@@ -57,6 +64,28 @@ class Contact extends StatelessComponent {
         display: Display.flex,
         flexDirection: FlexDirection.column,
         alignItems: AlignItems.center,
+      ),
+      // Cartoon mascot at the top of the contact card.
+      css('.contact-mascot').styles(
+        width: 72.px,
+        height: 72.px,
+        radius: .all(.circular(radiusFull.px)),
+        backgroundColor: cCard,
+        border: Border.all(color: cHairline, width: 2.px),
+        overflow: .hidden,
+        margin: .only(bottom: 18.px),
+        raw: const {
+          'transform': 'rotate(-6deg)',
+          'animation': 'mascotWiggle 6.5s ease-in-out infinite',
+        },
+      ),
+      css('.contact-mascot img').styles(
+        raw: const {
+          'width': '100%',
+          'height': '100%',
+          'border-radius': '50%',
+          'display': 'block',
+        },
       ),
       css('.contact-title').styles(
         fontSize: 30.px,

@@ -13,8 +13,8 @@ class Hero extends StatelessComponent {
         div(classes: 'hero-avatar-wrap', [
           div(classes: 'hero-avatar-ring', [
             img(
-              src: '/images/avatar.png',
-              alt: 'Omar Adel',
+              src: '/images/avatar.jpg',
+              alt: 'Portrait of Omar Adel',
               classes: 'hero-avatar',
             ),
           ]),

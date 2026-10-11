@@ -158,10 +158,28 @@ const String _bgJs = """
 /// Structured-data Person markup for search engines.
 const String _jsonLd = '{"@context":"https://schema.org","@type":"Person",'
     '"name":"Omar Adel","url":"https://omaradel.dev",'
-    '"image":"https://omaradel.dev/images/avatar.png",'
+    '"image":"https://omaradel.dev/images/avatar.jpg",'
     '"jobTitle":"Software Engineer",'
     '"email":"mailto:omaradel1.dev@gmail.com",'
     '"sameAs":["https://github.com/OmarAdel10","https://www.linkedin.com/in/omaradel10"]}';
+
+/// Open Graph metas. The [Document.meta] map renders `name` attributes,
+/// which the OGP spec (and strict crawlers such as LinkedIn) reject — these
+/// are emitted from [head] as `property` meta elements instead.
+const Map<String, String> _ogMeta = {
+  'og:title': 'Omar Adel — Software Engineer & App Developer',
+  'og:description':
+      'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+  'og:type': 'website',
+  'og:url': productionUrl,
+  'og:image': '$productionUrl/images/og-image.jpg',
+  'og:image:width': '1200',
+  'og:image:height': '630',
+  'og:image:alt': 'Omar Adel — Software Engineer (portrait)',
+  'og:image:type': 'image/jpeg',
+  'og:site_name': 'Omar Adel — Portfolio',
+  'og:locale': 'en_US',
+};
 
 void main() {
   // Initializes the server environment with the generated default options.
@@ -179,26 +197,31 @@ void main() {
       'theme-color': '#eeefe9',
       'keywords': 'Omar Adel, software engineer, Flutter, C# .NET, app developer, portfolio',
       'author': 'Omar Adel',
-      'og:title': 'Omar Adel — Software Engineer & App Developer',
-      'og:description':
-          'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'og:type': 'website',
-      'og:url': productionUrl,
-      'og:image': '$productionUrl/images/avatar.png',
-      'twitter:card': 'summary',
+      'google-site-verification': 'Uzi0q0Piapes6QUGWVdSwhoOjirhtK-YkBMguFXrhPA',
+      'twitter:card': 'summary_large_image',
       'twitter:title': 'Omar Adel — Software Engineer & App Developer',
       'twitter:description':
           'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'twitter:image': '$productionUrl/images/avatar.png',
+      'twitter:image': '$productionUrl/images/og-image.jpg',
+      'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
     },
     head: [
       script(content: _themeInitJs),
       script(content: _motionJs),
       script(content: _bgJs),
+      // Open Graph metas must carry `property` attributes (OGP spec); the
+      // `meta` map above emits `name`, so they are rendered here instead.
+      for (final entry in _ogMeta.entries)
+        meta(attributes: {'property': entry.key, 'content': entry.value}),
       link(
         rel: 'icon',
-        href: '/images/avatar.png',
-        attributes: {'type': 'image/png'},
+        href: '/favicon.ico',
+        attributes: {'sizes': 'any'},
+      ),
+      link(
+        rel: 'icon',
+        href: '/images/favicon-32x32.png',
+        attributes: {'type': 'image/png', 'sizes': '32x32'},
       ),
       link(
         rel: 'apple-touch-icon',
