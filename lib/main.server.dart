@@ -158,7 +158,7 @@ const String _bgJs = """
 /// Structured-data Person markup for search engines.
 const String _jsonLd = '{"@context":"https://schema.org","@type":"Person",'
     '"name":"Omar Adel","url":"https://omaradel.dev",'
-    '"image":"https://omaradel.dev/images/avatar.png",'
+    '"image":"https://omaradel.dev/images/avatar.jpg",'
     '"jobTitle":"Software Engineer",'
     '"email":"mailto:omaradel1.dev@gmail.com",'
     '"sameAs":["https://github.com/OmarAdel10","https://www.linkedin.com/in/omaradel10"]}';
@@ -184,12 +184,19 @@ void main() {
           'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
       'og:type': 'website',
       'og:url': productionUrl,
-      'og:image': '$productionUrl/images/avatar.png',
-      'twitter:card': 'summary',
+      'og:image': '$productionUrl/images/og-image.jpg',
+      'og:image:width': '1200',
+      'og:image:height': '630',
+      'og:image:alt': 'Omar Adel — Software Engineer (portrait)',
+      'og:image:type': 'image/jpeg',
+      'og:site_name': 'Omar Adel — Portfolio',
+      'og:locale': 'en_US',
+      'twitter:card': 'summary_large_image',
       'twitter:title': 'Omar Adel — Software Engineer & App Developer',
       'twitter:description':
           'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'twitter:image': '$productionUrl/images/avatar.png',
+      'twitter:image': '$productionUrl/images/og-image.jpg',
+      'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
     },
     head: [
       script(content: _themeInitJs),
@@ -197,8 +204,13 @@ void main() {
       script(content: _bgJs),
       link(
         rel: 'icon',
-        href: '/images/avatar.png',
-        attributes: {'type': 'image/png'},
+        href: '/favicon.ico',
+        attributes: {'sizes': 'any'},
+      ),
+      link(
+        rel: 'icon',
+        href: '/images/favicon-32x32.png',
+        attributes: {'type': 'image/png', 'sizes': '32x32'},
       ),
       link(
         rel: 'apple-touch-icon',

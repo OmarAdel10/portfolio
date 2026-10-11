@@ -13,10 +13,17 @@ class Hero extends StatelessComponent {
         div(classes: 'hero-avatar-wrap', [
           div(classes: 'hero-avatar-ring', [
             img(
-              src: '/images/avatar.png',
-              alt: 'Omar Adel',
+              src: '/images/avatar.jpg',
+              alt: 'Portrait of Omar Adel',
               classes: 'hero-avatar',
             ),
+            // Cartoon mascot sticker pinned to the photo's edge.
+            div(classes: 'hero-avatar-mascot', [
+              img(
+                src: '/images/avatar.png',
+                alt: '',
+              ),
+            ]),
           ]),
         ]),
         span(classes: 'eyebrow hero-eyebrow', [Component.text('Hello, I am')]),
@@ -105,6 +112,33 @@ class Hero extends StatelessComponent {
           'opacity': '0.28',
           'transform': 'scale(1)',
           'animation': 'heroRingPulse 3.2s ease-in-out infinite',
+        },
+      ),
+
+      // Cartoon mascot sticker overlapping the photo's bottom-right edge.
+      css('.hero-avatar-mascot').styles(
+        width: 56.px,
+        height: 56.px,
+        radius: .all(.circular(radiusFull.px)),
+        backgroundColor: cCard,
+        border: Border.all(color: cCard, width: 3.px),
+        overflow: .hidden,
+        raw: const {
+          'position': 'absolute',
+          'bottom': '-10px',
+          'right': '-10px',
+          'z-index': '2',
+          'box-shadow': '0 6px 16px -6px rgba(35, 37, 29, 0.25)',
+          'transform': 'rotate(-8deg)',
+          'animation': 'mascotWiggle 5.5s ease-in-out infinite',
+        },
+      ),
+      css('.hero-avatar-mascot img').styles(
+        raw: const {
+          'width': '100%',
+          'height': '100%',
+          'border-radius': '50%',
+          'display': 'block',
         },
       ),
 
@@ -242,6 +276,9 @@ class Hero extends StatelessComponent {
       css('.hero .hero-desc').styles(fontSize: 16.px),
       css('.hero .hero-cta').styles(gap: Gap.all(10.px)),
       css('.hero .hero-avatar-ring').styles(width: 124.px, height: 124.px),
+      css('.hero .hero-avatar-mascot').styles(
+        raw: const {'width': '48px', 'height': '48px', 'bottom': '-8px', 'right': '-8px'},
+      ),
     ]),
     css.media(MediaQuery.all(maxWidth: 480.px), [
       css('.hero .hero-name').styles(fontSize: 36.px),
@@ -251,6 +288,15 @@ class Hero extends StatelessComponent {
         padding: .symmetric(vertical: 7.px, horizontal: 14.px),
       ),
       css('.hero .hero-avatar-ring').styles(width: 108.px, height: 108.px),
+      css('.hero .hero-avatar-mascot').styles(
+        raw: const {
+          'width': '44px',
+          'height': '44px',
+          'bottom': '-7px',
+          'right': '-7px',
+          'border-width': '2.5px',
+        },
+      ),
     ]),
   ];
 }
