@@ -197,6 +197,7 @@ void main() {
       'theme-color': '#eeefe9',
       'keywords': 'Omar Adel, software engineer, Flutter, C# .NET, app developer, portfolio',
       'author': 'Omar Adel',
+      'google-site-verification': 'Uzi0q0Piapes6QUGWVdSwhoOjirhtK-YkBMguFXrhPA',
       'twitter:card': 'summary_large_image',
       'twitter:title': 'Omar Adel — Software Engineer & App Developer',
       'twitter:description':
