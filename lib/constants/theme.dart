@@ -183,6 +183,10 @@ List<StyleRule> get styles => [
     'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(20px)'}),
     'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
   }),
+  css.keyframes('mascotWiggle', {
+    '0%, 100%': Styles(raw: {'transform': 'rotate(-8deg)'}),
+    '50%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+  }),
 
   // ---------- Scroll reveal (driven by IntersectionObserver in the head) ----------
   css('html.js-enabled .reveal').styles(raw: const {
