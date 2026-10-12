@@ -16,7 +16,7 @@ import 'main.server.options.dart';
 
 /// Production origin used for canonical links, sitemap and Open Graph — swap to
 /// your real domain after attaching it in Cloudflare Pages.
-const String productionUrl = 'https://omaradel.dev';
+const String productionUrl = 'https://omaradel.pages.dev';
 
 /// Applies the saved theme before first paint so the site never flashes from
 /// light to dark. The default (no saved value) is the light PostHog theme.
