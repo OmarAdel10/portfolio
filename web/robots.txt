@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://omaradel.dev/sitemap.xml
+Sitemap: https://omaradel.pages.dev/sitemap.xml
