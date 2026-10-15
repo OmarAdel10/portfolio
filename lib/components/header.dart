@@ -2,6 +2,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:universal_web/web.dart' as web;
 
+import 'cupertino_icon.dart';
 import '../constants/theme.dart';
 
 /// Sticky top navigation with a light/dark theme toggle.
@@ -63,7 +64,12 @@ class HeaderState extends State<Header> {
             classes: 'theme-toggle mobile-theme-toggle',
             onClick: _toggleTheme,
             attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
-            [Component.text(_dark ? '☀️' : '🌙')],
+            [
+              CupertinoIcon(
+                icon: _dark ? CupertinoIconName.sunMax : CupertinoIconName.moon,
+                color: CupertinoIconColor.primary,
+              ),
+            ],
           ),
           // Mobile hamburger / close button
           button(
@@ -74,13 +80,10 @@ class HeaderState extends State<Header> {
               'aria-label': _isMenuOpen ? 'Close menu' : 'Open menu',
             },
             [
-              if (_isMenuOpen)
-                span(classes: 'x-mark', [Component.text('×')])
-              else ...[
-                span(classes: 'hamburger', []),
-                span(classes: 'hamburger', []),
-                span(classes: 'hamburger', []),
-              ],
+              CupertinoIcon(
+                icon: _isMenuOpen ? CupertinoIconName.xmark : CupertinoIconName.bars,
+                color: CupertinoIconColor.primary,
+              ),
             ],
           ),
         ]),
@@ -95,7 +98,12 @@ class HeaderState extends State<Header> {
             classes: 'theme-toggle',
             onClick: _toggleTheme,
             attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
-            [Component.text(_dark ? '☀️' : '🌙')],
+            [
+              CupertinoIcon(
+                icon: _dark ? CupertinoIconName.sunMax : CupertinoIconName.moon,
+                color: CupertinoIconColor.primary,
+              ),
+            ],
           ),
           a(href: '#contact', classes: 'nav-cta', [Component.text('Get in touch')]),
         ]),

@@ -1,6 +1,7 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import 'cupertino_icon.dart';
 import '../constants/theme.dart';
 import '../data/projects.dart';
 
@@ -31,18 +32,30 @@ class FeaturedProject extends StatelessComponent {
                 img(src: logo, alt: project.name, classes: 'fp-logo'),
               ])
             else
-              div(classes: 'fp-media-glyph', [Component.text('🖼️')]),
+              div(classes: 'fp-media-glyph', [
+                CupertinoIcon(
+                  icon: CupertinoIconName.photoFill,
+                  color: CupertinoIconColor.primary,
+                  size: CupertinoIconSize.xl,
+                ),
+              ]),
           ]),
           div(classes: 'fp-body', [
             span(classes: 'tag', [Component.text('Featured')]),
             h3(classes: 'fp-title', [Component.text(project.name)]),
             p(classes: 'fp-desc', [Component.text(project.description)]),
             div(classes: 'fp-tags', [
-              for (final topic in project.topics)
-                span(classes: 'tag tag-outline', [Component.text(topic)]),
+              for (final topic in project.topics) span(classes: 'tag tag-outline', [Component.text(topic)]),
             ]),
             div(classes: 'fp-links', [
-              a(href: project.url, classes: 'btn btn-secondary', [Component.text('View on GitHub →')]),
+              a(href: project.url, classes: 'btn btn-secondary', [
+                Component.text('View on GitHub'),
+                CupertinoIcon(
+                  icon: CupertinoIconName.arrowRight,
+                  color: CupertinoIconColor.primary,
+                  size: CupertinoIconSize.sm,
+                ),
+              ]),
             ]),
           ]),
         ]),
@@ -55,10 +68,12 @@ class FeaturedProject extends StatelessComponent {
     css('.featured-project', [
       css('.fp-card').styles(
         display: Display.grid,
-        gridTemplate: GridTemplate(columns: GridTracks([
-          GridTrack(TrackSize.fr(2)),
-          GridTrack(TrackSize.fr(3)),
-        ])),
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(2)),
+            GridTrack(TrackSize.fr(3)),
+          ]),
+        ),
         overflow: Overflow.hidden,
       ),
 
@@ -70,7 +85,9 @@ class FeaturedProject extends StatelessComponent {
         gap: Gap.all(12.px),
         minHeight: 300.px,
         backgroundColor: cSoft,
-        border: Border.only(right: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          right: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
         padding: Padding.all(24.px),
         position: Position.relative(),
       ),
@@ -100,15 +117,19 @@ class FeaturedProject extends StatelessComponent {
         border: Border.all(color: cHairline, width: 1.px),
         radius: .all(.circular(radiusMd.px)),
       ),
-      css('.fp-logo-wrap').styles(raw: const {
-        'box-shadow': '0 16px 24px -14px rgba(35, 37, 29, 0.18)',
-      }),
-      css('.fp-logo').styles(raw: const {
-        'width': '100%',
-        'height': '100%',
-        'object-fit': 'contain',
-        'object-position': 'center',
-      }),
+      css('.fp-logo-wrap').styles(
+        raw: const {
+          'box-shadow': '0 16px 24px -14px rgba(35, 37, 29, 0.18)',
+        },
+      ),
+      css('.fp-logo').styles(
+        raw: const {
+          'width': '100%',
+          'height': '100%',
+          'object-fit': 'contain',
+          'object-position': 'center',
+        },
+      ),
 
       css('.fp-body').styles(
         padding: Padding.all(32.px),
@@ -141,7 +162,9 @@ class FeaturedProject extends StatelessComponent {
         gridTemplate: GridTemplate(columns: GridTracks([GridTrack(TrackSize.fr(1))])),
       ),
       css('.featured-project .fp-media').styles(
-        border: Border.only(bottom: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          bottom: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
         minHeight: 200.px,
       ),
       css('.featured-project .fp-body').styles(padding: Padding.all(24.px)),

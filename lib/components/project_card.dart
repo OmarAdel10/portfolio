@@ -3,6 +3,7 @@ import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
 import '../models/project.dart';
+import 'cupertino_icon.dart';
 
 class ProjectCard extends StatelessComponent {
   final Project project;
@@ -33,10 +34,21 @@ class ProjectCard extends StatelessComponent {
       div(classes: 'pcard-links', [
         a(href: project.url, classes: 'btn btn-secondary', [
           Component.text('View on GitHub'),
-          span([Component.text('→')]),
+          CupertinoIcon(
+            icon: CupertinoIconName.arrowRight,
+            color: CupertinoIconColor.primary,
+            size: CupertinoIconSize.sm,
+          ),
         ]),
         if (project.homepage != null && project.homepage!.isNotEmpty)
-          a(href: project.homepage!, classes: 'btn btn-tertiary', [Component.text('Live Demo →')]),
+          a(href: project.homepage!, classes: 'btn btn-tertiary', [
+            Component.text('Live Demo'),
+            CupertinoIcon(
+              icon: CupertinoIconName.arrowRight,
+              color: CupertinoIconColor.primary,
+              size: CupertinoIconSize.sm,
+            ),
+          ]),
       ]),
     ]);
   }
@@ -54,22 +66,51 @@ class ProjectCard extends StatelessComponent {
       }
       return img(src: project.logoUrl!, alt: project.name, classes: 'pcard-logo');
     }
-    return Component.text(_getLanguageIcon(project.language));
+    if (project.icon case final projectIcon?) {
+      return CupertinoIcon(
+        icon: projectIcon,
+        color: project.iconColor,
+        label: '${project.name} icon',
+        size: CupertinoIconSize.lg,
+      );
+    }
+
+    return CupertinoIcon(
+      icon: _getLanguageIcon(project.language),
+      color: _getLanguageColor(project.language),
+      label: '${project.language} icon',
+      size: CupertinoIconSize.lg,
+    );
   }
 
-  String _getLanguageIcon(String language) {
-    const icons = {
-      'C++': '⚙️',
-      'HTML/CSS/JS': '🌐',
-      'HTML': '🌐',
-      'Python': '🐍',
-      'Dart': '🎯',
-      'TypeScript': '🦖',
-      'Swift': '🍎',
-      'JavaScript': '📜',
-      'CSS': '🎨',
+  CupertinoIconName _getLanguageIcon(String language) {
+    const icons = <String, CupertinoIconName>{
+      'C++': CupertinoIconName.gear,
+      'HTML/CSS/JS': CupertinoIconName.globe,
+      'HTML': CupertinoIconName.globe,
+      'Python': CupertinoIconName.waveform,
+      'Dart': CupertinoIconName.bolt,
+      'TypeScript': CupertinoIconName.textformatAbc,
+      'Swift': CupertinoIconName.chevronLeftSlashChevronRight,
+      'JavaScript': CupertinoIconName.textformatAbc,
+      'CSS': CupertinoIconName.paintbrushFill,
     };
-    return icons[language] ?? '📦';
+    return icons[language] ?? CupertinoIconName.archivebox;
+  }
+
+  CupertinoIconColor _getLanguageColor(String language) {
+    const colors = <String, CupertinoIconColor>{
+      'C++': CupertinoIconColor.red,
+      'HTML/CSS/JS': CupertinoIconColor.blue,
+      'HTML': CupertinoIconColor.blue,
+      'Python': CupertinoIconColor.teal,
+      'Dart': CupertinoIconColor.green,
+      'TypeScript': CupertinoIconColor.purple,
+      'Swift': CupertinoIconColor.purple,
+      'JavaScript': CupertinoIconColor.purple,
+      'CSS': CupertinoIconColor.purple,
+    };
+    return colors[language] ?? CupertinoIconColor.primary;
   }
 
   @css

@@ -1,5 +1,7 @@
 import 'package:jaspr/dom.dart';
 
+import '../components/cupertino_icon.dart';
+
 // =============================================================================
 // Omar Adel — Personal Portfolio design tokens.
 //
@@ -160,10 +162,42 @@ const Map<String, String> darkVars = {
   '--focus': 'rgba(96,165,250,0.5)',
 };
 
+List<StyleRule> get _cupertinoIconStyles => [
+  css('.cupertino-icon').styles(
+    raw: const {
+      'display': 'inline-block',
+      'background-color': 'currentColor',
+      '-webkit-mask-repeat': 'no-repeat',
+      'mask-repeat': 'no-repeat',
+      '-webkit-mask-position': 'center',
+      'mask-position': 'center',
+      '-webkit-mask-size': 'contain',
+      'mask-size': 'contain',
+    },
+  ),
+  css('.cupertino-icon--sm').styles(width: 16.px, height: 16.px),
+  css('.cupertino-icon--md').styles(width: 20.px, height: 20.px),
+  css('.cupertino-icon--lg').styles(width: 28.px, height: 28.px),
+  css('.cupertino-icon--xl').styles(width: 64.px, height: 64.px),
+  for (final iconColor in CupertinoIconColor.values)
+    if (iconColor.variableName case final colorVariable?)
+      css('.cupertino-icon-color--${iconColor.name}').styles(
+        color: Color.variable(colorVariable),
+      ),
+  for (final icon in CupertinoIconName.values)
+    css('.cupertino-icon--${icon.slug}').styles(
+      raw: {
+        '-webkit-mask-image': 'url("${icon.path}")',
+        'mask-image': 'url("${icon.path}")',
+      },
+    ),
+];
+
 @css
 List<StyleRule> get styles => [
   css.import(
-      'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap'),
+    'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap',
+  ),
   // ---------- Keyframes (premium minimal motion) ----------
   css.keyframes('heroAvatarFloat', {
     '0%': Styles(raw: {'transform': 'translateY(0)'}),
@@ -189,19 +223,27 @@ List<StyleRule> get styles => [
   }),
 
   // ---------- Scroll reveal (driven by IntersectionObserver in the head) ----------
-  css('html.js-enabled .reveal').styles(raw: const {
-    'opacity': '0',
-    'transform': 'translateY(22px)',
-    'transition': 'opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1)',
-  }),
-  css('html.js-enabled .reveal.in').styles(raw: const {
-    'opacity': '1',
-    'transform': 'translateY(0)',
-  }),
+  css('html.js-enabled .reveal').styles(
+    raw: const {
+      'opacity': '0',
+      'transform': 'translateY(22px)',
+      'transition':
+          'opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1)',
+    },
+  ),
+  css('html.js-enabled .reveal.in').styles(
+    raw: const {
+      'opacity': '1',
+      'transform': 'translateY(0)',
+    },
+  ),
 
   // ---------- Theme variables ----------
   css(':root').styles(raw: lightVars),
   css('html[data-theme="dark"]').styles(raw: darkVars),
+
+  // ---------- Cupertino icons ----------
+  ..._cupertinoIconStyles,
 
   // ---------- Reset & base ----------
   css('*, *::before, *::after').styles(
@@ -210,14 +252,18 @@ List<StyleRule> get styles => [
   css('html').styles(
     fontSize: 16.px,
   ),
-  css('html').styles(raw: const {
-    'scroll-behavior': 'smooth',
-    'scroll-padding-top': '78px',
-    '-webkit-text-size-adjust': '100%',
-  }),
-  css('section[id]').styles(raw: const {
-    'scroll-margin-top': '78px',
-  }),
+  css('html').styles(
+    raw: const {
+      'scroll-behavior': 'smooth',
+      'scroll-padding-top': '78px',
+      '-webkit-text-size-adjust': '100%',
+    },
+  ),
+  css('section[id]').styles(
+    raw: const {
+      'scroll-margin-top': '78px',
+    },
+  ),
   css('body').styles(
     margin: .zero,
     minHeight: 100.vh,
@@ -400,10 +446,12 @@ List<StyleRule> get styles => [
       Transition('background-color', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
     ]),
   ),
-  css('.card:hover').styles(raw: const {
-    'transform': 'translateY(-3px)',
-    'border-color': 'var(--primary)',
-  }),
+  css('.card:hover').styles(
+    raw: const {
+      'transform': 'translateY(-3px)',
+      'border-color': 'var(--primary)',
+    },
+  ),
 
   // ---------- Inline chip / tag ----------
   css('.tag').styles(
@@ -483,91 +531,117 @@ List<StyleRule> get styles => [
 
   // ---------- Interactive background canvas (dot-matrix constellation) ----------
   css('.app-shell').styles(raw: const {'position': 'relative', 'min-height': '100vh'}),
-  css('.bg-canvas').styles(raw: const {
-    'position': 'fixed',
-    'inset': '0',
-    'z-index': '0',
-    'pointer-events': 'none',
-    'display': 'block',
-  }),
+  css('.bg-canvas').styles(
+    raw: const {
+      'position': 'fixed',
+      'inset': '0',
+      'z-index': '0',
+      'pointer-events': 'none',
+      'display': 'block',
+    },
+  ),
   css('.app').styles(raw: const {'position': 'relative', 'z-index': '1'}),
 
   // ---------- Custom animated cursor ----------
-  css('html.has-custom-cursor, html.has-custom-cursor *').styles(raw: const {
-    'cursor': 'none',
-  }),
-  css('.cursor-dot, .cursor-ring').styles(raw: const {
-    'position': 'fixed',
-    'top': '0',
-    'left': '0',
-    'pointer-events': 'none',
-    'z-index': '9999',
-    'opacity': '0',
-    'border-radius': '50%',
-    'will-change': 'transform',
-  }),
-  css('html.has-custom-cursor .cursor-dot').styles(raw: const {
-    'width': '8px',
-    'height': '8px',
-    'background': 'var(--primary)',
-    'transform': 'translate(-50%, -50%)',
-    'opacity': '1',
-  }),
-  css('html.has-custom-cursor .cursor-ring').styles(raw: const {
-    'width': '34px',
-    'height': '34px',
-    'border': '1.5px solid var(--hairline)',
-    'transform': 'translate(-50%, -50%)',
-    'opacity': '1',
-    'transition': 'width 180ms ease-out, height 180ms ease-out, border-color 180ms ease-out, opacity 200ms ease-out',
-  }),
-  css('html.has-custom-cursor .cursor-ring.is-hover').styles(raw: const {
-    'width': '54px',
-    'height': '54px',
-    'border-color': 'var(--primary)',
-  }),
+  css('html.has-custom-cursor, html.has-custom-cursor *').styles(
+    raw: const {
+      'cursor': 'none',
+    },
+  ),
+  css('.cursor-dot, .cursor-ring').styles(
+    raw: const {
+      'position': 'fixed',
+      'top': '0',
+      'left': '0',
+      'pointer-events': 'none',
+      'z-index': '9999',
+      'opacity': '0',
+      'border-radius': '50%',
+      'will-change': 'transform',
+    },
+  ),
+  css('html.has-custom-cursor .cursor-dot').styles(
+    raw: const {
+      'width': '8px',
+      'height': '8px',
+      'background': 'var(--primary)',
+      'transform': 'translate(-50%, -50%)',
+      'opacity': '1',
+    },
+  ),
+  css('html.has-custom-cursor .cursor-ring').styles(
+    raw: const {
+      'width': '34px',
+      'height': '34px',
+      'border': '1.5px solid var(--hairline)',
+      'transform': 'translate(-50%, -50%)',
+      'opacity': '1',
+      'transition': 'width 180ms ease-out, height 180ms ease-out, border-color 180ms ease-out, opacity 200ms ease-out',
+    },
+  ),
+  css('html.has-custom-cursor .cursor-ring.is-hover').styles(
+    raw: const {
+      'width': '54px',
+      'height': '54px',
+      'border-color': 'var(--primary)',
+    },
+  ),
 
   // ---------- Marquee ticker ----------
-  css('.marquee').styles(raw: const {
-    'overflow': 'hidden',
-    'white-space': 'nowrap',
-    'user-select': 'none',
-    'width': '100%',
-  }),
-  css('.marquee-track').styles(raw: const {
-    'display': 'inline-flex',
-    'align-items': 'center',
-    'animation': 'marquee 34s linear infinite',
-    'will-change': 'transform',
-  }),
+  css('.marquee').styles(
+    raw: const {
+      'overflow': 'hidden',
+      'white-space': 'nowrap',
+      'user-select': 'none',
+      'width': '100%',
+    },
+  ),
+  css('.marquee-track').styles(
+    raw: const {
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'animation': 'marquee 34s linear infinite',
+      'will-change': 'transform',
+    },
+  ),
   css('.marquee-track:hover').styles(raw: const {'animation-play-state': 'paused'}),
-  css('.marquee-item').styles(raw: const {
-    'padding': '0 14px',
-    'color': 'var(--mute)',
-    'font-size': '15px',
-    'font-weight': '600',
-    'letter-spacing': '0.02em',
-  }),
+  css('.marquee-item').styles(
+    raw: const {
+      'padding': '0 14px',
+      'color': 'var(--mute)',
+      'font-size': '15px',
+      'font-weight': '600',
+      'letter-spacing': '0.02em',
+    },
+  ),
   css('.marquee-sep').styles(raw: const {'color': 'var(--primary)'}),
 
   // Respect users who prefer reduced motion.
   css.media(MediaQuery.raw('(prefers-reduced-motion: reduce)'), [
-    css('*, *::before, *::after').styles(raw: const {
-      'animation-duration': '0.001ms !important',
-      'animation-iteration-count': '1 !important',
-      'transition-duration': '0.001ms !important',
-      'scroll-behavior': 'auto !important',
-    }),
-    css('html.js-enabled .reveal').styles(raw: const {
-      'opacity': '1',
-      'transform': 'none',
-    }),
+    css('*, *::before, *::after').styles(
+      raw: const {
+        'animation-duration': '0.001ms !important',
+        'animation-iteration-count': '1 !important',
+        'transition-duration': '0.001ms !important',
+        'scroll-behavior': 'auto !important',
+      },
+    ),
+    css('html.js-enabled .reveal').styles(
+      raw: const {
+        'opacity': '1',
+        'transform': 'none',
+      },
+    ),
     // Keep the native cursor under reduced motion.
-    css('html.has-custom-cursor, html.has-custom-cursor *').styles(raw: const {
-      'cursor': 'auto',
-    }),
-    css('.cursor-dot, .cursor-ring').styles(raw: const {
-      'display': 'none',
-    }),
+    css('html.has-custom-cursor, html.has-custom-cursor *').styles(
+      raw: const {
+        'cursor': 'auto',
+      },
+    ),
+    css('.cursor-dot, .cursor-ring').styles(
+      raw: const {
+        'display': 'none',
+      },
+    ),
   ]),
 ];
