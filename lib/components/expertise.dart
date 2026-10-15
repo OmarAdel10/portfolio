@@ -1,6 +1,7 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import 'cupertino_icon.dart';
 import '../constants/theme.dart';
 
 class Expertise extends StatelessComponent {
@@ -13,19 +14,22 @@ class Expertise extends StatelessComponent {
         title: 'Cross-Platform App Development',
         description:
             'Offline-first Flutter apps for Android, iOS, Windows, and Linux — BLoC/HydratedBLOC state, Firebase, Shorebird updates, SQLite, and local speech recognition built into the flow.',
-        icon: '📱',
+        icon: CupertinoIconName.devicePhonePortrait,
+        color: CupertinoIconColor.blue,
       ),
       _Skill(
         title: 'Backend, Cloud & Payments',
         description:
             '.NET Core and Python services, Turso and Cloud Firestore databases, Cloudflare Workers gateways, and payment-terminal SDK integrations that reconcile invoices automatically.',
-        icon: '☁️',
+        icon: CupertinoIconName.cloudFill,
+        color: CupertinoIconColor.green,
       ),
       _Skill(
         title: 'AI & Agentic Tooling',
         description:
             'Deep learning and offline speech-to-text models, plus agent-driven development with Claude Code, Codex, and Gemini CLI workflows that ship faster without cutting corners.',
-        icon: '🤖',
+        icon: CupertinoIconName.sparkles,
+        color: CupertinoIconColor.purple,
       ),
     ];
 
@@ -45,7 +49,9 @@ class Expertise extends StatelessComponent {
 
   Component _buildSkillCard(_Skill s) {
     return div(classes: 'skill-card card reveal', [
-      div(classes: 'skill-icon', [Component.text(s.icon)]),
+      div(classes: 'skill-icon', [
+        CupertinoIcon(icon: s.icon, color: s.color, size: CupertinoIconSize.lg),
+      ]),
       h3(classes: 'skill-title', [Component.text(s.title)]),
       p(classes: 'skill-description', [Component.text(s.description)]),
     ]);
@@ -57,11 +63,13 @@ class Expertise extends StatelessComponent {
       css('.skills-grid', [
         css('&').styles(
           display: Display.grid,
-          gridTemplate: GridTemplate(columns: GridTracks([
-            GridTrack(TrackSize.fr(1)),
-            GridTrack(TrackSize.fr(1)),
-            GridTrack(TrackSize.fr(1)),
-          ])),
+          gridTemplate: GridTemplate(
+            columns: GridTracks([
+              GridTrack(TrackSize.fr(1)),
+              GridTrack(TrackSize.fr(1)),
+              GridTrack(TrackSize.fr(1)),
+            ]),
+          ),
           gap: Gap.all(20.px),
         ),
       ]),
@@ -105,11 +113,13 @@ class Expertise extends StatelessComponent {
 class _Skill {
   final String title;
   final String description;
-  final String icon;
+  final CupertinoIconName icon;
+  final CupertinoIconColor color;
 
   const _Skill({
     required this.title,
     required this.description,
     required this.icon,
+    required this.color,
   });
 }

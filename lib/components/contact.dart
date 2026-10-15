@@ -2,6 +2,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
+import 'cupertino_icon.dart';
 
 class Contact extends StatelessComponent {
   const Contact({super.key});
@@ -28,22 +29,52 @@ class Contact extends StatelessComponent {
           // a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
           div(classes: 'contact-links', [
             a(href: githubUrl, classes: 'contact-link', [
-              span(classes: 'contact-link-icon', [Component.text('⌘')]),
+              span(
+                classes: 'contact-link-icon contact-icon--github',
+                [
+                  const CupertinoIcon(
+                    icon: CupertinoIconName.linkCircleFill,
+                    color: CupertinoIconColor.blue,
+                    size: CupertinoIconSize.sm,
+                  ),
+                ],
+              ),
               span(classes: 'contact-link-label', [Component.text('GitHub')]),
               span(classes: 'contact-link-value', [Component.text('github.com/OmarAdel10')]),
             ]),
             a(href: linkedinUrl, classes: 'contact-link', [
-              span(classes: 'contact-link-icon', [Component.text('in')]),
+              span(
+                classes: 'contact-link-icon contact-icon--linkedin',
+                [
+                  const CupertinoIcon(
+                    icon: CupertinoIconName.personCropRectangleFill,
+                    color: CupertinoIconColor.purple,
+                    size: CupertinoIconSize.sm,
+                  ),
+                ],
+              ),
               span(classes: 'contact-link-label', [Component.text('LinkedIn')]),
               span(classes: 'contact-link-value', [Component.text('linkedin.com/in/omaradel10')]),
             ]),
             a(href: 'javascript:void(0)', classes: 'contact-link email-fallback', [
-              span(classes: 'contact-link-icon', [Component.text('✉')]),
+              span(
+                classes: 'contact-link-icon contact-icon--email',
+                [const CupertinoIcon(icon: CupertinoIconName.envelopeFill, size: CupertinoIconSize.sm)],
+              ),
               span(classes: 'contact-link-label', [Component.text('Email')]),
               span(classes: 'contact-link-value', [Component.text(emailAddress)]),
             ]),
             a(href: whatsappUrl, classes: 'contact-link', [
-              span(classes: 'contact-link-icon', [Component.text('✆')]),
+              span(
+                classes: 'contact-link-icon contact-icon--whatsapp',
+                [
+                  const CupertinoIcon(
+                    icon: CupertinoIconName.chatBubble2Fill,
+                    color: CupertinoIconColor.green,
+                    size: CupertinoIconSize.sm,
+                  ),
+                ],
+              ),
               span(classes: 'contact-link-label', [Component.text('WhatsApp')]),
               span(classes: 'contact-link-value', [Component.text(phoneNumber)]),
             ]),
@@ -145,6 +176,9 @@ class Contact extends StatelessComponent {
         backgroundColor: cPrimary,
         radius: .all(.circular(radiusSm.px)),
       ),
+      css('.contact-icon--github').styles(backgroundColor: cAccentBlueSoft),
+      css('.contact-icon--linkedin').styles(backgroundColor: cAccentPurpleSoft),
+      css('.contact-icon--whatsapp').styles(backgroundColor: cAccentGreenSoft),
       css('.contact-link-label').styles(
         fontSize: 14.px,
         fontWeight: FontWeight.w700,

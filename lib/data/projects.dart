@@ -1,3 +1,4 @@
+import '../components/cupertino_icon.dart';
 import '../models/project.dart';
 
 /// Projects shown on the portfolio (GitHub: OmarAdel10).
@@ -42,6 +43,8 @@ final List<Project> mainProjects = [
     url: 'https://github.com/OmarAdel10/voice-assistant',
     homepage: 'https://github.com/OmarAdel10/voice-assistant',
     topics: ['stt', 'tts', 'llm', 'websockets', 'python'],
+    icon: CupertinoIconName.waveform,
+    iconColor: CupertinoIconColor.blue,
   ),
   Project(
     name: 'Voice Assistant App',
@@ -53,6 +56,8 @@ final List<Project> mainProjects = [
     forks: 0,
     url: 'https://github.com/OmarAdel10/voice_assistant_app',
     topics: ['flutter', 'dart', 'audio-visualization', 'voice-assistant'],
+    icon: CupertinoIconName.micFill,
+    iconColor: CupertinoIconColor.purple,
   ),
   Project(
     name: 'Cashier Admin Key Gen',
@@ -63,6 +68,8 @@ final List<Project> mainProjects = [
     forks: 0,
     url: 'https://github.com/OmarAdel10/cashier_admin_keygen',
     topics: ['security', 'encryption', 'key-generation', 'admin-tools'],
+    icon: CupertinoIconName.lockShieldFill,
+    iconColor: CupertinoIconColor.red,
   ),
   Project(
     name: 'Obsidian Nexus',
@@ -74,6 +81,8 @@ final List<Project> mainProjects = [
     forks: 0,
     url: 'https://github.com/OmarAdel10/obsidian-nexus',
     topics: ['obsidian', 'ai', 'agents', 'cli', 'markdown'],
+    icon: CupertinoIconName.bookFill,
+    iconColor: CupertinoIconColor.green,
   ),
 ];
 
@@ -122,6 +131,8 @@ final List<Project> additionalProjects = [
     forks: 0,
     url: 'https://github.com/OmarAdel10/Explainable-Digit-Recognizer',
     topics: ['machine-learning', 'mnist', 'explainable-ai', 'shap'],
+    icon: CupertinoIconName.eyeFill,
+    iconColor: CupertinoIconColor.teal,
   ),
   Project(
     name: 'Smoke Counter',
