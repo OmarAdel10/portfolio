@@ -316,6 +316,14 @@ class HeaderState extends State<Header> {
       css('.site-header .mobile-actions').styles(display: Display.flex),
       css('.site-header .mobile-toggle').styles(display: Display.flex),
       css('.site-header .header-inner').styles(height: 56.px),
+      css(.theme-toggle).styles(
+        width: 48.px,
+        height: 48.px,
+      ),
+      css(.mobile-toggle).styles(
+        width: 48.px,
+        height: 48.px,
+      ),
     ]),
   ];
 }

@@ -93,8 +93,16 @@ class Footer extends StatelessComponent {
         color: cInk,
         textDecoration: .none,
         fontFamily: fSansStack,
+        transition: Transition(
+          'transform',
+          duration: Duration(milliseconds: 200),
+          curve: Curve.easeOut,
+        ),
       ),
-      css('.footer-logo:hover').styles(textDecoration: .none),
+      css('.footer-logo:hover').styles(
+        textDecoration: .none,
+        raw: const {'transform': 'scale(1.05) rotate(-1deg)'},
+      ),
       css('.footer-tagline').styles(
         fontSize: 14.px,
         color: cMute,

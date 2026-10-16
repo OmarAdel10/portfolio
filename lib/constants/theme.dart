@@ -523,8 +523,11 @@ List<StyleRule> get styles => [
     ),
     css('.container').styles(padding: .symmetric(horizontal: 18.px)),
     css('.section-title').styles(fontSize: 26.px),
+    // Ensure touch targets ≥48×48px on mobile
+    css(.btn).styles(
+      padding: .symmetric(vertical: 14.px, horizontal: 16.px),
+    ),
   ]),
-
   // ---------- Marquee ticker ----------
   css.keyframes('marquee', {
     '0%': Styles(raw: {'transform': 'translateX(0)'}),
@@ -617,6 +620,13 @@ List<StyleRule> get styles => [
     },
   ),
   css('.marquee-sep').styles(raw: const {'color': 'var(--primary)'}),
+
+  // Slow marquee on narrow viewports for readability
+  css.media(MediaQuery.all(maxWidth: 768.px), [
+    css('.marquee-track').styles(
+      raw: const {'animation': 'marquee 52s linear infinite'},
+    ),
+  ]),
 
   // Respect users who prefer reduced motion.
   css.media(MediaQuery.raw('(prefers-reduced-motion: reduce)'), [
