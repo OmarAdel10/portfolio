@@ -10,6 +10,7 @@ import 'components/experience.dart';
 import 'components/testimonials.dart';
 import 'components/contact.dart';
 import 'components/footer.dart';
+import 'components/ai_assistant.dart';
 
 // The main component of your application.
 //
@@ -40,6 +41,7 @@ class AppState extends State<App> {
         const Contact(),
       ]),
       const Footer(),
+const AIAssistant(),
     ]);
   }
 

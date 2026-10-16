@@ -17,7 +17,7 @@ void _openCV() {
 }
 
 void _askAI() {
-  web.window.alert("AI assistant placeholder");
+  web.window.alert("AI assistant available via the floating button in the bottom-right corner or via Ctrl+/ keyboard shortcut");
 }
 
 class Hero extends StatelessComponent {
@@ -45,7 +45,7 @@ class Hero extends StatelessComponent {
           ),
         ]),
         div(classes: 'hero-cta', [
-          a(href: '#', classes: 'btn btn-outline', onClick: _askAI, [Component.text('Ask AI')]),
+          a(href: '#', classes: 'btn btn-outline', onClick: _askAI, [Component.text('Ask Nono')]),
           a(href: '#', classes: 'btn btn-outline', onClick: _openCV, [Component.text('Open CV')]),
           a(href: '#', classes: 'btn btn-outline', onClick: _copyEmail, [Component.text('Copy Email')]),
           a(href: '#contact', classes: 'btn btn-secondary', [Component.text('Get in Touch')]),

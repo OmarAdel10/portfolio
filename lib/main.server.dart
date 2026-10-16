@@ -100,6 +100,8 @@ const String _bgJs = """
   if(!cv||!cv.getContext||reduced()) return;
   var ctx=cv.getContext('2d');
   var touch=coarse();
+  var dpr=getCappedDpr();
+  ctx.scale(dpr, dpr);
 
   var SP=touch?42:28, W=0, H=0, dots=[], mouse={x:-99999,y:-99999};
   var INK='#23251d';
@@ -109,8 +111,9 @@ const String _bgJs = """
 
   function hexToRgb(h){ h=h.replace('#',''); if(h.length===3){ h=h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2); } var n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
   function rgba(hex,a){ var r=hexToRgb(hex); return 'rgba('+r[0]+','+r[1]+','+r[2]+','+a+')'; }
+  function getCappedDpr(){ return Math.min(window.devicePixelRatio||1, 1.5); }
 
-  function size(){ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; build(); }
+  function size(){ var dpr=getCappedDpr(); W=cv.width=window.innerWidth*dpr; H=cv.height=window.innerHeight*dpr; cv.style.width=window.innerWidth+"px"; cv.style.height=window.innerHeight+"px"; ctx.scale(dpr, dpr); build(); }
   function build(){ dots=[]; var ix=Math.floor(W/SP), iy=Math.floor(H/SP);
     for(var i=0;i<ix;i++)for(var j=0;j<iy;j++)
       dots.push({x:i*SP+SP/2+(Math.random()-0.5)*5, y:j*SP+SP/2+(Math.random()-0.5)*5, ph:Math.random()*6.2832});
@@ -134,7 +137,7 @@ const String _bgJs = """
       var s=1+n*3.2;
       ctx.beginPath(); ctx.arc(p.x,p.y,s,0,6.2832); ctx.fillStyle=rgba(INK,Math.min(1,a)); ctx.fill();
     }
-    if(!touch) requestAnimationFrame(drawFrame);
+    requestAnimationFrame(drawFrame);
   }
   drawFrame();
 
