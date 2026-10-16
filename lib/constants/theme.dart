@@ -205,9 +205,9 @@ List<StyleRule> get styles => [
     '100%': Styles(raw: {'transform': 'translateY(0)'}),
   }),
   css.keyframes('heroRingPulse', {
-    '0%': Styles(raw: {'opacity': '0.30', 'transform': 'scale(1)'}),
-    '50%': Styles(raw: {'opacity': '0', 'transform': 'scale(1.07)'}),
-    '100%': Styles(raw: {'opacity': '0.30', 'transform': 'scale(1)'}),
+    '0%': Styles(raw: {'opacity': '0.3', 'transform': 'scale(1) rotate(0deg)'}),
+    '50%': Styles(raw: {'opacity': '0', 'transform': 'scale(1.1) rotate(180deg)'}),
+    '100%': Styles(raw: {'opacity': '0.3', 'transform': 'scale(1) rotate(360deg)'}),
   }),
   css.keyframes('heroRise', {
     'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(16px)'}),

@@ -1,7 +1,24 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+import "package:universal/web.dart" as web;
 
 import '../constants/theme.dart';
+
+void _copyEmail() {
+  web.window.navigator.clipboard.writeText("omaradel@example.com").then((_) {
+    // Note: We cannot easily show visual feedback without state.
+    // We could change the button text temporarily, but that would require state.
+    // For now, we just copy and do nothing.
+  });
+}
+
+void _openCV() {
+  web.window.open("https://example.com/cv.pdf", "_blank");
+}
+
+void _askAI() {
+  web.window.alert("AI assistant placeholder");
+}
 
 class Hero extends StatelessComponent {
   const Hero({super.key});
@@ -28,9 +45,11 @@ class Hero extends StatelessComponent {
           ),
         ]),
         div(classes: 'hero-cta', [
-          a(href: '#projects-work', classes: 'btn btn-primary', [Component.text('View Projects')]),
+          a(href: '#', classes: 'btn btn-outline', onClick: _askAI, [Component.text('Ask AI')]),
+          a(href: '#', classes: 'btn btn-outline', onClick: _openCV, [Component.text('Open CV')]),
+          a(href: '#', classes: 'btn btn-outline', onClick: _copyEmail, [Component.text('Copy Email')]),
           a(href: '#contact', classes: 'btn btn-secondary', [Component.text('Get in Touch')]),
-          // a(href: githubUrl, classes: 'btn btn-tertiary', [Component.text('GitHub →')]),
+          a(href: '#projects-work', classes: 'btn btn-primary', [Component.text('View Projects')]),
         ]),
         div(classes: 'hero-featured', [
           span(classes: 'featured-label', [Component.text('Building with')]),

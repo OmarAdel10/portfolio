@@ -55,7 +55,6 @@ class ProjectCard extends StatelessComponent {
 
   Component _buildLogo() {
     if (project.logoUrl != null) {
-      // Theme-aware logos: show light logo in light mode, dark logo in dark mode
       if (project.logoUrlLight != null || project.logoUrlDark != null) {
         return div(classes: 'pcard-logo-wrap', [
           if (project.logoUrlLight != null)
@@ -121,6 +120,17 @@ class ProjectCard extends StatelessComponent {
         display: Display.flex,
         flexDirection: FlexDirection.column,
         padding: Padding.all(24.px),
+        transition: Transition(
+          'transform',
+          duration: Duration(milliseconds: 300),
+          curve: Curve.easeOut,
+        ),
+      ),
+      css('&:hover').styles(
+        raw: const {
+          'transform': 'translateY(-8px) rotate(-1deg)',
+          'box-shadow': '0 20px 40px -12px rgba(35, 37, 29, 0.25)',
+        },
       ),
 
       css('.pcard-top').styles(
@@ -143,14 +153,22 @@ class ProjectCard extends StatelessComponent {
         justifyContent: JustifyContent.center,
         padding: Padding.all(10.px),
         fontSize: 26.px,
-        // Fixed light tile: product logos are designed for a light surface, so
-        // this contrasts correctly in both the light and dark themes.
-        // backgroundColor: Colors.white,
         backgroundColor: cHairlineSoft,
         border: Border.all(color: cHairlineSoft, width: 1.px),
         radius: .all(.circular(radiusSm.px)),
         margin: .only(bottom: 16.px),
+        transition: Transition(
+          'transform',
+          duration: Duration(milliseconds: 300),
+          curve: Curve.easeOut,
+        ),
       ),
+      css('.pcard:hover .pcard-icon').styles(
+        raw: const {
+          'transform': 'rotate(5deg) scale(1.1)',
+        },
+      ),
+
       css('.pcard-logo-wrap').styles(
         raw: const {
           'position': 'relative',
@@ -168,14 +186,12 @@ class ProjectCard extends StatelessComponent {
       ),
       css('.pcard-logo-light').styles(
         raw: const {
-          // Visible in light theme, hidden in dark
-          // The CSS variable --canvas is light in light mode, dark in dark mode
-          // We use media query in CSS instead for cleaner handling
+          'display': 'block',
         },
       ),
       css('.pcard-logo-dark').styles(
         raw: const {
-          // Visible in dark theme, hidden in light
+          'display': 'none',
         },
       ),
 
@@ -226,5 +242,5 @@ class ProjectCard extends StatelessComponent {
     css('html[data-theme="light"] .pcard-logo-dark').styles(raw: const {'display': 'none'}),
     css('html[data-theme="dark"] .pcard-logo-light').styles(raw: const {'display': 'none'}),
     css('html[data-theme="dark"] .pcard-logo-dark').styles(raw: const {'display': 'block'}),
-  ];
+  ]);
 }

@@ -5,7 +5,7 @@ import 'package:universal_web/web.dart' as web;
 import 'cupertino_icon.dart';
 import '../constants/theme.dart';
 
-/// Sticky top navigation with a light/dark theme toggle.
+/// Sticky top navigation with scroll-aware hide/show and animated nav links.
 class Header extends StatefulComponent {
   const Header({super.key});
 
@@ -16,19 +16,29 @@ class Header extends StatefulComponent {
 class HeaderState extends State<Header> {
   bool _isMenuOpen = false;
   late bool _dark;
+  int _lastScrollY = 0;
+  bool _isHeaderHidden = false;
 
   static const _storageKey = 'portfolio-theme';
 
   @override
   void initState() {
     super.initState();
-    // Server-side pre-render never touches the browser; the no-flash head
-    // script has already set `data-theme` from storage by the time the client
-    // hydrates, so this just syncs the toggle's icon state.
     if (kIsWeb) {
       _dark = web.document.documentElement?.getAttribute('data-theme') == 'dark';
     } else {
       _dark = false;
+    }
+    if (kIsWeb) {
+      web.window.onScroll.listen((_) {
+        final currentY = web.document.documentElement?.scrollTop ?? 0;
+        final isScrollingDown = currentY > _lastScrollY;
+        final shouldHide = isScrollingDown && currentY > 100;
+        if (_isHeaderHidden != shouldHide) {
+          setState(() => _isHeaderHidden = shouldHide);
+        }
+        _lastScrollY = currentY;
+      });
     }
   }
 
@@ -56,73 +66,79 @@ class HeaderState extends State<Header> {
 
   @override
   Component build(BuildContext context) {
-    return header(classes: 'site-header', [
-      div(classes: 'container header-inner', [
-        a(href: '#top', classes: 'logo', [Component.text('OmarAdel.dev')]),
-        div(classes: 'mobile-actions', [
-          button(
-            classes: 'theme-toggle mobile-theme-toggle',
-            onClick: _toggleTheme,
-            attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
-            [
-              CupertinoIcon(
-                icon: _dark ? CupertinoIconName.sunMax : CupertinoIconName.moon,
-                color: CupertinoIconColor.primary,
-              ),
-            ],
-          ),
-          // Mobile hamburger / close button
-          button(
-            classes: 'mobile-toggle',
-            onClick: _toggleMenu,
-            attributes: {
-              'aria-expanded': _isMenuOpen.toString(),
-              'aria-label': _isMenuOpen ? 'Close menu' : 'Open menu',
-            },
-            [
-              CupertinoIcon(
-                icon: _isMenuOpen ? CupertinoIconName.xmark : CupertinoIconName.bars,
-                color: CupertinoIconColor.primary,
-              ),
-            ],
-          ),
-        ]),
-        // Desktop nav
-        nav(classes: 'header-nav', [
-          a(href: '#expertise', classes: 'nav-link', [Component.text('Expertise')]),
-          a(href: '#projects-work', classes: 'nav-link', [Component.text('Projects')]),
-          a(href: '#experience', classes: 'nav-link', [Component.text('Education')]),
-          a(href: '#testimonials', classes: 'nav-link', [Component.text('How I Work')]),
-          a(href: '#contact', classes: 'nav-link', [Component.text('Contact')]),
-          button(
-            classes: 'theme-toggle',
-            onClick: _toggleTheme,
-            attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
-            [
-              CupertinoIcon(
-                icon: _dark ? CupertinoIconName.sunMax : CupertinoIconName.moon,
-                color: CupertinoIconColor.primary,
-              ),
-            ],
-          ),
-          a(href: '#contact', classes: 'nav-cta', [Component.text('Get in touch')]),
-        ]),
-      ]),
-      // Mobile drawer
-      if (_isMenuOpen)
-        div(classes: 'mobile-drawer', [
-          div(classes: 'container mobile-drawer-inner', [
-            a(href: '#expertise', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Expertise')]),
-            a(href: '#projects-work', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Projects')]),
-            a(href: '#experience', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Education')]),
-            a(href: '#testimonials', classes: 'drawer-link', onClick: _closeMenu, [Component.text('How I Work')]),
-            a(href: '#contact', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Contact')]),
-            a(href: '#contact', classes: 'btn btn-primary drawer-cta', onClick: _closeMenu, [
-              Component.text('Get in touch'),
-            ]),
+    return header(
+      classes: 'site-header',
+      attributes: {
+        if (_isHeaderHidden) 'data-hidden': 'true',
+      },
+      [
+        div(classes: 'container header-inner', [
+          a(href: '#top', classes: 'logo', [Component.text('OmarAdel.dev')]),
+          div(classes: 'mobile-actions', [
+            button(
+              classes: 'theme-toggle mobile-theme-toggle',
+              onClick: _toggleTheme,
+              attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
+              [
+                CupertinoIcon(
+                  icon: _dark ? CupertinoIconName.sunMax : CupertinoIconName.moon,
+                  color: CupertinoIconColor.primary,
+                ),
+              ],
+            ),
+            // Mobile hamburger / close button
+            button(
+              classes: 'mobile-toggle',
+              onClick: _toggleMenu,
+              attributes: {
+                'aria-expanded': _isMenuOpen.toString(),
+                'aria-label': _isMenuOpen ? 'Close menu' : 'Open menu',
+              },
+              [
+                CupertinoIcon(
+                  icon: _isMenuOpen ? CupertinoIconName.xmark : CupertinoIconName.bars,
+                  color: CupertinoIconColor.primary,
+                ),
+              ],
+            ),
+          ]),
+          // Desktop nav
+          nav(classes: 'header-nav', [
+            a(href: '#expertise', classes: 'nav-link', [Component.text('Expertise')]),
+            a(href: '#projects-work', classes: 'nav-link', [Component.text('Projects')]),
+            a(href: '#experience', classes: 'nav-link', [Component.text('Education')]),
+            a(href: '#testimonials', classes: 'nav-link', [Component.text('How I Work')]),
+            a(href: '#contact', classes: 'nav-link', [Component.text('Contact')]),
+            button(
+              classes: 'theme-toggle',
+              onClick: _toggleTheme,
+              attributes: {'aria-label': _dark ? 'Switch to light theme' : 'Switch to dark theme'},
+              [
+                CupertinoIcon(
+                  icon: _dark ? CupertinoIconName.sunMax : CupertinoIconName.moon,
+                  color: CupertinoIconColor.primary,
+                ),
+              ],
+            ),
+            a(href: '#contact', classes: 'nav-cta', [Component.text('Get in touch')]),
           ]),
         ]),
-    ]);
+        // Mobile drawer
+        if (_isMenuOpen)
+          div(classes: 'mobile-drawer', [
+            div(classes: 'container mobile-drawer-inner', [
+              a(href: '#expertise', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Expertise')]),
+              a(href: '#projects-work', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Projects')]),
+              a(href: '#experience', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Education')]),
+              a(href: '#testimonials', classes: 'drawer-link', onClick: _closeMenu, [Component.text('How I Work')]),
+              a(href: '#contact', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Contact')]),
+              a(href: '#contact', classes: 'btn btn-primary drawer-cta', onClick: _closeMenu, [
+                Component.text('Get in touch'),
+              ]),
+            ]),
+          ]),
+      ],
+    );
   }
 
   @css
@@ -135,6 +151,16 @@ class HeaderState extends State<Header> {
         border: Border.only(
           bottom: BorderSide.solid(color: cHairline, width: 1.px),
         ),
+        transition: Transition(
+          'transform',
+          duration: Duration(milliseconds: 300),
+          curve: Curve.easeOut,
+        ),
+      ),
+      css('[data-hidden="true"]').styles(
+        raw: const {
+          'transform': 'translateY(-100%)',
+        },
       ),
 
       css('.header-inner').styles(
@@ -167,11 +193,30 @@ class HeaderState extends State<Header> {
         padding: .symmetric(vertical: 8.px, horizontal: 12.px),
         radius: .all(.circular(radiusSm.px)),
         textDecoration: .none,
+        position: Position.relative(),
       ),
       css('.nav-link:hover').styles(
         color: cInk,
         backgroundColor: cSoft,
         textDecoration: .none,
+      ),
+      css('.nav-link::after').styles(
+        raw: const {
+          'content': '""',
+          'position': 'absolute',
+          'bottom': '-4px',
+          'left': '50%',
+          'width': '0',
+          'height': '2px',
+          'backgroundColor': 'var(--primary)',
+          'transition': 'all 0.3s ease',
+          'transform': 'translateX(-50%)',
+        },
+      ),
+      css('.nav-link:hover::after').styles(
+        raw: const {
+          'width': '100%',
+        },
       ),
 
       css('.theme-toggle').styles(
@@ -211,7 +256,7 @@ class HeaderState extends State<Header> {
       css('.mobile-toggle').styles(
         display: Display.none,
         alignItems: AlignItems.center,
-        justifyContent: JustifyContent.center,
+        justifyContent: .center,
         width: 40.px,
         height: 40.px,
         backgroundColor: Colors.transparent,
