@@ -32,7 +32,11 @@ class AppState extends State<App> {
       const Header(),
       div(classes: 'main-content', [
         const Hero(),
-        const MarqStrip(),
+        div(
+          classes: 'intro-item',
+          styles: Styles(raw: {'--i': '7'}),
+          [const MarqStrip()],
+        ),
         const Expertise(),
         const FeaturedProject(),
         const AllProjects(),
@@ -41,7 +45,11 @@ class AppState extends State<App> {
         const Contact(),
       ]),
       const Footer(),
-const AIAssistant(),
+      div(
+        classes: 'intro-item',
+        styles: Styles(raw: {'--i': '8'}),
+        [const AIAssistant()],
+      ),
     ]);
   }
 

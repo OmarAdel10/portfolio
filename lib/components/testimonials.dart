@@ -1,6 +1,7 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
+import 'cupertino_icon.dart';
 import '../constants/theme.dart';
 
 /// Principles section (retained as working principles — not testimonials).
@@ -11,8 +12,8 @@ class Testimonials extends StatelessComponent {
   Component build(BuildContext context) {
     final principles = [
       _Principle(
-        icon: CupertinoIconName.shield,
-        iconColor: cPrimary,
+        icon: CupertinoIconName.lockShieldFill,
+        iconColor: CupertinoIconColor.primary,
         quote:
             'I treat every project like my own product — from architecture trade-offs down to the last pixel and the final deployment.',
         title: 'Own the outcome',
@@ -21,7 +22,7 @@ class Testimonials extends StatelessComponent {
       ),
       _Principle(
         icon: CupertinoIconName.bolt,
-        iconColor: cPrimary,
+        iconColor: CupertinoIconColor.primary,
         quote:
             'I reach for boring, reliable technology and clean boundaries over cleverness. Simple systems are the ones that actually ship and scale.',
         title: 'Simple over clever',
@@ -29,8 +30,8 @@ class Testimonials extends StatelessComponent {
         glyph: '02',
       ),
       _Principle(
-        icon: CupertinoIconName.bubbleLeft,
-        iconColor: cPrimary,
+        icon: CupertinoIconName.chatBubble2Fill,
+        iconColor: CupertinoIconColor.primary,
         quote:
             'Clear updates, early risk calls, and decisions you can follow. I believe honest communication is half the craft.',
         title: 'A teammate, not a vendor',
@@ -78,11 +79,13 @@ class Testimonials extends StatelessComponent {
     css('.testimonials', [
       css('.testimonials-grid').styles(
         display: Display.grid,
-        gridTemplate: GridTemplate(columns: GridTracks([
-          GridTrack(TrackSize.fr(1)),
-          GridTrack(TrackSize.fr(1)),
-          GridTrack(TrackSize.fr(1)),
-        ])),
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+          ]),
+        ),
         gap: Gap.all(20.px),
       ),
       css('.testimonial-card').styles(
@@ -134,7 +137,9 @@ class Testimonials extends StatelessComponent {
         alignItems: AlignItems.center,
         gap: Gap.all(14.px),
         padding: .only(top: 8.px),
-        border: Border.only(top: BorderSide.solid(color: cHairlineSoft, width: 1.px)),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
       ),
       css('.author-avatar').styles(
         width: 46.px,

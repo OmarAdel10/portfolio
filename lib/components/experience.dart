@@ -46,7 +46,9 @@ class Experience extends StatelessComponent {
         div(classes: 'section-head reveal', [
           span(classes: 'eyebrow', [Component.text('Education')]),
           h2(classes: 'section-title', [Component.text('Education & Training')]),
-          p(classes: 'section-subtitle', [Component.text('Computer science foundation and hands-on professional certification')]),
+          p(classes: 'section-subtitle', [
+            Component.text('Computer science foundation and hands-on professional certification'),
+          ]),
         ]),
 
         div(classes: 'experience-list', [

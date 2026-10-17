@@ -2,6 +2,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
+import 'hero.dart';
 
 /// Conversational Nono assistant placeholder UI.
 ///
@@ -12,10 +13,10 @@ class AIAssistant extends StatefulComponent {
   const AIAssistant({super.key});
 
   @override
-  State<AIAssistant> createState() => _AIAssistantState();
+  State<AIAssistant> createState() => AIAssistantState();
 }
 
-class _AIAssistantState extends State<AIAssistant> {
+class AIAssistantState extends State<AIAssistant> {
   bool _isOpen = false;
 
   void _toggle() {
@@ -27,24 +28,31 @@ class _AIAssistantState extends State<AIAssistant> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Register the toggle callback so the Hero "Ask Nono" button can open this panel.
+    onToggleNono = _toggle;
+  }
+
+  @override
   Component build(BuildContext context) {
     return div(classes: 'ai-assistant', [
-      // Floating action button
+      // Illustrated ChatBot avatar button (replaces normal text button)
       button(
-        classes: 'ai-fab',
+        classes: 'ai-fab chatbot-avatar-btn',
         onClick: _toggle,
         attributes: {
           'aria-label': _isOpen ? 'Close Nono assistant' : 'Open Nono assistant',
           'aria-expanded': _isOpen.toString(),
         },
         [
-          Component.text('Ask Nono'),
+          span(classes: 'chatbot-avatar', [Component.text('🤖')]),
         ],
       ),
 
       // Modal (hidden when closed)
       if (_isOpen)
-        div(classes: 'ai-modal-overlay', onClick: _close, [
+        div(classes: 'ai-modal-overlay', [
           div(classes: 'ai-modal', [
             div(classes: 'ai-modal-header', [
               h3(classes: 'ai-modal-title', [Component.text('Ask Nono')]),
@@ -91,8 +99,7 @@ class _AIAssistantState extends State<AIAssistant> {
         ]),
 
       // Backdrop to close modal on outside click
-      if (_isOpen)
-        div(classes: 'ai-backdrop', onClick: _close),
+      if (_isOpen) div(classes: 'ai-backdrop', []),
     ]);
   }
 
@@ -101,30 +108,68 @@ class _AIAssistantState extends State<AIAssistant> {
     css('.ai-assistant', [
       css('&').styles(
         position: Position.fixed(),
-        bottom: 24.px,
-        right: 24.px,
+        raw: const {'bottom': '24px', 'right': '24px'},
         zIndex: ZIndex(9999),
         display: Display.flex,
         flexDirection: FlexDirection.column,
         alignItems: AlignItems.end,
       ),
 
-      css('.ai-fab').styles(
-        backgroundColor: cPrimary,
-        color: cOnPrimary,
+      // ChatBot avatar button styling
+      css('.ai-fab.chatbot-avatar-btn').styles(
+        backgroundColor: Colors.transparent,
         border: Border.none,
-        radius: .all(.circular(radiusFull.px)),
-        padding: .symmetric(vertical: 12.px, horizontal: 20.px),
-        fontSize: 14.px,
-        fontWeight: FontWeight.w700,
+        padding: .zero,
+        margin: .zero,
+        width: 56.px,
+        height: 56.px,
         cursor: .pointer,
-        boxShadow: '0 4px 12px -4px rgba(35, 37, 29, 0.25)',
-        transition: Transition(
-          'transform',
-          duration: Duration(milliseconds: 200),
-          curve: Curve.easeOut,
-        ),
+        display: .inlineFlex,
+        alignItems: AlignItems.center,
+        justifyContent: .center,
+        raw: const {
+          'box-shadow': 'none',
+          'animation': 'none',
+        },
       ),
+      css('.ai-fab.chatbot-avatar-btn:hover').styles(
+        raw: const {
+          'transform': 'none',
+        },
+      ),
+      css('.ai-fab.chatbot-avatar-btn:focus-visible').styles(
+        raw: const {
+          'outline': 'none',
+        },
+      ),
+
+      css('.chatbot-avatar').styles(
+        raw: const {
+          'width': '56px',
+          'height': '56px',
+          'border-radius': '50%',
+          'display': 'flex',
+          'align-items': 'center',
+          'justify-content': 'center',
+          'background': 'var(--primary)',
+          'color': 'var(--on-primary)',
+          'font-size': '24px',
+          'font-weight': '700',
+          'border': '3px solid var(--canvas)',
+          'box-shadow': '0 8px 24px -8px rgba(35, 37, 29, 0.25)',
+          'animation': 'chatbotFloat 4s ease-in-out infinite, chatbotPulse 2.5s ease-in-out infinite',
+          'cursor': 'pointer',
+          'transition': 'all 0.3s ease',
+        },
+      ),
+      css('.chatbot-avatar:hover').styles(
+        raw: const {
+          'transform': 'scale(1.15)',
+          'border-color': 'var(--on-primary)',
+          'box-shadow': '0 12px 32px -10px rgba(35, 37, 29, 0.35)',
+        },
+      ),
+
       css('.ai-fab:hover').styles(
         raw: const {'transform': 'scale(1.05)'},
       ),
@@ -134,8 +179,7 @@ class _AIAssistantState extends State<AIAssistant> {
 
       css('.ai-modal-overlay').styles(
         position: Position.fixed(),
-        inset: '0',
-        backgroundColor: 'rgba(35, 37, 29, 0.4)',
+        raw: const {'inset': '0', 'background-color': 'rgba(35, 37, 29, 0.4)'},
         display: Display.flex,
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.center,
@@ -156,7 +200,7 @@ class _AIAssistantState extends State<AIAssistant> {
         maxHeight: 80.percent,
         display: Display.flex,
         flexDirection: FlexDirection.column,
-        boxShadow: '0 24px 48px -16px rgba(35, 37, 29, 0.35)',
+        raw: const {'box-shadow': '0 24px 48px -16px rgba(35, 37, 29, 0.35)'},
         animation: Animation(
           name: 'aiSlideUp',
           duration: Duration(milliseconds: 250),
@@ -177,7 +221,7 @@ class _AIAssistantState extends State<AIAssistant> {
         fontSize: 18.px,
         fontWeight: FontWeight.w700,
         color: cInk,
-        margin: 0.px,
+        margin: .zero,
       ),
       css('.ai-modal-close').styles(
         backgroundColor: Colors.transparent,
@@ -193,7 +237,7 @@ class _AIAssistantState extends State<AIAssistant> {
         display: Display.flex,
         flexDirection: FlexDirection.column,
         gap: Gap.all(16.px),
-        overflowY: Overflow.auto,
+        raw: const {'overflow-y': 'auto'},
         maxHeight: 400.px,
       ),
 
@@ -236,8 +280,7 @@ class _AIAssistantState extends State<AIAssistant> {
         fontSize: 14.px,
       ),
       css('.ai-input:focus-visible').styles(
-        outline: '2px solid var(--primary)',
-        outlineOffset: '-1px',
+        raw: const {'outline': '2px solid var(--primary)', 'outline-offset': '-1px'},
       ),
       css('.ai-send-btn').styles(
         backgroundColor: cPrimary,
@@ -262,16 +305,16 @@ class _AIAssistantState extends State<AIAssistant> {
 
       css('.ai-backdrop').styles(
         position: Position.fixed(),
-        inset: '0',
+        raw: const {'inset': '0'},
         zIndex: ZIndex(9998),
       ),
     ]),
 
-    css('@keyframes aiFadeIn', {
+    css.keyframes('aiFadeIn', {
       '0%': Styles(raw: {'opacity': '0'}),
       '100%': Styles(raw: {'opacity': '1'}),
     }),
-    css('@keyframes aiSlideUp', {
+    css.keyframes('aiSlideUp', {
       '0%': Styles(raw: {'transform': 'translateY(20px)', 'opacity': '0'}),
       '100%': Styles(raw: {'transform': 'translateY(0)', 'opacity': '1'}),
     }),

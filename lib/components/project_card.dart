@@ -242,5 +242,5 @@ class ProjectCard extends StatelessComponent {
     css('html[data-theme="light"] .pcard-logo-dark').styles(raw: const {'display': 'none'}),
     css('html[data-theme="dark"] .pcard-logo-light').styles(raw: const {'display': 'none'}),
     css('html[data-theme="dark"] .pcard-logo-dark').styles(raw: const {'display': 'block'}),
-  ]);
+  ];
 }

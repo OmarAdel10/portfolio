@@ -110,6 +110,7 @@ const Map<String, String> lightVars = {
   '--hairline': '#bfc1b7',
   '--hairline-soft': '#dcdfd2',
   '--primary': '#f7a501',
+  '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#b17816',
   '--on-primary': '#23251d',
@@ -125,6 +126,8 @@ const Map<String, String> lightVars = {
   '--accent-purple': '#7c44a6',
   '--accent-purple-soft': '#e7d8ee',
   '--focus': 'rgba(59,130,246,0.5)',
+  '--cursor-fill': '#111111',
+  '--cursor-edge': '#ffffff',
 };
 
 /// CSS custom properties that define the **dark** theme, derived from the
@@ -145,6 +148,7 @@ const Map<String, String> darkVars = {
   '--hairline': '#3a3c30',
   '--hairline-soft': '#2c2e25',
   '--primary': '#f7a501',
+  '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#f0b93e',
   '--on-primary': '#23251d',
@@ -160,6 +164,8 @@ const Map<String, String> darkVars = {
   '--accent-purple': '#b78fe0',
   '--accent-purple-soft': '#322740',
   '--focus': 'rgba(96,165,250,0.5)',
+  '--cursor-fill': '#ffffff',
+  '--cursor-edge': '#111111',
 };
 
 List<StyleRule> get _cupertinoIconStyles => [
@@ -210,14 +216,6 @@ List<StyleRule> get styles => [
     '50%': Styles(raw: {'transform': 'scale(1.2) rotate(0deg)', 'opacity': '0.4'}),
     '75%': Styles(raw: {'transform': 'scale(1.1) rotate(-5deg)', 'opacity': '0.35'}),
     '100%': Styles(raw: {'transform': 'scale(1) rotate(0deg)', 'opacity': '0.3'}),
-  }),
-  css.keyframes('heroRise', {
-    'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(16px)'}),
-    'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
-  }),
-  css.keyframes('fadeUp', {
-    'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(20px)'}),
-    'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
   }),
   css.keyframes('mascotWiggle', {
     '0%, 100%': Styles(raw: {'transform': 'rotate(-8deg)'}),
@@ -437,6 +435,24 @@ List<StyleRule> get styles => [
   ),
 
   // ---------- Card vocabulary (PostHog: flat, hairline, 6px) ----------
+  // ---------- Outline buttons (for secondary CTAs like Ask Nono, Open CV) ----------
+  css('.btn-outline').styles(
+    backgroundColor: Colors.transparent,
+    color: cInk,
+    border: Border.all(color: cHairline, width: 1.px),
+    padding: .symmetric(vertical: 10.px, horizontal: 16.px),
+  ),
+  css('.btn-outline:hover').styles(
+    backgroundColor: cSoft,
+    border: Border.all(color: cPrimary, width: 1.px),
+    color: cInk,
+    textDecoration: .none,
+  ),
+  css('.btn-outline:active').styles(
+    backgroundColor: cHairline,
+    color: cInk,
+  ),
+
   css('.card').styles(
     backgroundColor: cCard,
     border: Border.all(color: cHairline, width: 1.px),
@@ -524,7 +540,7 @@ List<StyleRule> get styles => [
     css('.container').styles(padding: .symmetric(horizontal: 18.px)),
     css('.section-title').styles(fontSize: 26.px),
     // Ensure touch targets ≥48×48px on mobile
-    css(.btn).styles(
+    css('.btn').styles(
       padding: .symmetric(vertical: 14.px, horizontal: 16.px),
     ),
   ]),
@@ -656,4 +672,66 @@ List<StyleRule> get styles => [
       },
     ),
   ]),
+
+  // ---------- Intro staggered reveal (driven by Hero removing .intro-hold) ----------
+  css('.intro-hold .intro-item').styles(
+    raw: const {
+      'opacity': '0',
+      'transform': 'translateY(10px)',
+    },
+  ),
+  css('.intro-item').styles(
+    raw: const {
+      'transition': 'opacity 500ms ease-out, transform 500ms ease-out',
+      'transition-delay': 'calc(var(--i, 0) * 110ms)',
+    },
+  ),
+  css('.intro-hold .cursor-dot, .intro-hold .cursor-ring').styles(
+    raw: const {
+      'opacity': '0 !important',
+    },
+  ),
+
+  // ---------- ChatBot avatar (Ask Nono floating button) ----------
+  css.keyframes('chatbotFloat', {
+    '0%': Styles(raw: {'transform': 'translateY(0) scale(1)'}),
+    '50%': Styles(raw: {'transform': 'translateY(-10px) scale(1.05)'}),
+    '100%': Styles(raw: {'transform': 'translateY(0) scale(1)'}),
+  }),
+  css.keyframes('chatbotPulse', {
+    '0%': Styles(raw: {'transform': 'scale(1)', 'opacity': '0.8'}),
+    '50%': Styles(raw: {'transform': 'scale(1.1)', 'opacity': '1'}),
+    '100%': Styles(raw: {'transform': 'scale(1)', 'opacity': '0.8'}),
+  }),
+  css('.chatbot-avatar').styles(
+    raw: const {
+      'width': '56px',
+      'height': '56px',
+      'border-radius': '50%',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'background': 'var(--primary)',
+      'color': 'var(--on-primary)',
+      'font-size': '24px',
+      'font-weight': '700',
+      'border': '3px solid var(--canvas)',
+      'box-shadow': '0 8px 24px -8px rgba(35, 37, 29, 0.25)',
+      'animation': 'chatbotFloat 4s ease-in-out infinite, chatbotPulse 2.5s ease-in-out infinite',
+      'cursor': 'pointer',
+      'transition': 'all 0.3s ease',
+    },
+  ),
+  css('.chatbot-avatar:hover').styles(
+    raw: const {
+      'transform': 'scale(1.15)',
+      'border-color': 'var(--on-primary)',
+      'box-shadow': '0 12px 32px -10px rgba(35, 37, 29, 0.35)',
+    },
+  ),
+  css('.chatbot-avatar:active').styles(
+    raw: const {
+      'transform': 'scale(0.95)',
+    },
+  ),
 ];

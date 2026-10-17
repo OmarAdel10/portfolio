@@ -27,6 +27,15 @@ const String _themeInitJs =
 /// Marks JS as enabled, reveals `.reveal` elements, and handles email fallback.
 /// Direct click handlers on all `.email-fallback` links:
 /// tries mailto, then after 1.5s if page still has focus -> Gmail compose.
+/// Adds the intro hold class before first paint (unless reduced motion).
+/// Hero removes it when the intro finishes; failsafe removes it after 9s.
+const String _introHoldJs =
+    "(function(){try{"
+    "if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;"
+    "document.documentElement.classList.add('intro-hold');"
+    "setTimeout(function(){document.documentElement.classList.remove('intro-hold');},9000);"
+    "}catch(e){}})();";
+
 const String _motionJs = """
 (function(){
   var d=document.documentElement;
@@ -159,7 +168,8 @@ const String _bgJs = """
 """;
 
 /// Structured-data Person markup for search engines.
-const String _jsonLd = '{"@context":"https://schema.org","@type":"Person",'
+const String _jsonLd =
+    '{"@context":"https://schema.org","@type":"Person",'
     '"name":"Omar Adel","url":"https://omaradel.dev",'
     '"image":"https://omaradel.dev/images/avatar.jpg",'
     '"jobTitle":"Software Engineer",'
@@ -171,8 +181,7 @@ const String _jsonLd = '{"@context":"https://schema.org","@type":"Person",'
 /// are emitted from [head] as `property` meta elements instead.
 const Map<String, String> _ogMeta = {
   'og:title': 'Omar Adel — Software Engineer & App Developer',
-  'og:description':
-      'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+  'og:description': 'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
   'og:type': 'website',
   'og:url': productionUrl,
   'og:image': '$productionUrl/images/og-image.jpg',
@@ -191,60 +200,62 @@ void main() {
   );
 
   // Starts the app.
-  runApp(Document(
-    title: 'Omar Adel — Software Engineer & App Developer',
-    lang: 'en',
-    meta: {
-      'description':
-          'Personal portfolio of Omar Adel, a software engineer building cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'theme-color': '#eeefe9',
-      'keywords': 'Omar Adel, software engineer, Flutter, C# .NET, app developer, portfolio',
-      'author': 'Omar Adel',
-      'google-site-verification': 'Uzi0q0Piapes6QUGWVdSwhoOjirhtK-YkBMguFXrhPA',
-      'twitter:card': 'summary_large_image',
-      'twitter:title': 'Omar Adel — Software Engineer & App Developer',
-      'twitter:description':
-          'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'twitter:image': '$productionUrl/images/og-image.jpg',
-      'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
-    },
-    head: [
-      script(content: _themeInitJs),
-      script(content: _motionJs),
-      script(content: _bgJs),
-      // Open Graph metas must carry `property` attributes (OGP spec); the
-      // `meta` map above emits `name`, so they are rendered here instead.
-      for (final entry in _ogMeta.entries)
-        meta(attributes: {'property': entry.key, 'content': entry.value}),
-      link(
-        rel: 'icon',
-        href: '/favicon.ico',
-        attributes: {'sizes': 'any'},
-      ),
-      link(
-        rel: 'icon',
-        href: '/images/favicon-32x32.png',
-        attributes: {'type': 'image/png', 'sizes': '32x32'},
-      ),
-      link(
-        rel: 'apple-touch-icon',
-        href: '/images/apple-touch-icon.png',
-        attributes: {'sizes': '180x180'},
-      ),
-      link(
-        rel: 'manifest',
-        href: '/site.webmanifest',
-      ),
-      link(
-        href: productionUrl,
-        attributes: {'rel': 'canonical'},
-      ),
-      script(attributes: {'type': 'application/ld+json'}, content: _jsonLd),
-    ],
-    body: div(classes: 'app-shell', [
-      div(classes: 'cursor-dot', []),
-      div(classes: 'cursor-ring', []),
-      const App(),
-    ]),
-  ));
+  runApp(
+    Document(
+      title: 'Omar Adel — Software Engineer & App Developer',
+      lang: 'en',
+      meta: {
+        'description':
+            'Personal portfolio of Omar Adel, a software engineer building cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+        'theme-color': '#eeefe9',
+        'keywords': 'Omar Adel, software engineer, Flutter, C# .NET, app developer, portfolio',
+        'author': 'Omar Adel',
+        'google-site-verification': 'Uzi0q0Piapes6QUGWVdSwhoOjirhtK-YkBMguFXrhPA',
+        'twitter:card': 'summary_large_image',
+        'twitter:title': 'Omar Adel — Software Engineer & App Developer',
+        'twitter:description':
+            'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+        'twitter:image': '$productionUrl/images/og-image.jpg',
+        'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
+      },
+      head: [
+        script(content: _themeInitJs),
+        script(content: _introHoldJs),
+        script(content: _motionJs),
+        script(content: _bgJs),
+        // Open Graph metas must carry `property` attributes (OGP spec); the
+        // `meta` map above emits `name`, so they are rendered here instead.
+        for (final entry in _ogMeta.entries) meta(attributes: {'property': entry.key, 'content': entry.value}),
+        link(
+          rel: 'icon',
+          href: '/favicon.ico',
+          attributes: {'sizes': 'any'},
+        ),
+        link(
+          rel: 'icon',
+          href: '/images/favicon-32x32.png',
+          attributes: {'type': 'image/png', 'sizes': '32x32'},
+        ),
+        link(
+          rel: 'apple-touch-icon',
+          href: '/images/apple-touch-icon.png',
+          attributes: {'sizes': '180x180'},
+        ),
+        link(
+          rel: 'manifest',
+          href: '/site.webmanifest',
+        ),
+        link(
+          href: productionUrl,
+          attributes: {'rel': 'canonical'},
+        ),
+        script(attributes: {'type': 'application/ld+json'}, content: _jsonLd),
+      ],
+      body: div(classes: 'app-shell', [
+        div(classes: 'cursor-dot', []),
+        div(classes: 'cursor-ring', []),
+        const App(),
+      ]),
+    ),
+  );
 }

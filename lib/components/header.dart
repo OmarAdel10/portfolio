@@ -16,7 +16,7 @@ class Header extends StatefulComponent {
 class HeaderState extends State<Header> {
   bool _isMenuOpen = false;
   late bool _dark;
-  int _lastScrollY = 0;
+  double _lastScrollY = 0;
   bool _isHeaderHidden = false;
 
   static const _storageKey = 'portfolio-theme';
@@ -30,7 +30,7 @@ class HeaderState extends State<Header> {
       _dark = false;
     }
     if (kIsWeb) {
-      web.window.onScroll.listen((_) {
+      web.document.documentElement?.onScroll.listen((_) {
         final currentY = web.document.documentElement?.scrollTop ?? 0;
         final isScrollingDown = currentY > _lastScrollY;
         final shouldHide = isScrollingDown && currentY > 100;
@@ -67,7 +67,8 @@ class HeaderState extends State<Header> {
   @override
   Component build(BuildContext context) {
     return header(
-      classes: 'site-header',
+      classes: 'site-header intro-item',
+      styles: Styles(raw: {'--i': '0'}),
       attributes: {
         if (_isHeaderHidden) 'data-hidden': 'true',
       },
@@ -316,11 +317,11 @@ class HeaderState extends State<Header> {
       css('.site-header .mobile-actions').styles(display: Display.flex),
       css('.site-header .mobile-toggle').styles(display: Display.flex),
       css('.site-header .header-inner').styles(height: 56.px),
-      css(.theme-toggle).styles(
+      css('.theme-toggle').styles(
         width: 48.px,
         height: 48.px,
       ),
-      css(.mobile-toggle).styles(
+      css('.mobile-toggle').styles(
         width: 48.px,
         height: 48.px,
       ),
