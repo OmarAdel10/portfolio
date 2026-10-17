@@ -11,7 +11,7 @@ void _openCV() {
   web.window.open("https://example.com/cv.pdf", "_blank");
 }
 
-enum _Phase { waiting, cursorIn, travel, press, sweep, pill, drift, done }
+enum _Phase { waiting, avatarIn, cursorIn, travel, press, sweep, pill, drift, done }
 
 class Hero extends StatefulComponent {
   const Hero({super.key});
@@ -25,8 +25,16 @@ class HeroState extends State<Hero> {
   bool _passedSelected = false;
   bool _passedPill = false;
   Timer? _phaseTimer;
+  Timer? _typingTimer;
   Timer? _glitchTimer;
   int _glitchSeed = 0;
+
+  // Intro reveal/typing state.
+  bool _avatarVisible = false;
+  String _eyebrowText = '';
+  String _nameText = '';
+  static const String _eyebrowFull = 'Hello, I am';
+  static const String _nameFull = 'Omar Adel';
 
   // Cursor (overlay arrow) state — always rendered, driven by inline styles.
   String _cursorTransform = 'translate(calc(6vw - 5.3px), calc(8vh - 0.8px))';
@@ -47,7 +55,6 @@ class HeroState extends State<Hero> {
   void initState() {
     super.initState();
     if (kIsWeb) {
-      _startGlitchLoop();
       // fonts.ready fallback (1500ms) + 300ms settle.
       _phaseTimer = Timer(const Duration(milliseconds: 1800), _beginIntro);
     }
@@ -74,6 +81,7 @@ class HeroState extends State<Hero> {
   @override
   void dispose() {
     _phaseTimer?.cancel();
+    _typingTimer?.cancel();
     _glitchTimer?.cancel();
     super.dispose();
   }
@@ -84,6 +92,27 @@ class HeroState extends State<Hero> {
 
   // ---------- Intro phases ----------
 
+  void _startTyping({
+    required String fullText,
+    required void Function(String) setValue,
+    required void Function() onDone,
+  }) {
+    var index = 0;
+    setValue('');
+    _typingTimer?.cancel();
+    _typingTimer = Timer.periodic(const Duration(milliseconds: 90), (timer) {
+      index++;
+      if (index >= fullText.length) {
+        timer.cancel();
+        _typingTimer = null;
+        setValue(fullText);
+        onDone();
+        return;
+      }
+      setValue(fullText.substring(0, index));
+    });
+  }
+
   void _beginIntro() {
     final reduce = web.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     final coarse = web.window.matchMedia('(pointer: coarse)').matches;
@@ -91,6 +120,32 @@ class HeroState extends State<Hero> {
       _skipToFinal();
       return;
     }
+
+    // Phase 1: the avatar fades in with a slight rise.
+    setState(() {
+      _phase = _Phase.avatarIn;
+      _avatarVisible = true;
+    });
+    _phaseTimer = Timer(const Duration(milliseconds: 550), _startEyebrow);
+  }
+
+  void _startEyebrow() {
+    _startTyping(
+      fullText: _eyebrowFull,
+      setValue: (value) => setState(() => _eyebrowText = value),
+      onDone: _startName,
+    );
+  }
+
+  void _startName() {
+    _startTyping(
+      fullText: _nameFull,
+      setValue: (value) => setState(() => _nameText = value),
+      onDone: _startCursorIn,
+    );
+  }
+
+  void _startCursorIn() {
     // Phase: cursor fades in at the top-left of the viewport.
     setState(() {
       _phase = _Phase.cursorIn;
@@ -194,11 +249,16 @@ class HeroState extends State<Hero> {
   void _finish() {
     setState(() => _phase = _Phase.done);
     _removeIntroHold();
+    // Start the avatar glitch only after the complete page reveal has settled.
+    _phaseTimer = Timer(const Duration(milliseconds: 1500), _startGlitchLoop);
   }
 
   void _skipToFinal() {
     setState(() {
       _phase = _Phase.done;
+      _avatarVisible = true;
+      _eyebrowText = _eyebrowFull;
+      _nameText = _nameFull;
       _passedCursor = true;
       _passedSelected = true;
       _passedPill = true;
@@ -212,6 +272,7 @@ class HeroState extends State<Hero> {
       _handleTransition = 'none';
     });
     _removeIntroHold();
+    _phaseTimer = Timer(const Duration(milliseconds: 1500), _startGlitchLoop);
   }
 
   void _removeIntroHold() {
@@ -252,8 +313,14 @@ class HeroState extends State<Hero> {
           ),
           // Avatar — static, glitch/signal pulse overlay only.
           div(
-            classes: 'hero-avatar-wrap intro-item',
-            styles: Styles(raw: {'--i': '1'}),
+            classes: 'hero-avatar-wrap',
+            styles: Styles(
+              raw: {
+                'opacity': _avatarVisible ? '1' : '0',
+                'transform': _avatarVisible ? 'translateY(0)' : 'translateY(10px)',
+                'transition': 'opacity 500ms ease-out, transform 500ms ease-out',
+              },
+            ),
             [
               div(
                 classes: 'hero-avatar-glitch ${glitchActive ? 'glitch-active' : ''}',
@@ -270,11 +337,10 @@ class HeroState extends State<Hero> {
               ),
             ],
           ),
-          // Eyebrow (always mounted; revealed via intro-item).
+          // Eyebrow (always mounted; typed after the avatar reveal).
           span(
-            classes: 'hero-eyebrow intro-item',
-            styles: Styles(raw: {'--i': '2'}),
-            [Component.text('Hello, I am')],
+            classes: 'hero-eyebrow',
+            [Component.text(_eyebrowText)],
           ),
           // Name — ALWAYS mounted, never swapped.
           h1(classes: 'hero-name', [
@@ -289,7 +355,7 @@ class HeroState extends State<Hero> {
                 ),
                 [],
               ),
-              span(classes: 'name-text', [Component.text('Omar Adel')]),
+              span(classes: 'name-text', [Component.text(_nameText)]),
               span(
                 classes: 'sel-handle sel-start',
                 styles: Styles(
@@ -499,6 +565,9 @@ class HeroState extends State<Hero> {
       ),
       // Eyebrow.
       css('.hero-eyebrow').styles(
+        raw: const {
+          'min-height': '1.4em',
+        },
         margin: .only(bottom: 14.px),
         fontSize: 14.px,
         fontWeight: FontWeight.w700,
@@ -508,6 +577,9 @@ class HeroState extends State<Hero> {
       ),
       // Name + selection overlay.
       css('.hero-name').styles(
+        raw: const {
+          'min-height': '1.05em',
+        },
         fontSize: 60.px,
         fontWeight: FontWeight.w800,
         letterSpacing: (-1.2).px,

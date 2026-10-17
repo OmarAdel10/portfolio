@@ -68,7 +68,7 @@ class HeaderState extends State<Header> {
   Component build(BuildContext context) {
     return header(
       classes: 'site-header intro-item',
-      styles: Styles(raw: {'--i': '0'}),
+      styles: Styles(raw: {'--i': '10'}),
       attributes: {
         if (_isHeaderHidden) 'data-hidden': 'true',
       },
