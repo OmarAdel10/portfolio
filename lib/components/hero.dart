@@ -440,21 +440,6 @@ class HeroState extends State<Hero> {
               ),
             ],
           ),
-          div(
-            classes: 'hero-cta intro-item',
-            styles: Styles(raw: {'--i': '5'}),
-            [
-              a(href: '#contact', classes: 'btn btn-secondary', [Component.text('Get in Touch')]),
-              a(href: '#projects-work', classes: 'btn btn-primary', [Component.text('View Projects')]),
-            ],
-          ),
-          div(
-            classes: 'hero-featured intro-item',
-            styles: Styles(raw: {'--i': '6'}),
-            [
-              span(classes: 'featured-label', [Component.text('Building with')]),
-            ],
-          ),
         ]),
       ],
     );
@@ -712,29 +697,6 @@ class HeroState extends State<Hero> {
         maxWidth: 700.px,
         margin: .only(bottom: 30.px),
       ),
-      css('.hero-cta').styles(
-        display: Display.flex,
-        justifyContent: .center,
-        gap: Gap.all(12.px),
-        margin: .only(bottom: 40.px),
-      ),
-      css('.hero-featured').styles(
-        display: Display.flex,
-        flexDirection: FlexDirection.column,
-        alignItems: AlignItems.center,
-        width: 100.percent,
-        padding: .only(top: 24.px),
-        border: Border.only(
-          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
-        ),
-      ),
-      css('.featured-label').styles(
-        fontSize: 13.px,
-        fontWeight: FontWeight.w700,
-        textTransform: .upperCase,
-        letterSpacing: 0.08.em,
-        color: cAsh,
-      ),
     ]),
     // Animated overlay cursor (theme-aware via mask).
     css('.anim-cursor').styles(
@@ -788,10 +750,6 @@ class HeroState extends State<Hero> {
     css.media(MediaQuery.all(maxWidth: 480.px), [
       css('.hero .hero-name').styles(fontSize: 36.px),
       css('.hero .hero-role').styles(fontSize: 17.px),
-      css('.hero .hero-cta .btn').styles(
-        width: 100.percent,
-        justifyContent: .center,
-      ),
       css('.hero .hero-avatar-wrap').styles(width: 108.px, height: 108.px),
       css('.hero .hero-avatar-glitch').styles(width: 108.px, height: 108.px),
     ]),
