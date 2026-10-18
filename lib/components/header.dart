@@ -68,11 +68,6 @@ class HeaderState extends State<Header> {
     }
   }
 
-  void _setActive(String id) {
-    if (_activeId == id) return;
-    setState(() => _activeId = id);
-  }
-
   void _toggleTheme() {
     _dark = !_dark;
     final theme = _dark ? 'dark' : 'light';
@@ -89,10 +84,6 @@ class HeaderState extends State<Header> {
 
   void _toggleMenu() {
     setState(() => _isMenuOpen = !_isMenuOpen);
-  }
-
-  void _closeMenu() {
-    if (_isMenuOpen) setState(() => _isMenuOpen = false);
   }
 
   @override
@@ -141,7 +132,9 @@ class HeaderState extends State<Header> {
               a(
                 href: '#${item.id}',
                 classes: 'nav-link ${_activeId == item.id ? 'active' : ''}',
-                onClick: () => _setActive(item.id),
+                events: {
+                  'click': (_) => setState(() => _activeId = item.id),
+                },
                 [Component.text(item.label)],
               ),
             ],
@@ -168,9 +161,11 @@ class HeaderState extends State<Header> {
                 a(
                   href: '#${item.id}',
                   classes: 'drawer-link ${_activeId == item.id ? 'active' : ''}',
-                  onClick: () {
-                    _setActive(item.id);
-                    _closeMenu();
+                  events: {
+                    'click': (_) {
+                      setState(() => _activeId = item.id);
+                      if (_isMenuOpen) setState(() => _isMenuOpen = false);
+                    },
                   },
                   [Component.text(item.label)],
                 ),
@@ -204,18 +199,21 @@ class HeaderState extends State<Header> {
         display: Display.flex,
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.spaceBetween,
-        height: 56.px,
-        padding: .symmetric(horizontal: 16.px),
+        minHeight: 56.px,
+        padding: .symmetric(horizontal: 20.px, vertical: 10.px),
+        width: 100.percent,
+        maxWidth: 1200.px,
+        margin: .symmetric(horizontal: Unit.auto),
         backgroundColor: cCanvas,
         border: Border.all(color: cHairline, width: 1.px),
-        radius: .all(.circular(14.px)),
+        radius: .all(.circular(20.px)),
       ),
 
       css('.logo').styles(
         textDecoration: .none,
         color: cInk,
         fontFamily: fSansStack,
-        fontSize: 20.px,
+        fontSize: 18.px,
         fontWeight: FontWeight.w700,
         letterSpacing: (-0.4).px,
       ),
@@ -238,7 +236,7 @@ class HeaderState extends State<Header> {
 
       css('.nav-link').styles(
         color: cBody,
-        fontSize: 15.px,
+        fontSize: 14.px,
         fontWeight: FontWeight.w600,
         padding: .symmetric(vertical: 8.px, horizontal: 12.px),
         textDecoration: .none,
@@ -378,19 +376,56 @@ class HeaderState extends State<Header> {
     ]),
 
     // Tablet / mobile
-    css.media(MediaQuery.all(maxWidth: 900.px), [
+    // Tablet breakpoint (max-width: 768px)
+    css.media(MediaQuery.all(maxWidth: 768.px), [
+      css('.site-header .header-inner').styles(
+        width: 92.percent,
+        padding: .symmetric(horizontal: 14.px),
+        minHeight: 52.px,
+        radius: .all(.circular(18.px)),
+      ),
       css('.site-header .header-nav').styles(display: Display.none),
       css('.site-header .mobile-actions').styles(display: Display.flex),
       css('.site-header .mobile-toggle').styles(display: Display.flex),
       css('.site-header .desktop-actions').styles(display: Display.none),
-      css('.site-header .header-inner').styles(height: 56.px),
+      css('.logo').styles(fontSize: 17.px),
       css('.theme-toggle').styles(
-        width: 48.px,
-        height: 48.px,
+        width: 44.px,
+        height: 44.px,
       ),
       css('.mobile-toggle').styles(
-        width: 48.px,
-        height: 48.px,
+        width: 44.px,
+        height: 44.px,
+      ),
+    ]),
+
+    // Mobile breakpoint (max-width: 480px)
+    css.media(MediaQuery.all(maxWidth: 480.px), [
+      css('.site-header .header-inner').styles(
+        width: 96.percent,
+        padding: .symmetric(horizontal: 12.px, vertical: 8.px),
+        minHeight: 50.px,
+        radius: .all(.circular(16.px)),
+      ),
+      css('.site-header .header-nav').styles(display: Display.none),
+      css('.site-header .mobile-actions').styles(display: Display.flex),
+      css('.site-header .mobile-toggle').styles(display: Display.flex),
+      css('.site-header .desktop-actions').styles(display: Display.none),
+      css('.logo').styles(fontSize: 15.px),
+      css('.theme-toggle').styles(
+        width: 40.px,
+        height: 40.px,
+      ),
+      css('.mobile-toggle').styles(
+        width: 40.px,
+        height: 40.px,
+      ),
+      css('.mobile-drawer-inner').styles(
+        padding: .symmetric(vertical: 10.px),
+      ),
+      css('.drawer-link').styles(
+        fontSize: 16.px,
+        padding: .symmetric(vertical: 10.px, horizontal: 12.px),
       ),
     ]),
   ];
