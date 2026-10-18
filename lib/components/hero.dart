@@ -55,8 +55,8 @@ class HeroState extends State<Hero> {
   void initState() {
     super.initState();
     if (kIsWeb) {
-      // fonts.ready fallback (1500ms) + 300ms settle.
-      _phaseTimer = Timer(const Duration(milliseconds: 1800), _beginIntro);
+      // Short empty-screen delay; all later phases keep their original spacing.
+      _phaseTimer = Timer(const Duration(milliseconds: 200), _beginIntro);
     }
   }
 
