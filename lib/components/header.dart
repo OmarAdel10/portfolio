@@ -18,14 +18,25 @@ class HeaderState extends State<Header> {
   late bool _dark;
   double _lastScrollY = 0;
   bool _isHeaderHidden = false;
+  String _activeId = 'top';
 
   static const _storageKey = 'portfolio-theme';
+  static const _navItems = <({String id, String label})>[
+    (id: 'top', label: 'Home'),
+    (id: 'projects-work', label: 'My Work'),
+    (id: 'expertise', label: 'Expertise'),
+    (id: 'contact', label: 'Get In Touch'),
+  ];
 
   @override
   void initState() {
     super.initState();
     if (kIsWeb) {
       _dark = web.document.documentElement?.getAttribute('data-theme') == 'dark';
+      final hash = web.window.location.hash.replaceFirst('#', '');
+      if (_navItems.any((item) => item.id == hash)) {
+        _activeId = hash;
+      }
     } else {
       _dark = false;
     }
@@ -38,8 +49,28 @@ class HeaderState extends State<Header> {
           setState(() => _isHeaderHidden = shouldHide);
         }
         _lastScrollY = currentY;
+        _updateActiveSection(currentY);
       });
     }
+  }
+
+  void _updateActiveSection(double scrollY) {
+    var activeId = 'top';
+    for (final item in _navItems.skip(1)) {
+      final element = web.document.querySelector('#${item.id}');
+      if (element == null) continue;
+      if (element.getBoundingClientRect().top <= 120) {
+        activeId = item.id;
+      }
+    }
+    if (_activeId != activeId) {
+      setState(() => _activeId = activeId);
+    }
+  }
+
+  void _setActive(String id) {
+    if (_activeId == id) return;
+    setState(() => _activeId = id);
   }
 
   void _toggleTheme() {
@@ -105,11 +136,17 @@ class HeaderState extends State<Header> {
           ]),
           // Desktop nav
           nav(classes: 'header-nav', [
-            a(href: '#expertise', classes: 'nav-link', [Component.text('Expertise')]),
-            a(href: '#projects-work', classes: 'nav-link', [Component.text('Projects')]),
-            a(href: '#experience', classes: 'nav-link', [Component.text('Education')]),
-            a(href: '#testimonials', classes: 'nav-link', [Component.text('How I Work')]),
-            a(href: '#contact', classes: 'nav-link', [Component.text('Contact')]),
+            for (final (index, item) in _navItems.indexed) ...[
+              if (index > 0) span(classes: 'nav-divider', []),
+              a(
+                href: '#${item.id}',
+                classes: 'nav-link ${_activeId == item.id ? 'active' : ''}',
+                onClick: () => _setActive(item.id),
+                [Component.text(item.label)],
+              ),
+            ],
+          ]),
+          div(classes: 'desktop-actions', [
             button(
               classes: 'theme-toggle',
               onClick: _toggleTheme,
@@ -121,21 +158,22 @@ class HeaderState extends State<Header> {
                 ),
               ],
             ),
-            a(href: '#contact', classes: 'nav-cta', [Component.text('Get in touch')]),
           ]),
         ]),
         // Mobile drawer
         if (_isMenuOpen)
           div(classes: 'mobile-drawer', [
             div(classes: 'container mobile-drawer-inner', [
-              a(href: '#expertise', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Expertise')]),
-              a(href: '#projects-work', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Projects')]),
-              a(href: '#experience', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Education')]),
-              a(href: '#testimonials', classes: 'drawer-link', onClick: _closeMenu, [Component.text('How I Work')]),
-              a(href: '#contact', classes: 'drawer-link', onClick: _closeMenu, [Component.text('Contact')]),
-              a(href: '#contact', classes: 'btn btn-primary drawer-cta', onClick: _closeMenu, [
-                Component.text('Get in touch'),
-              ]),
+              for (final item in _navItems)
+                a(
+                  href: '#${item.id}',
+                  classes: 'drawer-link ${_activeId == item.id ? 'active' : ''}',
+                  onClick: () {
+                    _setActive(item.id);
+                    _closeMenu();
+                  },
+                  [Component.text(item.label)],
+                ),
             ]),
           ]),
       ],
@@ -148,10 +186,8 @@ class HeaderState extends State<Header> {
       css('&').styles(
         position: Position.sticky(top: 0.px),
         zIndex: ZIndex(1000),
-        backgroundColor: cCanvas,
-        border: Border.only(
-          bottom: BorderSide.solid(color: cHairline, width: 1.px),
-        ),
+        backgroundColor: Colors.transparent,
+        padding: .only(top: 10.px),
         transition: Transition(
           'transform',
           duration: Duration(milliseconds: 300),
@@ -168,7 +204,11 @@ class HeaderState extends State<Header> {
         display: Display.flex,
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.spaceBetween,
-        height: 60.px,
+        height: 56.px,
+        padding: .symmetric(horizontal: 16.px),
+        backgroundColor: cCanvas,
+        border: Border.all(color: cHairline, width: 1.px),
+        radius: .all(.circular(14.px)),
       ),
 
       css('.logo').styles(
@@ -184,7 +224,16 @@ class HeaderState extends State<Header> {
       css('.header-nav').styles(
         display: Display.flex,
         alignItems: AlignItems.center,
-        gap: Gap.all(6.px),
+        flex: Flex.grow(1),
+        justifyContent: .center,
+        gap: Gap.all(2.px),
+      ),
+
+      css('.nav-divider').styles(
+        width: 1.px,
+        height: 18.px,
+        backgroundColor: cHairlineSoft,
+        margin: .symmetric(horizontal: 4.px),
       ),
 
       css('.nav-link').styles(
@@ -192,9 +241,9 @@ class HeaderState extends State<Header> {
         fontSize: 15.px,
         fontWeight: FontWeight.w600,
         padding: .symmetric(vertical: 8.px, horizontal: 12.px),
-        radius: .all(.circular(radiusSm.px)),
         textDecoration: .none,
         position: Position.relative(),
+        radius: .all(.circular(radiusFull.px)),
       ),
       css('.nav-link:hover').styles(
         color: cInk,
@@ -218,6 +267,19 @@ class HeaderState extends State<Header> {
         raw: const {
           'width': '100%',
         },
+      ),
+
+      css('.nav-link.active').styles(
+        color: cInk,
+        raw: const {
+          'background-color': 'rgba(247, 165, 1, 0.14)',
+        },
+      ),
+      css('.nav-link.active::after').styles(raw: const {'width': '0'}),
+
+      css('.desktop-actions').styles(
+        display: .inlineFlex,
+        alignItems: .center,
       ),
 
       css('.theme-toggle').styles(
@@ -301,14 +363,18 @@ class HeaderState extends State<Header> {
         fontSize: 17.px,
         fontWeight: FontWeight.w600,
         padding: .symmetric(vertical: 12.px, horizontal: 12.px),
-        radius: .all(.circular(radiusSm.px)),
         textDecoration: .none,
+        radius: .all(.circular(radiusFull.px)),
       ),
       css('.drawer-link:hover').styles(
         backgroundColor: cSoft,
         textDecoration: .none,
       ),
-      css('.drawer-cta').styles(margin: .only(top: 8.px)),
+      css('.drawer-link.active').styles(
+        raw: const {
+          'background-color': 'rgba(247, 165, 1, 0.14)',
+        },
+      ),
     ]),
 
     // Tablet / mobile
@@ -316,6 +382,7 @@ class HeaderState extends State<Header> {
       css('.site-header .header-nav').styles(display: Display.none),
       css('.site-header .mobile-actions').styles(display: Display.flex),
       css('.site-header .mobile-toggle').styles(display: Display.flex),
+      css('.site-header .desktop-actions').styles(display: Display.none),
       css('.site-header .header-inner').styles(height: 56.px),
       css('.theme-toggle').styles(
         width: 48.px,
