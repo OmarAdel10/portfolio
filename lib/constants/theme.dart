@@ -222,11 +222,23 @@ List<StyleRule> get styles => [
     '50%': Styles(raw: {'transform': 'rotate(-2deg)'}),
   }),
 
-  // ---------- Scroll reveal (driven by IntersectionObserver in the head) ----------
-  css('html.js-enabled .reveal').styles(
+  // ---------- Scroll reveal (base styles - no JS required, prevents FOUC) ----------
+  css('.reveal').styles(
     raw: const {
       'opacity': '0',
       'transform': 'translateY(22px)',
+    },
+  ),
+  // Also hide during Hero intro (when .intro-hold is on html element)
+  css('.intro-hold .reveal').styles(
+    raw: const {
+      'opacity': '0',
+      'transform': 'translateY(22px)',
+    },
+  ),
+  // Enhanced transition when JS is enabled
+  css('html.js-enabled .reveal').styles(
+    raw: const {
       'transition':
           'opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1)',
     },

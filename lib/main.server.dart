@@ -24,6 +24,21 @@ const String _themeInitJs =
     "(function(){try{var t=localStorage.getItem('portfolio-theme');"
     "if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();";
 
+/// Critical CSS to prevent FOUC - hides .reveal and .intro-item elements
+/// before any scripts execute. Must be inlined FIRST in <head>.
+const String _criticalCss = '''
+  .reveal,
+  .intro-hold .reveal,
+  .intro-hold .intro-item {
+    opacity: 0 !important;
+    transform: translateY(22px) !important;
+  }
+  .intro-hold .cursor-dot,
+  .intro-hold .cursor-ring {
+    opacity: 0 !important;
+  }
+''';
+
 /// Marks JS as enabled, reveals `.reveal` elements, and handles email fallback.
 /// Direct click handlers on all `.email-fallback` links:
 /// tries mailto, then after 1.5s if page still has focus -> Gmail compose.
@@ -219,6 +234,11 @@ void main() {
         'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
       },
       head: [
+        // Critical CSS - MUST be first to prevent FOUC (flash of unstyled content)
+        .element(
+          tag: 'style',
+          children: [.text(_criticalCss)],
+        ),
         script(content: _themeInitJs),
         script(content: _introHoldJs),
         script(content: _motionJs),
