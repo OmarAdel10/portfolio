@@ -428,7 +428,7 @@ class HeroState extends State<Hero> {
             classes: 'hero-role intro-item',
             styles: Styles(raw: {'--i': '3'}),
             [
-              Component.text('Software Engineer · Flutter, C# .NET & AI Tooling'),
+              Component.text('Software Engineer · Flutter, .NET & AI · Mobile, Web & Desktop'),
             ],
           ),
           p(
@@ -436,7 +436,7 @@ class HeroState extends State<Hero> {
             styles: Styles(raw: {'--i': '4'}),
             [
               Component.text(
-                'I design and build polished cross-platform apps and the systems behind them — Flutter and C# .NET on the front, Python, edge databases, and practical AI integrations under the hood. Focused on clean architecture, great developer experience, and shipping products that feel premium.',
+                'I\'m Omar — a Software Engineer who builds cross-platform apps and the systems behind them. Flutter on the front (mobile, web via Jaspr, desktop), .NET for backend services, Python for the AI work that started in university and never really stopped.\n\nI use AI daily in my workflow — Claude Code, Codex, Opencode, Hermes — as a force multiplier for the parts I\'ve already thought through. Obsessed with the details that make an app feel *right*: micro-interactions, consistent spacing, animations that don\'t get in the way. The kind of polish you only notice when it\'s missing.\n\nNight person. Mornings are for other people. I procrastinate like it\'s a discipline, then learn an entire semester\'s worth of material in one night when the deadline hits — works every time.\n\nMostly at my desk, studying, shipping, breaking things on purpose to understand them. But the friends I do have? We make it count when we hang out.\n\nCurrently: sharpening the craft, one side project at a time.',
               ),
             ],
           ),
