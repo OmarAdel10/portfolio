@@ -24,6 +24,19 @@ import 'package:portfolio/app.dart' deferred as _app;
 ///   runApp(...);
 /// }
 /// ```
+/// Loads the deferred `app.dart` library with one retry (~1s) so a transient
+/// chunk-load failure (network/404 race during reload) doesn't leave the app
+/// unhydrated forever. Rethrows on the second failure so Jaspr's existing
+/// logging surfaces it.
+Future<void> _loadApp() async {
+  try {
+    await _app.loadLibrary();
+  } catch (_) {
+    await Future<void>.delayed(const Duration(seconds: 1));
+    await _app.loadLibrary();
+  }
+}
+
 ClientOptions get defaultClientOptions => ClientOptions(
-  clients: {'app': ClientLoader((p) => _app.App(), loader: _app.loadLibrary)},
+  clients: {'app': ClientLoader((p) => _app.App(), loader: _loadApp)},
 );

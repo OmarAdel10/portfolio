@@ -27,7 +27,6 @@ const String _themeInitJs =
 /// Critical CSS to prevent FOUC - hides .reveal and .intro-item elements
 /// before any scripts execute. Must be inlined FIRST in <head>.
 const String _criticalCss = '''
-  .reveal,
   .intro-hold .reveal,
   .intro-hold .intro-item {
     opacity: 0 !important;
@@ -55,23 +54,43 @@ const String _motionJs = """
 (function(){
   var d=document.documentElement;
   d.classList.add('js-enabled');
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  var revealed=[],ticking=false;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ticking=false;
   function revealVisible(){
     var sheet='opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';
     var els=[].slice.call(document.querySelectorAll('.reveal'));
     var vh=window.innerHeight||document.documentElement.clientHeight;
     for(var i=0;i<els.length;i++){
-      var el=els[i]; if(revealed.indexOf(el)>=0)continue;
+      var el=els[i];
+      // Skip only elements that already carry the revealed inline state.
+      // Hydration can wipe style attributes (DomRenderElement.update()), so
+      // bookkeeping by element identity poisons itself — re-check current
+      // style instead, so wiped elements get re-revealed on the next pass.
+      if(el.style.opacity==='1') continue;
       var r=el.getBoundingClientRect();
-      if(r.top<vh){ el.style.transition=sheet; el.style.opacity='1'; el.style.transform='translateY(0)'; revealed.push(el); }
+      if(r.top<vh){
+        if(reduce){
+          // Reduced motion: reveal immediately without animation
+          el.style.opacity='1';
+          el.style.transform='translateY(0)';
+        }else{
+          el.style.transition=sheet; el.style.opacity='1'; el.style.transform='translateY(0)';
+        }
+      }
     }
   }
-  function request(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; revealVisible(); }); } }
-  window.addEventListener('scroll',request,{passive:true});
-  window.addEventListener('resize',request);
-  var mut=new MutationObserver(request); mut.observe(d,{childList:true,subtree:true});
-  revealVisible(); setTimeout(revealVisible,500); setTimeout(revealVisible,1600);
+  if(reduce){
+    // Reduced motion: reveal all immediately, no scroll listeners needed
+    revealVisible();
+    // Also handle elements added later (e.g., after hydration)
+    new MutationObserver(revealVisible).observe(d,{childList:true,subtree:true});
+  }else{
+    function request(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; revealVisible(); }); } }
+    window.addEventListener('scroll',request,{passive:true});
+    window.addEventListener('resize',request);
+    var mut=new MutationObserver(request); mut.observe(d,{childList:true,subtree:true});
+    revealVisible(); setTimeout(revealVisible,500); setTimeout(revealVisible,1600);
+  }
 
   // ---- Email fallback (mailto -> Gmail) ----
   var EMAIL = 'omaradel1.dev@gmail.com';
