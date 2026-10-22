@@ -128,6 +128,14 @@ const Map<String, String> lightVars = {
   '--focus': 'rgba(59,130,246,0.5)',
   '--cursor-fill': '#111111',
   '--cursor-edge': '#ffffff',
+  // Mascot logo theming (dark lines + cream face in both themes; the dark
+  // theme maps them through its own --ink/--canvas, which resolve to the
+  // same visual pairing).
+  '--mascot-ink': 'var(--ink)',
+  '--mascot-paper': 'var(--canvas)',
+  // Hair rim color: only used by the dark-theme rule below, where the ink
+  // (== canvas) would otherwise vanish against the dark page background.
+  '--mascot-hair-edge': 'var(--ink)',
 };
 
 /// CSS custom properties that define the **dark** theme, derived from the
@@ -166,6 +174,11 @@ const Map<String, String> darkVars = {
   '--focus': 'rgba(96,165,250,0.5)',
   '--cursor-fill': '#ffffff',
   '--cursor-edge': '#111111',
+  // Dark theme keeps the mascot readable: cream face, dark lines.
+  '--mascot-ink': 'var(--canvas)',
+  '--mascot-paper': 'var(--ink)',
+  // Lighter rim so the hair silhouette reads against the dark canvas.
+  '--mascot-hair-edge': 'var(--ash)',
 };
 
 List<StyleRule> get _cupertinoIconStyles => [
@@ -683,6 +696,26 @@ List<StyleRule> get styles => [
         'display': 'none',
       },
     ),
+    // Keep the mascot fully static under reduced motion (no blink, no head
+    // droop, no Zzz — the near-zero-duration global rule above would still
+    // let the `forwards` sleep animations snap to their end state).
+    css(
+      '.logo-fab.attention #ear-left, .logo-fab.attention #ear-right, '
+      '.logo-fab.attention #hair, .logo-fab.attention #eyelid-left, '
+      '.logo-fab.attention #eyelid-right, .logo-fab.attention #head, '
+      '.logo-fab.attention #eyebrow-left, .logo-fab.attention #eyebrow-right, '
+      '.logo-fab.sleeping #eyelid-left, .logo-fab.sleeping #eyelid-right, '
+      '.logo-fab.sleeping #head, .logo-fab.sleeping #ear-left, '
+      '.logo-fab.sleeping #ear-right, .logo-fab.sleeping #mascot, '
+      '.logo-fab.sleeping::before, .logo-fab.sleeping::after, '
+      '.logo-fab.surprised #mascot, .logo-fab.surprised #head, '
+      '.logo-fab.blink #eyelid-left, .logo-fab.blink #eyelid-right, '
+      '.logo-fab svg',
+    ).styles(
+      raw: const {
+        'animation': 'none !important',
+      },
+    ),
   ]),
 
   // ---------- Intro staggered reveal (driven by Hero removing .intro-hold) ----------
@@ -704,46 +737,372 @@ List<StyleRule> get styles => [
     },
   ),
 
-  // ---------- ChatBot avatar (Ask Nono floating button) ----------
-  css.keyframes('chatbotFloat', {
-    '0%': Styles(raw: {'transform': 'translateY(0) scale(1)'}),
-    '50%': Styles(raw: {'transform': 'translateY(-10px) scale(1.05)'}),
-    '100%': Styles(raw: {'transform': 'translateY(0) scale(1)'}),
+  // ---------- Mascot logo (Ask Nono floating button) ----------
+  // The button (`.logo-fab`) stays still at rest; the AIAssistant state adds
+  // `.attention` for a ~1.2s playful sequence every 90–120s, or `.sleeping`
+  // after ~2.5 min of no interaction. Part selectors target the inlined
+  // layered SVG groups by ID (see lib/components/logo.dart).
+
+  // ===== ATTENTION =====
+  css.keyframes('logoEarWiggle', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '15%': Styles(raw: {'transform': 'rotate(-8deg)'}),
+    '30%': Styles(raw: {'transform': 'rotate(8deg)'}),
+    '45%': Styles(raw: {'transform': 'rotate(-5deg)'}),
+    '60%': Styles(raw: {'transform': 'rotate(5deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(-3deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
   }),
-  css.keyframes('chatbotPulse', {
-    '0%': Styles(raw: {'transform': 'scale(1)', 'opacity': '0.8'}),
-    '50%': Styles(raw: {'transform': 'scale(1.1)', 'opacity': '1'}),
-    '100%': Styles(raw: {'transform': 'scale(1)', 'opacity': '0.8'}),
+  // The right ear wiggles opposite the left, for an asymmetric, playful beat.
+  css.keyframes('logoEarWiggleRight', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '15%': Styles(raw: {'transform': 'rotate(8deg)'}),
+    '30%': Styles(raw: {'transform': 'rotate(-8deg)'}),
+    '45%': Styles(raw: {'transform': 'rotate(5deg)'}),
+    '60%': Styles(raw: {'transform': 'rotate(-5deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(3deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
   }),
-  css('.chatbot-avatar').styles(
+  css.keyframes('logoHairSway', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '20%': Styles(raw: {'transform': 'rotate(-3deg)'}),
+    '40%': Styles(raw: {'transform': 'rotate(3deg)'}),
+    '60%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+    '80%': Styles(raw: {'transform': 'rotate(2deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+  css.keyframes('logoEyeBlink', {
+    '0%': Styles(raw: {'transform': 'scaleY(1)'}),
+    '10%': Styles(raw: {'transform': 'scaleY(0)'}),
+    '20%': Styles(raw: {'transform': 'scaleY(1)'}),
+    '100%': Styles(raw: {'transform': 'scaleY(1)'}),
+  }),
+  css.keyframes('logoHeadTilt', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '25%': Styles(raw: {'transform': 'rotate(-4deg)'}),
+    '50%': Styles(raw: {'transform': 'rotate(4deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+  css.keyframes('logoBrowRaise', {
+    // SVG user units: -30 ≈ 2.5px on screen — a subtle raise you can catch.
+    '0%': Styles(raw: {'transform': 'translateY(0)'}),
+    '30%': Styles(raw: {'transform': 'translateY(-30px)'}),
+    '60%': Styles(raw: {'transform': 'translateY(-15px)'}),
+    '100%': Styles(raw: {'transform': 'translateY(0)'}),
+  }),
+
+  // ===== SLEEP =====
+  css.keyframes('logoHeadNod', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '25%': Styles(raw: {'transform': 'rotate(2deg)'}),
+    '50%': Styles(raw: {'transform': 'rotate(-3deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(-1deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+  }),
+  css.keyframes('logoEarRelax', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(-10deg)'}),
+  }),
+  css.keyframes('logoEarRelaxRight', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(10deg)'}),
+  }),
+  css.keyframes('logoBreathing', {
+    '0%': Styles(raw: {'transform': 'scale(1)'}),
+    '50%': Styles(raw: {'transform': 'scale(1.01)'}),
+    '100%': Styles(raw: {'transform': 'scale(1)'}),
+  }),
+  // One "Z" drifting up and fading out.
+  css.keyframes('logoZzzFloat', {
+    '0%': Styles(raw: {'transform': 'translateY(0) scale(0.6)', 'opacity': '0'}),
+    '15%': Styles(raw: {'opacity': '1'}),
+    '85%': Styles(raw: {'opacity': '1'}),
+    '100%': Styles(raw: {'transform': 'translateY(-34px) scale(1.1)', 'opacity': '0'}),
+  }),
+  // Always-on gentle bob so the mascot feels alive even at rest.
+  css.keyframes('logoFloatBob', {
+    '0%': Styles(raw: {'transform': 'translateY(0)'}),
+    '50%': Styles(raw: {'transform': 'translateY(-8px)'}),
+    '100%': Styles(raw: {'transform': 'translateY(0)'}),
+  }),
+  // One quick blink, played when AIAssistantState adds `.blink` at a random
+  // 3–9s cadence (Dart-driven — CSS loops can't do random intervals).
+  css.keyframes('logoBlink', {
+    '0%': Styles(raw: {'transform': 'scaleY(1)'}),
+    '50%': Styles(raw: {'transform': 'scaleY(0.05)'}),
+    '100%': Styles(raw: {'transform': 'scaleY(1)'}),
+  }),
+  css('.logo-fab.blink #eyelid-left, .logo-fab.blink #eyelid-right').styles(
     raw: const {
-      'width': '56px',
-      'height': '56px',
-      'border-radius': '50%',
+      'animation': 'logoBlink 0.18s ease-in-out',
+      'transform-origin': '50% 20%',
+    },
+  ),
+
+  // ===== SURPRISE (startled self-wake) =====
+  // Quick body jolt: pop up, settle back.
+  css.keyframes('logoStartle', {
+    '0%': Styles(raw: {'transform': 'scale(1)'}),
+    '30%': Styles(raw: {'transform': 'scale(1.07) rotate(-1deg)'}),
+    '60%': Styles(raw: {'transform': 'scale(0.98)'}),
+    '100%': Styles(raw: {'transform': 'scale(1)'}),
+  }),
+  // Head snaps up as it startles.
+  css.keyframes('logoHeadJolt', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '35%': Styles(raw: {'transform': 'rotate(-4deg)'}),
+    '70%': Styles(raw: {'transform': 'rotate(2deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+
+  // ===== Button shell (transparent floating character) =====
+  css('.logo-fab').styles(
+    raw: const {
+      'width': '120px',
+      'height': '120px',
       'display': 'flex',
       'align-items': 'center',
       'justify-content': 'center',
-      'background': 'var(--primary)',
-      'color': 'var(--on-primary)',
-      'font-size': '24px',
-      'font-weight': '700',
-      'border': '3px solid var(--canvas)',
-      'box-shadow': '0 8px 24px -8px rgba(35, 37, 29, 0.25)',
-      'animation': 'chatbotFloat 4s ease-in-out infinite, chatbotPulse 2.5s ease-in-out infinite',
+      'background': 'transparent',
+      'border': 'none',
+      'padding': '0',
       'cursor': 'pointer',
-      'transition': 'all 0.3s ease',
+      'transition': 'transform 0.3s ease',
+      // Let ears/hair/Zzz exceed the bounds while animating.
+      'overflow': 'visible',
+      'position': 'relative',
     },
   ),
-  css('.chatbot-avatar:hover').styles(
+  css('.logo-fab svg').styles(
     raw: const {
-      'transform': 'scale(1.15)',
-      'border-color': 'var(--on-primary)',
-      'box-shadow': '0 12px 32px -10px rgba(35, 37, 29, 0.35)',
+      'width': '112px',
+      'height': '112px',
+      'display': 'block',
+      // Silhouette shadow that follows the character, not a circle. The bob
+      // lives on the svg (not the button) so the hover scale on the button
+      // isn't overridden by the running animation.
+      'filter': 'drop-shadow(0 10px 18px rgba(35, 37, 29, 0.28))',
+      'animation': 'logoFloatBob 5.5s ease-in-out infinite',
     },
   ),
-  css('.chatbot-avatar:active').styles(
+  css('.logo-fab:hover').styles(
     raw: const {
-      'transform': 'scale(0.95)',
+      'transform': 'scale(1.06)',
+    },
+  ),
+  css('.logo-fab:active').styles(
+    raw: const {'transform': 'scale(0.95)'},
+  ),
+  css('.logo-fab:focus-visible').styles(
+    raw: const {'outline': '2px solid var(--primary)', 'outline-offset': '2px'},
+  ),
+
+  // ===== Sleep-only shapes (hidden by default inside the SVG's own style) =====
+  // Closed-lid arcs: a soft ink stroke in place of the open eye.
+  css(
+    '.logo-fab #eye-closed-left path, .logo-fab #eye-closed-right path',
+  ).styles(
+    raw: const {
+      'fill': 'none',
+      'stroke': 'var(--mascot-ink)',
+      'stroke-width': '9',
+      'stroke-linecap': 'round',
+    },
+  ),
+  // Sleep mouth: a small ring (dark outline, face-colored center).
+  css('.logo-fab #mouth-sleep ellipse').styles(
+    raw: const {
+      'fill': 'var(--mascot-paper)',
+      'stroke': 'var(--mascot-ink)',
+      'stroke-width': '8',
+    },
+  ),
+  // Fade these in/out smoothly when the sleeping class toggles.
+  css(
+    '.logo-fab #eye-closed-left, .logo-fab #eye-closed-right, '
+    '.logo-fab #mouth-sleep',
+  ).styles(
+    raw: const {
+      'transition': 'opacity 1.2s ease',
+    },
+  ),
+
+  // Dark mode only: the ink (== canvas) would vanish against the dark page
+  // background, so the hair gets a thin lighter rim and the whole mascot a
+  // faint cream glow. Light mode needs neither — dark ink on light canvas.
+  css('html[data-theme="dark"] .logo-fab #hair path').styles(
+    raw: const {
+      'stroke': 'var(--mascot-hair-edge)',
+      // ≈1.1px on screen: the viewBox is ~1420 units shown at 112px, so the
+      // SVG's own stroke-width:1 renders at ~0.08px — invisible.
+      'stroke-width': '14',
+      'stroke-linejoin': 'round',
+    },
+  ),
+  css('html[data-theme="dark"] .logo-fab svg').styles(
+    raw: const {
+      'filter':
+          'drop-shadow(0 10px 18px rgba(35, 37, 29, 0.28)) '
+          'drop-shadow(0 0 20px rgba(233, 234, 226, 0.12))',
+    },
+  ),
+
+  // ===== Attention state (part-level selectors) =====
+  css('.logo-fab.attention #ear-left').styles(
+    raw: const {
+      'animation': 'logoEarWiggle 1.2s ease-in-out',
+      'transform-origin': '100% 50%',
+    },
+  ),
+  css('.logo-fab.attention #ear-right').styles(
+    raw: const {
+      'animation': 'logoEarWiggleRight 1.2s ease-in-out',
+      'transform-origin': '0% 50%',
+    },
+  ),
+  css('.logo-fab.attention #hair').styles(
+    raw: const {
+      'animation': 'logoHairSway 1.2s ease-in-out',
+      'transform-origin': '50% 100%',
+    },
+  ),
+  css('.logo-fab.attention #eyelid-left, .logo-fab.attention #eyelid-right').styles(
+    raw: const {
+      'animation': 'logoEyeBlink 1.2s ease-in-out',
+      'transform-origin': '50% 20%',
+    },
+  ),
+  css('.logo-fab.attention #head').styles(
+    raw: const {
+      'animation': 'logoHeadTilt 1.2s ease-in-out',
+    },
+  ),
+  css('.logo-fab.attention #eyebrow-left, .logo-fab.attention #eyebrow-right').styles(
+    raw: const {
+      'animation': 'logoBrowRaise 1.2s ease-in-out',
+    },
+  ),
+
+  // ===== Sleep state =====
+  // Eyes: the open eye (pupil + line-work eyelid) fades out and two gentle
+  // closed-lid arcs fade in — a real "peacefully closed" look instead of the
+  // old squashed-eyelid dot.
+  css(
+    '.logo-fab.sleeping #pupil-left, .logo-fab.sleeping #pupil-right, '
+    '.logo-fab.sleeping #eyelid-left, .logo-fab.sleeping #eyelid-right',
+  ).styles(
+    raw: const {
+      'opacity': '0',
+      'transition': 'opacity 1s ease',
+    },
+  ),
+  css(
+    '.logo-fab.sleeping #eye-closed-left, .logo-fab.sleeping #eye-closed-right',
+  ).styles(
+    raw: const {
+      'opacity': '1',
+      // Arcs fade in just after the eye starts fading out.
+      'transition': 'opacity 1.2s ease 0.4s',
+    },
+  ),
+  // Mouth: the smile fades out and a small "o" fades in.
+  css('.logo-fab.sleeping #mouth').styles(
+    raw: const {
+      'opacity': '0',
+      'transition': 'opacity 1s ease',
+    },
+  ),
+  css('.logo-fab.sleeping #mouth-sleep').styles(
+    raw: const {
+      'opacity': '1',
+      'transition': 'opacity 1.2s ease 0.4s',
+    },
+  ),
+  css('.logo-fab.sleeping #head').styles(
+    raw: const {
+      'animation': 'logoHeadNod 4s ease-in-out forwards',
+    },
+  ),
+  css('.logo-fab.sleeping #ear-left').styles(
+    raw: const {
+      'animation': 'logoEarRelax 2s ease-out forwards',
+      'transform-origin': '100% 50%',
+    },
+  ),
+  css('.logo-fab.sleeping #ear-right').styles(
+    raw: const {
+      'animation': 'logoEarRelaxRight 2s ease-out forwards',
+      'transform-origin': '0% 50%',
+    },
+  ),
+  css('.logo-fab.sleeping #mascot').styles(
+    raw: const {
+      'animation': 'logoBreathing 3s ease-in-out infinite',
+    },
+  ),
+
+  // ===== Surprise state (startled self-wake) =====
+  // Eyes need nothing here: dropping .sleeping snaps them wide open, which
+  // is exactly the jolt we want. The sleep "o" mouth doubles as a shock
+  // mouth, and the brows shoot up and hold for the whole reaction.
+  css('.logo-fab.surprised #mascot').styles(
+    raw: const {
+      'animation': 'logoStartle 0.6s ease-out',
+    },
+  ),
+  css('.logo-fab.surprised #head').styles(
+    raw: const {
+      'animation': 'logoHeadJolt 0.5s ease-out',
+    },
+  ),
+  css(
+    '.logo-fab.surprised #eyebrow-left, .logo-fab.surprised #eyebrow-right',
+  ).styles(
+    raw: const {
+      // SVG transforms are in user units, not screen px — the viewBox is
+      // ~1420 units shown at 112px (scale ≈ 0.08), so -60 units ≈ 5px on
+      // screen: a clear shock raise.
+      'transform': 'translateY(-60px)',
+      'transition': 'transform 0.25s ease-out',
+    },
+  ),
+  css('.logo-fab.surprised #mouth-sleep').styles(
+    raw: const {
+      'opacity': '1',
+    },
+  ),
+  css('.logo-fab.surprised #mouth').styles(
+    raw: const {
+      'opacity': '0',
+    },
+  ),
+
+  // Zzz bubbles: two CSS "Z" glyphs drifting up from the head, staggered.
+  // Rendered as text content so they follow --mascot-ink in both themes.
+  css('.logo-fab.sleeping::before, .logo-fab.sleeping::after').styles(
+    raw: const {
+      'content': '"Z"',
+      'position': 'absolute',
+      'top': '-4px',
+      'right': '2px',
+      'font-family': 'var(--font-sans, system-ui, sans-serif)',
+      'font-size': '13px',
+      'font-weight': '700',
+      // var(--ink) is the only ink tone that contrasts with the *page*
+      // background in both themes (var(--mascot-ink) equals the dark canvas
+      // in dark mode, which made the Zzz invisible there).
+      'color': 'var(--ink)',
+      'pointer-events': 'none',
+      'animation': 'logoZzzFloat 3s ease-in-out infinite',
+    },
+  ),
+  css('.logo-fab.sleeping::after').styles(
+    raw: const {
+      'animation-delay': '1.5s',
+      'right': '12px',
+      'top': '2px',
+      'font-size': '10px',
     },
   ),
 ];
