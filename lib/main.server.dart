@@ -55,7 +55,6 @@ const String _motionJs = """
   var d=document.documentElement;
   d.classList.add('js-enabled');
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var ticking=false;
   function revealVisible(){
     var sheet='opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';
     var els=[].slice.call(document.querySelectorAll('.reveal'));
@@ -67,6 +66,13 @@ const String _motionJs = """
       // bookkeeping by element identity poisons itself — re-check current
       // style instead, so wiped elements get re-revealed on the next pass.
       if(el.style.opacity==='1') continue;
+      // Once the pinned scrub is active it owns the reveal of the panel, so
+      // these elements must NOT get inline styles (they would beat the CSS
+      // custom properties that drive the scrub). Before the hero intro
+      // finishes (!heroReady) the panel stays hidden via the CSS defaults so
+      // it only appears on scroll; once the scene deactivates it reverts to
+      // the normal reveal-on-scroll path.
+      if(el.closest('.scene-stage') && (sceneActive || !heroReady)) continue;
       var r=el.getBoundingClientRect();
       if(r.top<vh){
         if(reduce){
@@ -84,74 +90,184 @@ const String _motionJs = """
       }
     }
   }
-  if(reduce){
-    // Reduced motion: reveal all immediately, no scroll listeners needed
-    revealVisible();
-    // Also handle elements added later (e.g., after hydration)
-    new MutationObserver(revealVisible).observe(d,{childList:true,subtree:true});
-  }else{
-    function request(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; revealVisible(); }); } }
-    window.addEventListener('scroll',request,{passive:true});
-    window.addEventListener('resize',request);
-    var mut=new MutationObserver(request); mut.observe(d,{childList:true,subtree:true});
-    revealVisible(); setTimeout(revealVisible,500); setTimeout(revealVisible,1600);
+  // The scroll listener and the rAF scheduler live in the scene block below,
+  // so there is exactly one of each for the whole page.
+
+  // ---- Scroll-scrubbed hero -> Expertise scene ---------------------------
+  // After the hero intro finishes (.phase-done), the .scene wrapper (400vh)
+  // holds a sticky .scene-stage (left = hero, right = expertise). Scroll
+  // drives progress p (0..1); JS writes CSS custom properties and CSS applies
+  // the hero shift, expertise title and cards. Fully reversible on scroll up.
+  // No scroll-lock, no preventDefault — scrolling is never hijacked.
+  var sceneActive = false;
+  var heroReady = false;
+  var geometryReady = false;
+  var wrapperTop = 0, wrapperHeight = 0, vh = 0, heroShiftMax = 0;
+  var heroInner = null, titleEl = null, cards = [];
+
+  function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+  function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+  function getScene(){ return document.querySelector('.scene'); }
+  function getStage(){ return document.querySelector('.scene-stage'); }
+  function measureScene(){
+    var s = getScene();
+    if(!s) return;
+    var r = s.getBoundingClientRect();
+    wrapperTop = r.top + window.pageYOffset;
+    wrapperHeight = s.offsetHeight || r.height;
+    vh = window.innerHeight || d.clientHeight;
+    // The stage sticks right below the floating header pill.
+    var header = document.querySelector('.site-header');
+    var headerH = header ? Math.round(header.getBoundingClientRect().height) : 64;
+    d.style.setProperty('--scene-top', headerH + 'px');
+  }
+  // How far the hero may travel left before the hero column would clip it.
+  // Measured on the untransformed element, never per frame.
+  function measureHeroShift(){
+    heroShiftMax = 0;
+    if(!heroInner) return;
+    var hero = heroInner.closest('.hero');
+    if(!hero) return;
+    var prev = heroInner.style.transform;
+    heroInner.style.transform = 'none';
+    var hr = heroInner.getBoundingClientRect();
+    var herr = hero.getBoundingClientRect();
+    var hcs = window.getComputedStyle(hero);
+    heroInner.style.transform = prev;
+    var heroLeft = herr.left + (parseFloat(hcs.paddingLeft) || 0);
+    heroShiftMax = Math.max(0, hr.left - heroLeft);
+  }
+  // Strip any inline reveal state from the panel so the scrub owns it.
+  function resetSceneEls(){
+    var owned = [].slice.call(document.querySelectorAll('.scene-stage .reveal'));
+    owned.forEach(function(el){
+      el.style.opacity='';
+      el.style.transform='';
+      el.style.transition='';
+      el.style.transitionDelay='';
+      el.style.removeProperty('--reveal');
+      el.style.removeProperty('--card-blur');
+      el.classList.remove('lit');
+    });
+  }
+  function initSceneEls(){
+    heroInner = document.querySelector('.hero-inner');
+    titleEl = document.querySelector('.expertise .section-head');
+    cards = [].slice.call(document.querySelectorAll('.skill-card.reveal'));
+    cards.forEach(function(c){ c._done = false; });
+    resetSceneEls();
+    measureHeroShift();
+  }
+  function tickCard(card, local){
+    if(local >= 1 && !card._done){
+      card._done = true;
+      card.classList.add('lit');
+      setTimeout(function(){ card.classList.remove('lit'); }, 800);
+    }
+    if(local < 1){ card._done = false; card.classList.remove('lit'); }
+  }
+  function applyScene(p){
+    // Hero glides left (p 0.00 -> 0.30), existing shift look.
+    var h = easeOutCubic(clamp01(p / 0.30));
+    if(heroInner) heroInner.style.setProperty('--hero-shift', (heroShiftMax * h).toFixed(2) + 'px');
+    if(p > 0.01) d.classList.add('hero-shifted'); else d.classList.remove('hero-shifted');
+    // Expertise title (p 0.25 -> 0.40).
+    var t = easeOutCubic(clamp01((p - 0.25) / 0.15));
+    if(titleEl) titleEl.style.setProperty('--reveal', t);
+    // Cards, staggered with overlapping ranges.
+    var vals = [
+      easeOutCubic(clamp01((p - 0.40) / 0.20)),
+      easeOutCubic(clamp01((p - 0.55) / 0.20)),
+      easeOutCubic(clamp01((p - 0.70) / 0.20))
+    ];
+    for(var i=0;i<cards.length;i++){
+      var card = cards[i];
+      if(!card) continue;
+      var r = vals[i] !== undefined ? vals[i] : 0;
+      card.style.setProperty('--reveal', r);
+      // Depth blur: a revealed card picks up a little blur as the cards below
+      // it come in, so the stack reads as depth instead of a flat list.
+      var blur = 8 * (1 - r);
+      for(var j=i+1;j<cards.length;j++){
+        blur += 0.8 * (vals[j] !== undefined ? vals[j] : 0);
+      }
+      card.style.setProperty('--card-blur', blur.toFixed(2) + 'px');
+      tickCard(card, r);
+    }
   }
 
-  // ---- Orchestrated entry: on the first scroll after the hero intro
-  // finishes, lock the page at the hero section, push the hero left, and
-  // reveal the expertise cards one by one on the right. The screen never
-  // scrolls a pixel away from the hero until the last card has faded in,
-  // after which scrolling is released.
-  var expertiseShown = false;
-  var scrollLocking = false;
-  var sheet = 'opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';
-  function runExpertiseReveal(){
-    if(expertiseShown) return;
-    expertiseShown = true;
-    // Lock the viewport at the hero section and push the hero left.
-    d.classList.add('scroll-lock');
-    d.classList.add('hero-shifted');
-    d.style.overflow = 'hidden';
-    // Fade in the expertise section title (eyebrow + title + subtitle).
-    var title = document.querySelector('.expertise .section-head');
-    if (title) {
-      title.style.transition = sheet;
-      title.style.opacity = '1';
-      title.style.transform = 'translateY(0)';
+  var ticking = false;
+  function sceneTick(){
+    if(!geometryReady){ measureScene(); geometryReady = true; }
+    var scrollY = window.pageYOffset || d.scrollTop;
+    if(sceneActive){
+      var span = wrapperHeight - vh;
+      if(span > 0){
+        var p = clamp01((scrollY - wrapperTop) / span);
+        applyScene(p);
+      }
     }
-    // Reveal each expertise card one after another.
-    var cards = [].slice.call(document.querySelectorAll('.skill-card.reveal'));
-    cards.forEach(function(card, i){
-      card.style.transition = sheet;
-      card.style.transitionDelay = (i * 180) + 'ms';
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    });
-    // Release scroll once the final card has finished fading in.
-    setTimeout(function(){
-      d.classList.remove('scroll-lock');
-      d.style.overflow = '';
-      scrollLocking = false;
-    }, cards.length * 180 + 400);
+    revealVisible();
+    ticking = false;
   }
-  // Wait for the hero intro to finish (hero.dart writes .phase-done), then
-  // intercept the very first scroll attempt to run the reveal sequence.
-  var heroReady = false;
+  function request(){ if(!ticking){ ticking = true; requestAnimationFrame(sceneTick); } }
+
+  function applyNoScene(){
+    // The pinned scene needs room for the hero and the three cards side by
+    // side: below 900px wide (or 700px tall) the page falls back to the
+    // normal stacked document.
+    var noScene = reduce
+      || (window.innerWidth || d.clientWidth) < 900
+      || (window.innerHeight || d.clientHeight) < 700;
+    d.classList.toggle('no-scene', noScene);
+    var wantActive = !noScene && heroReady;
+    if(wantActive !== sceneActive){
+      sceneActive = wantActive;
+      var st = getStage();
+      if(st){
+        if(wantActive){ st.classList.add('scrubbed'); initSceneEls(); }
+        else { st.classList.remove('scrubbed'); d.classList.remove('hero-shifted'); resetSceneEls(); }
+      }
+      geometryReady = false;
+    }
+    measureScene();
+  }
+
+  // Initial layout class + first reveal pass.
+  applyNoScene();
+  revealVisible();
+
+  // Wait for the hero intro to finish (.phase-done), then activate the scrub.
   function pollHero(){
     if(!heroReady && document.querySelector('.hero.phase-done')){
       heroReady = true;
-      window.addEventListener('scroll', function(e){
-        if(expertiseShown || scrollLocking) return;
-        scrollLocking = true;
-        e.preventDefault();
-        window.scrollTo(0, 0);
-        runExpertiseReveal();
-      }, {passive: false});
+      applyNoScene();
+      request();
     }
   }
   pollHero();
   var heroPoll = setInterval(pollHero, 100);
   setTimeout(function(){ clearInterval(heroPoll); }, 20000);
+
+  window.addEventListener('scroll', request, {passive: true});
+  window.addEventListener('resize', function(){ geometryReady = false; measureScene(); measureHeroShift(); applyNoScene(); request(); });
+  // Deep links / header nav link to '#expertise' resolve inside the pinned scene
+  // where the panel is hidden until p > 0.25: scroll to the end of the scene so
+  // the panel arrives fully revealed. Falls back to native scroll if the scene
+  // is not yet active (e.g. clicked right after load).
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href="#expertise"]') : null;
+    if(!a || !sceneActive) return;
+    var s = getScene();
+    if(s){
+      e.preventDefault();
+      var endY = (s.getBoundingClientRect().top + window.pageYOffset)
+        + Math.max(0, s.offsetHeight - (window.innerHeight || d.clientHeight));
+      window.scrollTo(0, Math.round(endY));
+    }
+  });
+  new MutationObserver(request).observe(d, {childList: true, subtree: true});
+  request();
 
   // ---- Email fallback (mailto -> Gmail) ----
   var EMAIL = 'omaradel1.dev@gmail.com';

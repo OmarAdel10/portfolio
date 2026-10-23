@@ -282,6 +282,8 @@ List<StyleRule> get styles => [
       'scroll-behavior': 'smooth',
       'scroll-padding-top': '78px',
       '-webkit-text-size-adjust': '100%',
+      // `clip` (not `hidden`) keeps position:sticky working.
+      'overflow-x': 'clip',
     },
   ),
   css('section[id]').styles(
@@ -737,28 +739,246 @@ List<StyleRule> get styles => [
     },
   ),
 
-  // ---------- Hero shifts left once the user scrolls (after intro finishes) ----------
-  // Only applies when the hero intro is done (hero writes .phase-done), so the
-  // shift never interrupts the typing intro. align-items/text-align flip
-  // instantly; transform slides smoothly over 0.7s.
+  // ---------- Pinned scroll-scrubbed hero -> Expertise scene ----------
+  // Active only when html is NOT .no-scene (JS adds .no-scene on narrow
+  // viewports or prefers-reduced-motion). .scene is a 400vh scrollable wrapper;
+  // .scene-stage sticks for one full viewport while scroll drives progress p
+  // (0..1) via JS custom properties. Scrolling up reverses everything.
+  css('.scene').styles(
+    raw: const {
+      'height': 'auto',
+    },
+  ),
+  css('.scene-stage').styles(
+    raw: const {
+      'display': 'block',
+      'height': 'auto',
+      'position': 'static',
+    },
+  ),
+  css('html:not(.no-scene) .scene').styles(
+    raw: const {
+      'height': '400vh',
+    },
+  ),
+  // --scene-top is the measured header height; the stage sticks right below
+  // the floating header pill and fills what is left of the viewport.
+  // The stage paints the canvas colour so the dot matrix does not bleed into
+  // the empty right half while the scene is pinned (the hero band used to be
+  // an opaque full-width band, so this matches the original first screen).
+  css('html:not(.no-scene) .scene-stage').styles(
+    raw: const {
+      'position': 'sticky',
+      'top': 'var(--scene-top, 64px)',
+      'height': 'calc(100vh - var(--scene-top, 64px))',
+      'display': 'grid',
+      '--scene-col': '0.55',
+      'grid-template-columns': 'calc(var(--scene-col) * 100%) 1fr',
+      'grid-template-rows': '100%',
+      'align-items': 'stretch',
+      'background-color': 'var(--canvas)',
+    },
+  ),
+  // Hero — compacted inside the pinned stage so the whole bio fits in
+  // (100vh - header) at 1280x720 and 1440x900. The mobile / fallback hero
+  // keeps its original size because these rules are scoped to the scene.
+  css('html:not(.no-scene) .scene-stage .hero').styles(
+    raw: const {
+      'padding-top': '10px',
+      'padding-bottom': '10px',
+      // The hero block rests page-centred, which reaches past the hero
+      // column, so it must not be clipped by the hero box.
+      'overflow': 'visible',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-inner').styles(
+    raw: const {
+      'max-width': '500px',
+      'margin-left': 'auto',
+      'margin-right': 'auto',
+      // Resting offset: centre the hero block on the page instead of inside
+      // the left column. 100% is the hero column (the flex container), so
+      // dividing by the column ratio gives the page width. The scrub then
+      // glides the block flush to the left edge.
+      'left': 'calc((100% / var(--scene-col, 0.55) - 100%) / 2)',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-avatar-wrap').styles(
+    raw: const {
+      'width': '120px',
+      'height': '120px',
+      'margin-bottom': '14px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-avatar-glitch').styles(
+    raw: const {
+      'width': '120px',
+      'height': '120px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-eyebrow').styles(
+    raw: const {
+      'margin-bottom': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-name').styles(
+    raw: const {
+      'font-size': '52px',
+      'margin-bottom': '6px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-pill-wrap').styles(
+    raw: const {
+      'margin-top': '2px',
+      'margin-bottom': '14px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-pill').styles(
+    raw: const {
+      'height': '40px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-role').styles(
+    raw: const {
+      'font-size': '16px',
+      'margin-bottom': '10px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-desc').styles(
+    raw: const {
+      'font-size': '13px',
+      'line-height': '1.55',
+      'margin-bottom': '12px',
+      'max-width': '100%',
+    },
+  ),
+  // Expertise panel: right column, vertically centered, single card column.
+  // overflow-x: clip contains the title's 40px slide-in without creating a
+  // scroll container (which would break the sticky stage).
+  css('html:not(.no-scene) .scene-stage .expertise').styles(
+    raw: const {
+      'display': 'flex',
+      'flex-direction': 'column',
+      'justify-content': 'center',
+      'height': '100%',
+      'padding-top': '0',
+      'padding-bottom': '0',
+      'overflow-x': 'clip',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+    raw: const {
+      'margin-bottom': '20px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .eyebrow').styles(
+    raw: const {
+      'margin-bottom': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .section-title').styles(
+    raw: const {
+      'font-size': '26px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .section-subtitle').styles(
+    raw: const {
+      'font-size': '13px',
+      'margin-top': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+    raw: const {
+      'grid-template-columns': '1fr',
+      'gap': '10px',
+    },
+  ),
+  // Keep card text readable on the narrow right panel.
+  css('html:not(.no-scene) .scene-stage .skill-card').styles(
+    raw: const {
+      'padding': '14px',
+      'border': '1px solid var(--hairline-soft)',
+      'border-radius': '8px',
+      'opacity': 'var(--reveal, 0)',
+      'transform': 'translateY(calc(32px * (1 - var(--reveal, 0)))) scale(calc(0.94 + 0.06 * var(--reveal, 0)))',
+      'filter': 'blur(var(--card-blur, 0px))',
+      'transition': 'border-color 0.4s ease, box-shadow 0.4s ease',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .skill-icon').styles(
+    raw: const {
+      'width': '40px',
+      'height': '40px',
+      'font-size': '20px',
+      'margin-bottom': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .skill-title').styles(
+    raw: const {
+      'font-size': '15px',
+      'margin-bottom': '6px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .skill-description').styles(
+    raw: const {
+      'font-size': '12.5px',
+      'line-height': '1.45',
+    },
+  ),
+  // Hero glides left (0.00->0.30) using the existing shift look, now scrubbed.
+  // The distance is measured by JS so the hero can never be clipped.
+  css('html:not(.no-scene) .hero.phase-done .hero-inner').styles(
+    raw: const {
+      'transform': 'translateX(calc(-1 * var(--hero-shift, 0px)))',
+    },
+  ),
   css('html.hero-shifted .hero.phase-done .hero-inner').styles(
     raw: const {
       'align-items': 'flex-start',
       'text-align': 'left',
-      'transform': 'translateX(-20%)',
-      'transition': 'transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)',
     },
   ),
-  css('html.scroll-lock').styles(
+  // Expertise title (0.25->0.40): fade in, slide from right, blur clears.
+  css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
     raw: const {
-      'overflow': 'hidden !important',
+      'opacity': 'var(--reveal, 0)',
+      'transform': 'translateX(calc(40px * (1 - var(--reveal, 0))))',
+      'filter': 'blur(calc(6px * (1 - var(--reveal, 0))))',
+      'transition': 'none',
     },
   ),
-  css('html.scroll-lock body').styles(
+  // Brief amber border glow when a card finishes revealing.
+  css('html:not(.no-scene) .scene-stage .skill-card.lit').styles(
     raw: const {
-      'overflow': 'hidden !important',
+      'border-color': 'var(--primary)',
+      'box-shadow': '0 0 14px rgba(var(--primary-rgb), 0.35)',
     },
   ),
+  // Short and narrow viewports (e.g. 900x700) cannot fit the compacted hero
+  // and the three cards at once, so tighten the scene a little further.
+  css.media(MediaQuery.all(maxWidth: 1100.px, maxHeight: 760.px), [
+    css('html:not(.no-scene) .scene-stage .hero .hero-desc').styles(
+      raw: const {
+        'font-size': '12.5px',
+        'line-height': '1.45',
+      },
+    ),
+    css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+      raw: const {
+        'margin-bottom': '12px',
+      },
+    ),
+    css('html:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+      raw: const {
+        'gap': '8px',
+      },
+    ),
+    css('html:not(.no-scene) .scene-stage .skill-card').styles(
+      raw: const {
+        'padding': '10px',
+      },
+    ),
+  ]),
 
   // ---------- Mascot logo (Ask Nono floating button) ----------
   // The button (`.logo-fab`) stays still at rest; the AIAssistant state adds

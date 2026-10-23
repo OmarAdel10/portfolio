@@ -31,13 +31,17 @@ class AppState extends State<App> {
     return div(classes: 'app', [
       const Header(),
       div(classes: 'main-content', [
-        const Hero(),
+        div(classes: 'scene', [
+          div(classes: 'scene-stage', [
+            const Hero(),
+            const Expertise(),
+          ]),
+        ]),
         div(
           classes: 'intro-item',
           styles: Styles(raw: {'--i': '7'}),
           [const MarqStrip()],
         ),
-        const Expertise(),
         const FeaturedProject(),
         const AllProjects(),
         const Experience(),
