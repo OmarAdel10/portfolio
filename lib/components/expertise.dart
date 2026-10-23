@@ -41,20 +41,24 @@ class Expertise extends StatelessComponent {
           p(classes: 'section-subtitle', [Component.text('Technologies and areas I specialize in')]),
         ]),
         div(classes: 'skills-grid', [
-          for (final s in skills) _buildSkillCard(s),
+          for (var i = 0; i < skills.length; i++) _buildSkillCard(skills[i], i),
         ]),
       ]),
     ]);
   }
 
-  Component _buildSkillCard(_Skill s) {
-    return div(classes: 'skill-card card reveal', [
-      div(classes: 'skill-icon', [
-        CupertinoIcon(icon: s.icon, color: s.color, size: CupertinoIconSize.lg),
-      ]),
-      h3(classes: 'skill-title', [Component.text(s.title)]),
-      p(classes: 'skill-description', [Component.text(s.description)]),
-    ]);
+  Component _buildSkillCard(_Skill s, int i) {
+    return div(
+      classes: 'skill-card card reveal',
+      attributes: {'data-stagger-index': i.toString()},
+      [
+        div(classes: 'skill-icon', [
+          CupertinoIcon(icon: s.icon, color: s.color, size: CupertinoIconSize.lg),
+        ]),
+        h3(classes: 'skill-title', [Component.text(s.title)]),
+        p(classes: 'skill-description', [Component.text(s.description)]),
+      ],
+    );
   }
 
   @css

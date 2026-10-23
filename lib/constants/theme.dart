@@ -737,6 +737,29 @@ List<StyleRule> get styles => [
     },
   ),
 
+  // ---------- Hero shifts left once the user scrolls (after intro finishes) ----------
+  // Only applies when the hero intro is done (hero writes .phase-done), so the
+  // shift never interrupts the typing intro. align-items/text-align flip
+  // instantly; transform slides smoothly over 0.7s.
+  css('html.hero-shifted .hero.phase-done .hero-inner').styles(
+    raw: const {
+      'align-items': 'flex-start',
+      'text-align': 'left',
+      'transform': 'translateX(-20%)',
+      'transition': 'transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)',
+    },
+  ),
+  css('html.scroll-lock').styles(
+    raw: const {
+      'overflow': 'hidden !important',
+    },
+  ),
+  css('html.scroll-lock body').styles(
+    raw: const {
+      'overflow': 'hidden !important',
+    },
+  ),
+
   // ---------- Mascot logo (Ask Nono floating button) ----------
   // The button (`.logo-fab`) stays still at rest; the AIAssistant state adds
   // `.attention` for a ~1.2s playful sequence every 90–120s, or `.sleeping`

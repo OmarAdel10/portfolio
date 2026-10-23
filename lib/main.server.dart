@@ -74,7 +74,12 @@ const String _motionJs = """
           el.style.opacity='1';
           el.style.transform='translateY(0)';
         }else{
-          el.style.transition=sheet; el.style.opacity='1'; el.style.transform='translateY(0)';
+          el.style.transition=sheet;
+          // Staggered one-by-one reveal: cards carry data-stagger-index and
+          // fade in with an increasing delay so they pop in sequentially.
+          var st=el.getAttribute('data-stagger-index');
+          if(st!==null){el.style.transitionDelay=(parseInt(st,10)*160)+'ms';}
+          el.style.opacity='1'; el.style.transform='translateY(0)';
         }
       }
     }
@@ -91,6 +96,62 @@ const String _motionJs = """
     var mut=new MutationObserver(request); mut.observe(d,{childList:true,subtree:true});
     revealVisible(); setTimeout(revealVisible,500); setTimeout(revealVisible,1600);
   }
+
+  // ---- Orchestrated entry: on the first scroll after the hero intro
+  // finishes, lock the page at the hero section, push the hero left, and
+  // reveal the expertise cards one by one on the right. The screen never
+  // scrolls a pixel away from the hero until the last card has faded in,
+  // after which scrolling is released.
+  var expertiseShown = false;
+  var scrollLocking = false;
+  var sheet = 'opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';
+  function runExpertiseReveal(){
+    if(expertiseShown) return;
+    expertiseShown = true;
+    // Lock the viewport at the hero section and push the hero left.
+    d.classList.add('scroll-lock');
+    d.classList.add('hero-shifted');
+    d.style.overflow = 'hidden';
+    // Fade in the expertise section title (eyebrow + title + subtitle).
+    var title = document.querySelector('.expertise .section-head');
+    if (title) {
+      title.style.transition = sheet;
+      title.style.opacity = '1';
+      title.style.transform = 'translateY(0)';
+    }
+    // Reveal each expertise card one after another.
+    var cards = [].slice.call(document.querySelectorAll('.skill-card.reveal'));
+    cards.forEach(function(card, i){
+      card.style.transition = sheet;
+      card.style.transitionDelay = (i * 180) + 'ms';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    });
+    // Release scroll once the final card has finished fading in.
+    setTimeout(function(){
+      d.classList.remove('scroll-lock');
+      d.style.overflow = '';
+      scrollLocking = false;
+    }, cards.length * 180 + 400);
+  }
+  // Wait for the hero intro to finish (hero.dart writes .phase-done), then
+  // intercept the very first scroll attempt to run the reveal sequence.
+  var heroReady = false;
+  function pollHero(){
+    if(!heroReady && document.querySelector('.hero.phase-done')){
+      heroReady = true;
+      window.addEventListener('scroll', function(e){
+        if(expertiseShown || scrollLocking) return;
+        scrollLocking = true;
+        e.preventDefault();
+        window.scrollTo(0, 0);
+        runExpertiseReveal();
+      }, {passive: false});
+    }
+  }
+  pollHero();
+  var heroPoll = setInterval(pollHero, 100);
+  setTimeout(function(){ clearInterval(heroPoll); }, 20000);
 
   // ---- Email fallback (mailto -> Gmail) ----
   var EMAIL = 'omaradel1.dev@gmail.com';
