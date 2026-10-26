@@ -129,9 +129,7 @@ class AIAssistantState extends State<AIAssistant> {
 
   void _scheduleAttention({bool first = false}) {
     _attentionTimer?.cancel();
-    final delay = first
-        ? _firstAttentionDelay
-        : _attentionMin + _attentionSpan * _random.nextDouble();
+    final delay = first ? _firstAttentionDelay : _attentionMin + _attentionSpan * _random.nextDouble();
     _attentionTimer = Timer(delay, _playAttention);
   }
 
@@ -159,8 +157,7 @@ class AIAssistantState extends State<AIAssistant> {
       // Stay asleep: no more attention sequences until something wakes it.
       _attentionTimer?.cancel();
       // But if nobody shows up, it startles awake on its own after a while.
-      final sleepFor =
-          _sleepBeforeSelfWake + _sleepBeforeSelfWakeSpan * _random.nextDouble();
+      final sleepFor = _sleepBeforeSelfWake + _sleepBeforeSelfWakeSpan * _random.nextDouble();
       _selfWakeTimer = Timer(sleepFor, _selfWake);
     });
   }
@@ -216,7 +213,8 @@ class AIAssistantState extends State<AIAssistant> {
 
   @override
   Component build(BuildContext context) {
-    final fabClasses = 'ai-fab logo-fab'
+    final fabClasses =
+        'ai-fab logo-fab'
         '${_isAnimating ? ' attention' : ''}'
         '${_isSleeping ? ' sleeping' : ''}'
         '${_isSurprised ? ' surprised' : ''}'
@@ -311,7 +309,7 @@ class AIAssistantState extends State<AIAssistant> {
       padding: Padding.all(24.px),
       animation: Animation(
         name: 'aiFadeIn',
-        duration: Duration(milliseconds: 250),
+        duration: durControl,
         curve: Curve.easeOut,
       ),
     ),
@@ -327,7 +325,7 @@ class AIAssistantState extends State<AIAssistant> {
       raw: const {'box-shadow': '0 24px 48px -16px rgba(35, 37, 29, 0.35)'},
       animation: Animation(
         name: 'aiSlideUp',
-        duration: Duration(milliseconds: 250),
+        duration: durControl,
         curve: Curve.easeOut,
       ),
     ),
@@ -381,7 +379,7 @@ class AIAssistantState extends State<AIAssistant> {
       cursor: .pointer,
       transition: Transition(
         'all',
-        duration: Duration(milliseconds: 150),
+        duration: durMicro,
         curve: Curve.easeOut,
       ),
     ),

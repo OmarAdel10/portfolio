@@ -8,10 +8,47 @@ import '../constants/theme.dart';
 void Function()? onToggleNono;
 
 void _openCV() {
-  web.window.open("https://example.com/cv.pdf", "_blank");
+  // `noopener` keeps the new tab from reaching back through `window.opener`.
+  web.window.open(cvUrl, "_blank", "noopener,noreferrer");
 }
 
 enum _Phase { waiting, avatarIn, cursorIn, travel, press, sweep, pill, drift, done }
+
+/// The intro choreography's own clock.
+///
+/// These are *script beats*, not interface feedback: the cursor travels to
+/// the name, presses, sweeps the highlight across it and drifts away. They
+/// deliberately sit outside the four motion tokens, which govern hover,
+/// press and arrival states. The one-off beats are named here so the
+/// sequence reads as a score instead of a pile of magic numbers.
+class _Intro {
+  const _Intro._();
+
+  // Beat lengths, in milliseconds.
+  static const int holdMs = 200;
+  static const int avatarInMs = 550;
+  static const int cursorInMs = 250;
+  static const int travelMs = 1050;
+  static const int pressMs = 140;
+  static const int sweepMs = 720;
+  static const int pillMs = 380;
+  static const int driftMs = 560;
+  static const int settleMs = 1500;
+  static const int typingMs = 90;
+  static const int glitchMs = 3000;
+  static const int pollMs = 100;
+
+  // The sweep holds the name for a beat before the actions land.
+  static const int actionsDelayMs = 300;
+
+  // The drift fades a touch faster than it travels.
+  static const int driftMoveMs = 500;
+  static const int driftFadeMs = 350;
+
+  // Two easing curves, one per gesture.
+  static const String travelEase = 'cubic-bezier(.22,.8,.2,1)';
+  static const String sweepEase = 'cubic-bezier(.45,0,.2,1)';
+}
 
 class Hero extends StatefulComponent {
   const Hero({super.key});
@@ -21,20 +58,33 @@ class Hero extends StatefulComponent {
 
 class HeroState extends State<Hero> {
   _Phase _phase = _Phase.waiting;
-  bool _passedCursor = false;
-  bool _passedSelected = false;
-  bool _passedPill = false;
   Timer? _phaseTimer;
   Timer? _typingTimer;
   Timer? _glitchTimer;
+  Timer? _scrollPoll;
   int _glitchSeed = 0;
 
   // Intro reveal/typing state.
+  //
+  // The strings start at their full value so the server-rendered document
+  // contains the real name and role — a no-JS reader and a crawler get a
+  // complete hero. The client-side intro then blanks them and types them
+  // again; the `phase-*` classes below keep the pre-intro copy out of the
+  // way while JavaScript is driving the sequence.
   bool _avatarVisible = false;
-  String _eyebrowText = '';
-  String _nameText = '';
-  static const String _eyebrowFull = 'Hello, I am';
+  bool _eyebrowStarted = false;
+  bool _nameStarted = false;
+  String _eyebrowText = _eyebrowFull;
+  String _nameText = _nameFull;
+  static const String _eyebrowFull = 'Software Engineer';
   static const String _nameFull = 'Omar Adel';
+
+  /// The positioning line that replaces the old paragraph-length bio.
+  static const String _positioning =
+      'Cross-platform apps, the backend and cloud behind them, and the AI tooling that speeds it up.';
+
+  /// The stack line — mono, comma separated, no middle dots.
+  static const String _stack = 'Flutter, .NET, AI, mobile, web, desktop';
 
   // Cursor (overlay arrow) state — always rendered, driven by inline styles.
   String _cursorTransform = 'translate(calc(6vw - 5.3px), calc(8vh - 0.8px))';
@@ -56,8 +106,27 @@ class HeroState extends State<Hero> {
     super.initState();
     if (kIsWeb) {
       // Short empty-screen delay; all later phases keep their original spacing.
-      _phaseTimer = Timer(const Duration(milliseconds: 200), _beginIntro);
+      _phaseTimer = Timer(Duration(milliseconds: _Intro.holdMs), _beginIntro);
+      _startScrollWatch();
     }
+  }
+
+  /// The first real scroll skips the intro. The scene scrub takes over
+  /// immediately, so the page never feels stuck behind an animation.
+  void _startScrollWatch() {
+    _scrollPoll?.cancel();
+    _scrollPoll = Timer.periodic(Duration(milliseconds: _Intro.pollMs), (timer) {
+      if (_phase == _Phase.done) {
+        timer.cancel();
+        _scrollPoll = null;
+        return;
+      }
+      if (web.window.scrollY > 16) {
+        timer.cancel();
+        _scrollPoll = null;
+        _skipToFinal();
+      }
+    });
   }
 
   void _startGlitchLoop() {
@@ -65,7 +134,7 @@ class HeroState extends State<Hero> {
   }
 
   void _scheduleNextGlitch() {
-    final intervalMs = 3000 + _randomHashCode();
+    final intervalMs = _Intro.glitchMs + _randomHashCode();
     _glitchTimer = Timer(Duration(milliseconds: intervalMs), () {
       setState(() => _glitchSeed++);
       _scheduleNextGlitch();
@@ -83,6 +152,7 @@ class HeroState extends State<Hero> {
     _phaseTimer?.cancel();
     _typingTimer?.cancel();
     _glitchTimer?.cancel();
+    _scrollPoll?.cancel();
     super.dispose();
   }
 
@@ -95,12 +165,15 @@ class HeroState extends State<Hero> {
   void _startTyping({
     required String fullText,
     required void Function(String) setValue,
+    required void Function() onStart,
     required void Function() onDone,
   }) {
     var index = 0;
-    setValue('');
     _typingTimer?.cancel();
-    _typingTimer = Timer.periodic(const Duration(milliseconds: 90), (timer) {
+    // `onStart` blanks the text and flips the phase class in the same frame,
+    // so the full server-rendered string never flashes before the typing.
+    onStart();
+    _typingTimer = Timer.periodic(Duration(milliseconds: _Intro.typingMs), (timer) {
       index++;
       if (index >= fullText.length) {
         timer.cancel();
@@ -126,34 +199,44 @@ class HeroState extends State<Hero> {
       _phase = _Phase.avatarIn;
       _avatarVisible = true;
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 550), _startEyebrow);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.avatarInMs), _startEyebrow);
   }
 
   void _startEyebrow() {
+    if (_phase == _Phase.done) return;
     _startTyping(
       fullText: _eyebrowFull,
       setValue: (value) => setState(() => _eyebrowText = value),
+      onStart: () => setState(() {
+        _eyebrowText = '';
+        _eyebrowStarted = true;
+      }),
       onDone: _startName,
     );
   }
 
   void _startName() {
+    if (_phase == _Phase.done) return;
     _startTyping(
       fullText: _nameFull,
       setValue: (value) => setState(() => _nameText = value),
+      onStart: () => setState(() {
+        _nameText = '';
+        _nameStarted = true;
+      }),
       onDone: _startCursorIn,
     );
   }
 
   void _startCursorIn() {
+    if (_phase == _Phase.done) return;
     // Phase: cursor fades in at the top-left of the viewport.
     setState(() {
       _phase = _Phase.cursorIn;
-      _passedCursor = true;
       _cursorOpacity = 1;
-      _cursorTransition = 'opacity 200ms ease-out';
+      _cursorTransition = 'opacity var(--dur-control) var(--ease-out)';
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 250), _startTravel);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.cursorInMs), _startTravel);
   }
 
   ({double left, double right, double centerY})? _measureName() {
@@ -171,6 +254,7 @@ class HeroState extends State<Hero> {
   }
 
   void _startTravel() {
+    if (_phase == _Phase.done) return;
     final m = _measureName();
     if (m == null) {
       _skipToFinal();
@@ -179,12 +263,13 @@ class HeroState extends State<Hero> {
     setState(() {
       _phase = _Phase.travel;
       _cursorTransform = 'translate(${(m.left - 5.3).toStringAsFixed(1)}px, ${(m.centerY - 0.8).toStringAsFixed(1)}px)';
-      _cursorTransition = 'transform 1000ms cubic-bezier(.22,.8,.2,1)';
+      _cursorTransition = 'transform ${_Intro.travelMs}ms ${_Intro.travelEase}';
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 1050), _press);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.travelMs), _press);
   }
 
   void _press() {
+    if (_phase == _Phase.done) return;
     final m = _measureName();
     if (m == null) {
       _skipToFinal();
@@ -194,14 +279,15 @@ class HeroState extends State<Hero> {
       _phase = _Phase.press;
       _cursorTransform =
           'translate(${(m.left - 5.3).toStringAsFixed(1)}px, ${(m.centerY - 0.8).toStringAsFixed(1)}px) scale(0.9)';
-      _cursorTransition = 'transform 120ms ease-out';
+      _cursorTransition = 'transform var(--dur-micro) var(--ease-out)';
       _handlesVisible = true;
-      _handleTransition = 'opacity 150ms ease-out';
+      _handleTransition = 'opacity var(--dur-micro) var(--ease-out)';
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 140), _startSweep);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.pressMs), _startSweep);
   }
 
   void _startSweep() {
+    if (_phase == _Phase.done) return;
     final m = _measureName();
     if (m == null) {
       _skipToFinal();
@@ -209,28 +295,35 @@ class HeroState extends State<Hero> {
     }
     setState(() {
       _phase = _Phase.sweep;
-      _passedSelected = true;
       _cursorTransform =
           'translate(${(m.right - 5.3).toStringAsFixed(1)}px, ${(m.centerY - 0.8).toStringAsFixed(1)}px)';
-      _cursorTransition = 'transform 700ms cubic-bezier(.45,0,.2,1)';
+      _cursorTransition = 'transform ${_Intro.sweepMs}ms ${_Intro.sweepEase}';
       _highlight = 1;
-      _highlightTransition = 'transform 700ms cubic-bezier(.45,0,.2,1)';
+      _highlightTransition = 'transform ${_Intro.sweepMs}ms ${_Intro.sweepEase}';
       _endLeft = '100%';
-      _handleTransition = 'left 700ms cubic-bezier(.45,0,.2,1), opacity 150ms ease-out';
+      _handleTransition =
+          'left ${_Intro.sweepMs}ms ${_Intro.sweepEase}, '
+          'opacity var(--dur-micro) var(--ease-out)';
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 720), _revealPill);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.sweepMs), _revealPill);
   }
 
   void _revealPill() {
+    if (_phase == _Phase.done) return;
+    // One orchestrated beat: the stack line, the positioning line and the
+    // two actions land together, staggered by their CSS transition delays.
     setState(() {
       _phase = _Phase.pill;
-      _passedPill = true;
       _pillVisible = true;
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 380), _startDrift);
+    // Releasing the hold here is what lifts the intro copy. The actions
+    // carry their own delay, so the three land as one sequence.
+    _removeIntroHold();
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.pillMs), _startDrift);
   }
 
   void _startDrift() {
+    if (_phase == _Phase.done) return;
     final m = _measureName();
     if (m == null) {
       _finish();
@@ -240,31 +333,55 @@ class HeroState extends State<Hero> {
       _phase = _Phase.drift;
       _cursorTransform =
           'translate(${(m.right - 5.3 + 48).toStringAsFixed(1)}px, ${(m.centerY - 0.8 + 40).toStringAsFixed(1)}px)';
-      _cursorTransition = 'transform 500ms ease-out, opacity 350ms ease-out';
+      _cursorTransition =
+          'transform ${_Intro.driftMoveMs}ms ease-out, '
+          'opacity ${_Intro.driftFadeMs}ms ease-out';
       _cursorOpacity = 0;
     });
-    _phaseTimer = Timer(const Duration(milliseconds: 560), _finish);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.driftMs), _finish);
   }
 
   void _finish() {
-    setState(() => _phase = _Phase.done);
+    if (_phase == _Phase.done) return;
+    setState(() {
+      _phase = _Phase.done;
+      // The selection knobs were part of the sweep. Once the sweep is over
+      // they retire and only the soft amber wash on the name remains.
+      _handlesVisible = false;
+      _handleTransition = 'opacity var(--dur-control) var(--ease-out)';
+    });
+    _scrollPoll?.cancel();
+    _scrollPoll = null;
     _removeIntroHold();
     // Start the avatar glitch only after the complete page reveal has settled.
-    _phaseTimer = Timer(const Duration(milliseconds: 1500), _startGlitchLoop);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.settleMs), _startGlitchLoop);
   }
 
+  /// Jump straight to the finished hero: cancel everything in flight and
+  /// paint the end state. The first real scroll calls this, and so do the
+  /// reduced-motion and coarse-pointer paths.
   void _skipToFinal() {
+    // Cancel the pending timers *before* painting the end state. Otherwise
+    // a phase timer that is already queued fires afterwards and replays the
+    // whole choreography on top of the finished hero.
+    _phaseTimer?.cancel();
+    _phaseTimer = null;
+    _typingTimer?.cancel();
+    _typingTimer = null;
+    _scrollPoll?.cancel();
+    _scrollPoll = null;
+
     setState(() {
       _phase = _Phase.done;
       _avatarVisible = true;
+      _eyebrowStarted = true;
+      _nameStarted = true;
       _eyebrowText = _eyebrowFull;
       _nameText = _nameFull;
-      _passedCursor = true;
-      _passedSelected = true;
-      _passedPill = true;
       _highlight = 1;
       _endLeft = '100%';
-      _handlesVisible = true;
+      // The knobs belong to the sweep; a skipped intro never shows them.
+      _handlesVisible = false;
       _pillVisible = true;
       _cursorOpacity = 0;
       _cursorTransition = 'none';
@@ -272,7 +389,7 @@ class HeroState extends State<Hero> {
       _handleTransition = 'none';
     });
     _removeIntroHold();
-    _phaseTimer = Timer(const Duration(milliseconds: 1500), _startGlitchLoop);
+    _phaseTimer = Timer(Duration(milliseconds: _Intro.settleMs), _startGlitchLoop);
   }
 
   void _removeIntroHold() {
@@ -285,42 +402,40 @@ class HeroState extends State<Hero> {
 
   @override
   Component build(BuildContext context) {
+    // The phase classes drive the intro from CSS, not from inline styles, so
+    // the server-rendered document can carry the full hero without the
+    // client having to hand-correct it.
     final heroClasses = StringBuffer('hero');
-    if (_passedCursor) heroClasses.write(' phase-cursor');
-    if (_passedSelected) heroClasses.write(' phase-selected');
-    if (_passedPill) heroClasses.write(' phase-pill');
-    if (_phase == _Phase.done) heroClasses.write(' phase-done');
+    if (_avatarVisible) heroClasses.write(' phase-avatar-in');
+    if (_eyebrowStarted) heroClasses.write(' phase-eyebrow');
+    if (_nameStarted) heroClasses.write(' phase-name');
+    if (_pillVisible) heroClasses.write(' phase-pill');
     final glitchActive = _glitchSeed % 2 == 1;
 
     return section(
       classes: heroClasses.toString(),
       id: 'top',
       [
-        div(classes: 'container hero-inner', [
-          // Animated overlay cursor (direct child so position:fixed works).
-          div(
-            classes: 'anim-cursor',
-            styles: Styles(
-              raw: {
-                'transform': _cursorTransform,
-                'opacity': '$_cursorOpacity',
-                'transition': _cursorTransition,
-              },
-            ),
-            [
-              span(classes: 'anim-cursor-fill', []),
-            ],
+        // Animated overlay cursor. It is a sibling of .hero-inner rather
+        // than a child, so the scene's recede transform on .hero-inner can
+        // never trap its fixed positioning inside a transformed box.
+        div(
+          classes: 'anim-cursor',
+          styles: Styles(
+            raw: {
+              'transform': _cursorTransform,
+              'opacity': '$_cursorOpacity',
+              'transition': _cursorTransition,
+            },
           ),
+          [
+            span(classes: 'anim-cursor-fill', []),
+          ],
+        ),
+        div(classes: 'container hero-inner', [
           // Avatar — static, glitch/signal pulse overlay only.
           div(
             classes: 'hero-avatar-wrap',
-            styles: Styles(
-              raw: {
-                'opacity': _avatarVisible ? '1' : '0',
-                'transform': _avatarVisible ? 'translateY(0)' : 'translateY(10px)',
-                'transition': 'opacity 500ms ease-out, transform 500ms ease-out',
-              },
-            ),
             [
               div(
                 classes: 'hero-avatar-glitch ${glitchActive ? 'glitch-active' : ''}',
@@ -379,64 +494,48 @@ class HeroState extends State<Hero> {
               ),
             ]),
           ]),
-          // Dark pill (Open CV | Ask Nono) — always mounted, space reserved.
-          div(classes: 'hero-pill-wrap', [
-            div(
-              classes: 'hero-pill',
-              styles: Styles(
-                raw: {
-                  'opacity': _pillVisible ? '1' : '0',
-                  'visibility': _pillVisible ? 'visible' : 'hidden',
-                  'filter': _pillVisible ? 'blur(0px)' : 'blur(8px)',
-                  'transform': _pillVisible ? 'scale(1)' : 'scale(.96) translateY(-4px)',
-                  'transition': 'opacity 350ms ease-out, filter 350ms ease-out, transform 350ms ease-out',
-                },
-              ),
-              [
-                button(
-                  attributes: {'type': 'button'},
-                  classes: 'pill-btn',
-                  onClick: _openCV,
-                  [
-                    span(classes: 'pill-ico', [
-                      RawText(
-                        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>',
-                      ),
-                    ]),
-                    span(classes: 'pill-label', [Component.text('Open CV')]),
-                  ],
-                ),
-                span(classes: 'pill-divider', []),
-                button(
-                  attributes: {'type': 'button'},
-                  classes: 'pill-btn',
-                  onClick: _askNono,
-                  [
-                    span(classes: 'pill-ico', [
-                      RawText(
-                        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-                      ),
-                    ]),
-                    span(classes: 'pill-label', [Component.text('Ask Nono')]),
-                  ],
-                ),
-              ],
-            ),
-          ]),
-          // Rest of hero — staggered intro reveal.
-          p(
-            classes: 'hero-role intro-item',
-            styles: Styles(raw: {'--i': '3'}),
-            [
-              Component.text('Software Engineer · Flutter, .NET & AI · Mobile, Web & Desktop'),
-            ],
-          ),
+          // Positioning line — replaces the old 994-char bio.
           p(
             classes: 'hero-desc intro-item',
-            styles: Styles(raw: {'--i': '4'}),
+            styles: Styles(raw: {'--i': '0'}),
+            [Component.text(_positioning)],
+          ),
+          // Stack line — the mono second voice.
+          p(
+            classes: 'hero-role intro-item',
+            styles: Styles(raw: {'--i': '1'}),
+            [Component.text(_stack)],
+          ),
+          // Actions — one primary (Open CV) and one outline (Ask Nono).
+          // Always mounted, space reserved, revealed as a single beat.
+          div(
+            classes: 'hero-actions',
             [
-              Component.text(
-                'I\'m Omar — a Software Engineer who builds cross-platform apps and the systems behind them. Flutter on the front (mobile, web via Jaspr, desktop), TypeScript/Rust/.NET for backend services, Python for the AI work that started in university and never really stopped.\n\nI use AI daily in my workflow — Claude Code, Codex, Opencode, Hermes — as a force multiplier for the parts I\'ve already thought through. Obsessed with the details that make an app feel *right*: micro-interactions, consistent spacing, animations that don\'t get in the way. The kind of polish you only notice when it\'s missing.\n\nNight person. Mornings are for other people. I procrastinate like it\'s a discipline, then learn an entire semester\'s worth of material in one night when the deadline hits — works every time.\n\nMostly at my desk, studying, shipping, breaking things on purpose to understand them. But the friends I do have? We make it count when we hang out.\n\nCurrently: sharpening the craft, one side project at a time.',
+              button(
+                attributes: {'type': 'button'},
+                classes: 'btn hero-btn hero-btn-primary',
+                onClick: _openCV,
+                [
+                  span(classes: 'hero-btn-ico', [
+                    RawText(
+                      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>',
+                    ),
+                  ]),
+                  span(classes: 'hero-btn-label', [Component.text('Open CV')]),
+                ],
+              ),
+              button(
+                attributes: {'type': 'button'},
+                classes: 'btn hero-btn hero-btn-ghost',
+                onClick: _askNono,
+                [
+                  span(classes: 'hero-btn-ico', [
+                    RawText(
+                      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+                    ),
+                  ]),
+                  span(classes: 'hero-btn-label', [Component.text('Ask Nono')]),
+                ],
               ),
             ],
           ),
@@ -449,7 +548,7 @@ class HeroState extends State<Hero> {
   static List<StyleRule> get styles => [
     css('.hero', [
       css('&').styles(
-        padding: Padding.symmetric(vertical: 45.px),
+        padding: Padding.symmetric(vertical: 48.px),
         display: Display.flex,
         alignItems: AlignItems.center,
         backgroundColor: cCanvas,
@@ -458,23 +557,25 @@ class HeroState extends State<Hero> {
       css('.hero-inner').styles(
         display: Display.flex,
         flexDirection: FlexDirection.column,
-        alignItems: AlignItems.center,
-        textAlign: TextAlign.center,
-        maxWidth: 840.px,
+        alignItems: AlignItems.start,
+        textAlign: TextAlign.left,
         position: Position.relative(),
       ),
       // Avatar.
       css('.hero-avatar-wrap').styles(
         margin: .only(bottom: 24.px),
         display: Display.flex,
-        justifyContent: .center,
+        justifyContent: JustifyContent.start,
         position: Position.relative(),
-        width: 148.px,
-        height: 148.px,
+        width: 112.px,
+        height: 112.px,
+        raw: const {
+          'transition': 'opacity var(--dur-panel) var(--ease-out), transform var(--dur-panel) var(--ease-out)',
+        },
       ),
       css('.hero-avatar-glitch').styles(
-        width: 148.px,
-        height: 148.px,
+        width: 112.px,
+        height: 112.px,
         position: Position.relative(),
         radius: .all(.circular(radiusFull.px)),
         overflow: .hidden,
@@ -552,9 +653,10 @@ class HeroState extends State<Hero> {
       css('.hero-eyebrow').styles(
         raw: const {
           'min-height': '1.4em',
+          'display': 'inline-block',
         },
-        margin: .only(bottom: 14.px),
-        fontSize: 14.px,
+        margin: .only(bottom: 16.px),
+        fontSize: fontMicro.px,
         fontWeight: FontWeight.w700,
         textTransform: .upperCase,
         letterSpacing: 0.08.em,
@@ -565,12 +667,12 @@ class HeroState extends State<Hero> {
         raw: const {
           'min-height': '1.05em',
         },
-        fontSize: 60.px,
+        fontSize: fontDisplay.px,
         fontWeight: FontWeight.w800,
-        letterSpacing: (-1.2).px,
+        letterSpacing: (-1.4).px,
         lineHeight: 1.05.em,
         color: cInk,
-        margin: .only(bottom: 10.px),
+        margin: .only(bottom: 16.px),
       ),
       css('.name-sel').styles(
         raw: const {
@@ -627,77 +729,133 @@ class HeroState extends State<Hero> {
       ),
       css('.sel-start .sel-knob').styles(raw: const {'top': '-8px'}),
       css('.sel-end .sel-knob').styles(raw: const {'bottom': '-8px'}),
-      // Dark pill (Open CV | Ask Nono).
-      css('.hero-pill-wrap').styles(
-        display: Display.flex,
-        justifyContent: .center,
-        margin: .only(top: 8.px, bottom: 26.px),
-      ),
-      css('.hero-pill').styles(
+      // Actions — primary (amber) + outline (ghost).
+      css('.hero-actions').styles(
         raw: const {
-          'display': 'inline-flex',
+          'display': 'flex',
+          'flex-wrap': 'wrap',
           'align-items': 'center',
-          'height': '44px',
-          'padding': '0 14px',
-          'border-radius': '999px',
-          'background': 'rgba(38, 38, 40, 0.94)',
-          'backdrop-filter': 'blur(12px)',
-          '-webkit-backdrop-filter': 'blur(12px)',
-          'border': '1px solid rgba(255, 255, 255, 0.08)',
-          'box-shadow': '0 8px 24px rgba(0, 0, 0, 0.35)',
-          'opacity': '0',
-          'visibility': 'hidden',
-          'filter': 'blur(8px)',
-          'transform': 'scale(.96) translateY(-4px)',
+          'gap': '12px',
         },
+        margin: .only(top: 28.px, bottom: 0.px),
       ),
-      css('.pill-btn').styles(
+      css('.hero-btn').styles(
         raw: const {
-          'display': 'inline-flex',
-          'align-items': 'center',
-          'gap': '8px',
-          'background': 'transparent',
-          'border': 'none',
-          'color': '#ffffff',
           'font-family': 'inherit',
-          'font-size': '14px',
-          'font-weight': '500',
-          'padding': '0 6px',
           'cursor': 'pointer',
-          'transition': 'opacity 150ms ease-out',
         },
       ),
-      css('.pill-btn:hover').styles(raw: const {'opacity': '0.85'}),
-      css('.pill-ico').styles(
+      css('.hero-btn-ico').styles(
         raw: const {
           'display': 'inline-flex',
+          'align-items': 'center',
+          'justify-content': 'center',
           'width': '16px',
           'height': '16px',
         },
       ),
-      css('.pill-divider').styles(
+      css('.hero-btn-label').styles(
         raw: const {
-          'width': '1px',
-          'height': '20px',
-          'background': 'rgba(255, 255, 255, 0.14)',
-          'margin': '0 8px',
+          'white-space': 'nowrap',
         },
       ),
-      // Role / description / CTAs.
-      css('.hero-role').styles(
-        fontSize: 21.px,
-        fontWeight: FontWeight.w600,
-        color: cCharcoal,
-        margin: .only(bottom: 18.px),
+      // The hero buttons reuse the site-wide `.btn` metrics — one button
+      // system, two weights. The compound selector outranks `.btn` so the
+      // palette rules win regardless of stylesheet order.
+      css('.hero .hero-btn-primary').styles(
+        raw: const {
+          'background': 'var(--primary)',
+          'border-color': 'var(--primary)',
+          'color': 'var(--on-primary)',
+        },
       ),
+      css('.hero .hero-btn-primary:hover').styles(
+        raw: const {
+          'background': 'var(--primary-pressed)',
+          'border-color': 'var(--primary-pressed)',
+        },
+      ),
+      css('.hero .hero-btn-ghost').styles(
+        raw: const {
+          'background': 'transparent',
+          'border-color': 'var(--hairline)',
+          'color': 'var(--ink)',
+        },
+      ),
+      css('.hero .hero-btn-ghost:hover').styles(
+        raw: const {
+          'background': 'var(--soft)',
+          'border-color': 'var(--ink)',
+        },
+      ),
+      // Positioning line + mono stack.
       css('.hero-desc').styles(
-        fontSize: 17.px,
+        fontSize: fontBody.px,
         lineHeight: 1.6.em,
+        color: cBody,
+        maxWidth: 600.px,
+        margin: .only(bottom: 12.px),
+      ),
+      css('.hero-role').styles(
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+        fontWeight: FontWeight.w500,
+        lineHeight: 1.5.em,
         color: cMute,
-        maxWidth: 700.px,
-        margin: .only(bottom: 30.px),
+        margin: .only(bottom: 0.px),
       ),
     ]),
+
+    // ---------- The intro, driven from CSS ----------
+    // The server-rendered hero is complete: the name, the role, the portrait
+    // and both actions are all in the document. These rules only apply once
+    // JavaScript is present, and they hold the copy back until the intro
+    // reaches it — so a no-JS reader gets the finished hero and a crawler
+    // gets the real name.
+    css('html.js-enabled .hero .hero-avatar-wrap').styles(
+      raw: const {
+        'opacity': '0',
+        'transform': 'translateY(10px)',
+      },
+    ),
+    css('html.js-enabled .hero.phase-avatar-in .hero-avatar-wrap').styles(
+      raw: const {
+        'opacity': '1',
+        'transform': 'translateY(0)',
+      },
+    ),
+    css('html.js-enabled .hero .hero-eyebrow').styles(
+      raw: const {'visibility': 'hidden'},
+    ),
+    css('html.js-enabled .hero.phase-eyebrow .hero-eyebrow').styles(
+      raw: const {'visibility': 'visible'},
+    ),
+    css('html.js-enabled .hero .name-text').styles(
+      raw: const {'visibility': 'hidden'},
+    ),
+    css('html.js-enabled .hero.phase-name .name-text').styles(
+      raw: const {'visibility': 'visible'},
+    ),
+    css('html.js-enabled .hero .hero-actions').styles(
+      raw: {
+        'opacity': '0',
+        'visibility': 'hidden',
+        'filter': 'blur(6px)',
+        'transform': 'translateY(8px)',
+        'transition':
+            'opacity var(--dur-panel) var(--ease-out), filter var(--dur-panel) var(--ease-out), transform var(--dur-panel) var(--ease-out)',
+        // The actions land one beat after the sweep releases the name.
+        'transition-delay': '${_Intro.actionsDelayMs}ms',
+      },
+    ),
+    css('html.js-enabled .hero.phase-pill .hero-actions').styles(
+      raw: const {
+        'opacity': '1',
+        'visibility': 'visible',
+        'filter': 'blur(0px)',
+        'transform': 'translateY(0)',
+      },
+    ),
     // Animated overlay cursor (theme-aware via mask).
     css('.anim-cursor').styles(
       raw: const {
@@ -738,18 +896,14 @@ class HeroState extends State<Hero> {
       '50%': Styles(raw: {'transform': 'translate(4px, -2px)', 'opacity': '0.6'}),
       '100%': Styles(raw: {'transform': 'translate(0, 0)', 'opacity': '0'}),
     }),
-    // Responsive.
+    // Responsive. The type ladder does not bend for width: a long title
+    // wraps, it does not shrink off the scale.
     css.media(MediaQuery.all(maxWidth: 768.px), [
-      css('.hero').styles(padding: .symmetric(vertical: 52.px)),
-      css('.hero .hero-name').styles(fontSize: 44.px),
-      css('.hero .hero-role').styles(fontSize: 19.px),
-      css('.hero .hero-desc').styles(fontSize: 16.px),
+      css('.hero').styles(padding: .symmetric(vertical: 48.px)),
       css('.hero .hero-avatar-wrap').styles(width: 124.px, height: 124.px),
       css('.hero .hero-avatar-glitch').styles(width: 124.px, height: 124.px),
     ]),
     css.media(MediaQuery.all(maxWidth: 480.px), [
-      css('.hero .hero-name').styles(fontSize: 36.px),
-      css('.hero .hero-role').styles(fontSize: 17.px),
       css('.hero .hero-avatar-wrap').styles(width: 108.px, height: 108.px),
       css('.hero .hero-avatar-glitch').styles(width: 108.px, height: 108.px),
     ]),

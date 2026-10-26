@@ -25,12 +25,12 @@ const String _themeInitJs =
     "if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();";
 
 /// Critical CSS to prevent FOUC - hides .reveal and .intro-item elements
-/// before any scripts execute. Must be inlined FIRST in <head>.
+/// before any scripts execute. Must be inlined FIRST in the `head`.
 const String _criticalCss = '''
   .intro-hold .reveal,
   .intro-hold .intro-item {
     opacity: 0 !important;
-    transform: translateY(22px) !important;
+    transform: translateY(12px) !important;
   }
   .intro-hold .cursor-dot,
   .intro-hold .cursor-ring {
@@ -54,9 +54,13 @@ const String _motionJs = """
 (function(){
   var d=document.documentElement;
   d.classList.add('js-enabled');
-  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Keep the MediaQueryList around: if the visitor changes their OS motion
+  // preference while the page is open, the pinned scrub has to follow —
+  // otherwise it keeps running for someone who just asked it to stop.
+  var reduceMQ=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+  var reduce=!!(reduceMQ&&reduceMQ.matches);
   function revealVisible(){
-    var sheet='opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';
+    var sheet='opacity var(--dur-panel) var(--ease-out), transform var(--dur-panel) var(--ease-out)';
     var els=[].slice.call(document.querySelectorAll('.reveal'));
     var vh=window.innerHeight||document.documentElement.clientHeight;
     for(var i=0;i<els.length;i++){
@@ -66,13 +70,9 @@ const String _motionJs = """
       // bookkeeping by element identity poisons itself — re-check current
       // style instead, so wiped elements get re-revealed on the next pass.
       if(el.style.opacity==='1') continue;
-      // Once the pinned scrub is active it owns the reveal of the panel, so
-      // these elements must NOT get inline styles (they would beat the CSS
-      // custom properties that drive the scrub). Before the hero intro
-      // finishes (!heroReady) the panel stays hidden via the CSS defaults so
-      // it only appears on scroll; once the scene deactivates it reverts to
-      // the normal reveal-on-scroll path.
-      if(el.closest('.scene-stage') && (sceneActive || !heroReady)) continue;
+      // The pinned scrub owns the panel: inline styles would beat the CSS
+      // custom properties that drive the recede and the reveals.
+      if(el.closest('.scene-stage') && sceneActive) continue;
       var r=el.getBoundingClientRect();
       if(r.top<vh){
         if(reduce){
@@ -87,6 +87,8 @@ const String _motionJs = """
           if(st!==null){el.style.transitionDelay=(parseInt(st,10)*160)+'ms';}
           el.style.opacity='1'; el.style.transform='translateY(0)';
         }
+        // Marks the head so its hairline rule can draw across.
+        el.classList.add('in');
       }
     }
   }
@@ -94,24 +96,26 @@ const String _motionJs = """
   // so there is exactly one of each for the whole page.
 
   // ---- Scroll-scrubbed hero -> Expertise scene ---------------------------
-  // After the hero intro finishes (.phase-done), the .scene wrapper (400vh)
-  // holds a sticky .scene-stage (left = hero, right = expertise). Scroll
-  // drives progress p (0..1); JS writes CSS custom properties and CSS applies
-  // the hero shift, expertise title and cards. Fully reversible on scroll up.
-  // No scroll-lock, no preventDefault — scrolling is never hijacked.
+  // The .scene wrapper is 400vh tall and holds a sticky .scene-stage with the
+  // hero and the expertise panel layered inside it. Scroll drives progress
+  // p (0..1); JS writes CSS custom properties and CSS applies the hero
+  // recede and the panel reveals. Fully reversible on scroll up. No
+  // scroll-lock and no preventDefault: scrolling is never hijacked.
   var sceneActive = false;
-  var heroReady = false;
   var geometryReady = false;
-  var wrapperTop = 0, wrapperHeight = 0, vh = 0, heroShiftMax = 0;
-  var heroInner = null, titleEl = null, cards = [];
+  var wrapperTop = 0, wrapperHeight = 0, vh = 0;
+  var heroInner = null, headEl = null, subEl = null, cols = [];
 
   function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+  function easeInOutCubic(x){
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  }
   function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
   function getScene(){ return document.querySelector('.scene'); }
   function getStage(){ return document.querySelector('.scene-stage'); }
   function measureScene(){
     var s = getScene();
-    if(!s) return;
+    if(!s) return false;
     var r = s.getBoundingClientRect();
     wrapperTop = r.top + window.pageYOffset;
     wrapperHeight = s.offsetHeight || r.height;
@@ -120,22 +124,7 @@ const String _motionJs = """
     var header = document.querySelector('.site-header');
     var headerH = header ? Math.round(header.getBoundingClientRect().height) : 64;
     d.style.setProperty('--scene-top', headerH + 'px');
-  }
-  // How far the hero may travel left before the hero column would clip it.
-  // Measured on the untransformed element, never per frame.
-  function measureHeroShift(){
-    heroShiftMax = 0;
-    if(!heroInner) return;
-    var hero = heroInner.closest('.hero');
-    if(!hero) return;
-    var prev = heroInner.style.transform;
-    heroInner.style.transform = 'none';
-    var hr = heroInner.getBoundingClientRect();
-    var herr = hero.getBoundingClientRect();
-    var hcs = window.getComputedStyle(hero);
-    heroInner.style.transform = prev;
-    var heroLeft = herr.left + (parseFloat(hcs.paddingLeft) || 0);
-    heroShiftMax = Math.max(0, hr.left - heroLeft);
+    return true;
   }
   // Strip any inline reveal state from the panel so the scrub owns it.
   function resetSceneEls(){
@@ -145,66 +134,84 @@ const String _motionJs = """
       el.style.transform='';
       el.style.transition='';
       el.style.transitionDelay='';
-      el.style.removeProperty('--reveal');
-      el.style.removeProperty('--card-blur');
-      el.classList.remove('lit');
+      el.style.removeProperty('--head-reveal');
+      el.style.removeProperty('--sub-reveal');
+      el.style.removeProperty('--col-reveal');
+      el.style.removeProperty('--col-blur');
+      el.classList.remove('in');
     });
+    // The subtitle carries the scrub's --sub-reveal but is not a .reveal
+    // element, so the sweep above never reaches it. Clear it explicitly,
+    // or the panel keeps its last scrub state after the scene switches off.
+    if(subEl) subEl.style.removeProperty('--sub-reveal');
+    // The hero must go back to its resting state when the scene switches off.
+    if(heroInner){
+      heroInner.style.removeProperty('--hero-opacity');
+      heroInner.style.removeProperty('--hero-transform');
+      heroInner.style.removeProperty('--hero-filter');
+      heroInner.style.removeProperty('--hero-pointer-events');
+    }
+    d.classList.remove('scrubbing');
   }
   function initSceneEls(){
-    heroInner = document.querySelector('.hero-inner');
-    titleEl = document.querySelector('.expertise .section-head');
-    cards = [].slice.call(document.querySelectorAll('.skill-card.reveal'));
-    cards.forEach(function(c){ c._done = false; });
+    heroInner = document.querySelector('.hero .hero-inner');
+    headEl = document.querySelector('.expertise .section-head');
+    subEl = document.querySelector('.expertise .section-subtitle');
+    cols = [].slice.call(document.querySelectorAll('.expertise .skill-card'));
     resetSceneEls();
-    measureHeroShift();
-  }
-  function tickCard(card, local){
-    if(local >= 1 && !card._done){
-      card._done = true;
-      card.classList.add('lit');
-      setTimeout(function(){ card.classList.remove('lit'); }, 800);
-    }
-    if(local < 1){ card._done = false; card.classList.remove('lit'); }
   }
   function applyScene(p){
-    // Hero glides left (p 0.00 -> 0.30), existing shift look.
-    var h = easeOutCubic(clamp01(p / 0.30));
-    if(heroInner) heroInner.style.setProperty('--hero-shift', (heroShiftMax * h).toFixed(2) + 'px');
-    if(p > 0.01) d.classList.add('hero-shifted'); else d.classList.remove('hero-shifted');
-    // Expertise title (p 0.25 -> 0.40).
-    var t = easeOutCubic(clamp01((p - 0.25) / 0.15));
-    if(titleEl) titleEl.style.setProperty('--reveal', t);
-    // Cards, staggered with overlapping ranges.
-    var vals = [
-      easeOutCubic(clamp01((p - 0.40) / 0.20)),
-      easeOutCubic(clamp01((p - 0.55) / 0.20)),
-      easeOutCubic(clamp01((p - 0.70) / 0.20))
-    ];
-    for(var i=0;i<cards.length;i++){
-      var card = cards[i];
-      if(!card) continue;
-      var r = vals[i] !== undefined ? vals[i] : 0;
-      card.style.setProperty('--reveal', r);
-      // Depth blur: a revealed card picks up a little blur as the cards below
-      // it come in, so the stack reads as depth instead of a flat list.
-      var blur = 8 * (1 - r);
-      for(var j=i+1;j<cards.length;j++){
-        blur += 0.8 * (vals[j] !== undefined ? vals[j] : 0);
-      }
-      card.style.setProperty('--card-blur', blur.toFixed(2) + 'px');
-      tickCard(card, r);
+    // Hero recedes in place (p 0.00 -> 0.28): scale 1 -> 0.95, lift 0 -> -6px,
+    // blur 0 -> 2.5px. It then fades out (p 0.18 -> 0.34).
+    var recede = easeInOutCubic(clamp01(p / 0.28));
+    var fade = easeInOutCubic(clamp01((p - 0.18) / 0.16));
+    var moving = recede > 0.0005;
+    if(heroInner){
+      heroInner.style.setProperty('--hero-opacity', (1 - fade).toFixed(3));
+      // The transform and the filter are left unset at rest so the hero
+      // renders exactly as it would without the scene.
+      heroInner.style.setProperty('--hero-transform', moving
+        ? 'translateY(' + (-6 * recede).toFixed(2) + 'px) scale(' + (1 - 0.05 * recede).toFixed(4) + ')'
+        : 'none');
+      heroInner.style.setProperty('--hero-filter', moving
+        ? 'blur(' + (2.5 * recede).toFixed(2) + 'px)'
+        : 'none');
+      // A faded-out hero must not keep swallowing clicks meant for the panel.
+      heroInner.style.setProperty('--hero-pointer-events', fade > 0.98 ? 'none' : 'auto');
+    }
+    d.classList.toggle('scrubbing', moving);
+    // Expertise head (p 0.30 -> 0.46); the subtitle trails it by 0.04.
+    var head = easeOutCubic(clamp01((p - 0.30) / 0.16));
+    var sub = easeOutCubic(clamp01((p - 0.34) / 0.16));
+    if(headEl) headEl.style.setProperty('--head-reveal', head.toFixed(3));
+    if(subEl) subEl.style.setProperty('--sub-reveal', sub.toFixed(3));
+    // Columns: 0.44 -> 0.66, 0.52 -> 0.74, 0.60 -> 0.82.
+    var vals = [];
+    for(var i=0;i<cols.length;i++){
+      vals.push(easeOutCubic(clamp01((p - (0.44 + i * 0.08)) / 0.22)));
+    }
+    for(var k=0;k<cols.length;k++){
+      var el = cols[k];
+      if(!el) continue;
+      var r = vals[k];
+      el.style.setProperty('--col-reveal', r.toFixed(3));
+      // Rack focus: a column stays soft until it arrives, and the columns
+      // that have not arrived yet stay soft too. Everything settles crisp.
+      var blur = 1.2 * (1 - r);
+      for(var j=k+1;j<vals.length;j++){ blur += 1.2 * (1 - vals[j]); }
+      if(blur > 2.4) blur = 2.4;
+      el.style.setProperty('--col-blur', blur.toFixed(2) + 'px');
     }
   }
 
   var ticking = false;
   function sceneTick(){
-    if(!geometryReady){ measureScene(); geometryReady = true; }
+    if(!geometryReady){ geometryReady = measureScene(); }
     var scrollY = window.pageYOffset || d.scrollTop;
-    if(sceneActive){
+    if(sceneActive && geometryReady){
       var span = wrapperHeight - vh;
       if(span > 0){
-        var p = clamp01((scrollY - wrapperTop) / span);
-        applyScene(p);
+        applyScene(clamp01((scrollY - wrapperTop) / span));
       }
     }
     revealVisible();
@@ -213,20 +220,19 @@ const String _motionJs = """
   function request(){ if(!ticking){ ticking = true; requestAnimationFrame(sceneTick); } }
 
   function applyNoScene(){
-    // The pinned scene needs room for the hero and the three cards side by
-    // side: below 900px wide (or 700px tall) the page falls back to the
-    // normal stacked document.
+    // The pinned scene needs room for the hero and the three columns: below
+    // 900px wide (or 700px tall) the page falls back to the normal stacked
+    // document.
     var noScene = reduce
       || (window.innerWidth || d.clientWidth) < 900
       || (window.innerHeight || d.clientHeight) < 700;
     d.classList.toggle('no-scene', noScene);
-    var wantActive = !noScene && heroReady;
+    var wantActive = !noScene;
     if(wantActive !== sceneActive){
       sceneActive = wantActive;
-      var st = getStage();
-      if(st){
-        if(wantActive){ st.classList.add('scrubbed'); initSceneEls(); }
-        else { st.classList.remove('scrubbed'); d.classList.remove('hero-shifted'); resetSceneEls(); }
+      if(getStage()){
+        if(wantActive){ initSceneEls(); }
+        else { resetSceneEls(); }
       }
       geometryReady = false;
     }
@@ -237,36 +243,67 @@ const String _motionJs = """
   applyNoScene();
   revealVisible();
 
-  // Wait for the hero intro to finish (.phase-done), then activate the scrub.
-  function pollHero(){
-    if(!heroReady && document.querySelector('.hero.phase-done')){
-      heroReady = true;
-      applyNoScene();
-      request();
-    }
+  // The document-space y at the end of the scene, where the expertise panel
+  // is fully revealed and the pin releases.
+  function sceneEndY(){
+    var s = getScene();
+    if(!s) return null;
+    return Math.round((s.getBoundingClientRect().top + window.pageYOffset)
+      + Math.max(0, s.offsetHeight - (window.innerHeight || d.clientHeight)));
   }
-  pollHero();
-  var heroPoll = setInterval(pollHero, 100);
-  setTimeout(function(){ clearInterval(heroPoll); }, 20000);
+  function jumpToExpertise(){
+    var y = sceneEndY();
+    if(y === null) return false;
+    window.scrollTo(0, y);
+    return true;
+  }
+
+  // This script is inlined in <head>, so the body (and therefore the scene
+  // elements) does not exist yet. Re-bind once the document is parsed.
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      geometryReady = false;
+      initSceneEls();
+      request();
+      // A deep link into the scene lands on a panel that is still hidden
+      // until the scrub has run — jump to the end of the scene instead, so
+      // the expertise panel arrives fully revealed.
+      if((window.location.hash || '') === '#expertise' && sceneActive){
+        jumpToExpertise();
+      }
+    });
+  }
 
   window.addEventListener('scroll', request, {passive: true});
-  window.addEventListener('resize', function(){ geometryReady = false; measureScene(); measureHeroShift(); applyNoScene(); request(); });
+  window.addEventListener('resize', function(){ geometryReady = false; applyNoScene(); request(); });
   // Deep links / header nav link to '#expertise' resolve inside the pinned scene
-  // where the panel is hidden until p > 0.25: scroll to the end of the scene so
-  // the panel arrives fully revealed. Falls back to native scroll if the scene
-  // is not yet active (e.g. clicked right after load).
+  // where the panel is hidden until the scrub has run: scroll to the end of the
+  // scene so the panel arrives fully revealed.
   document.addEventListener('click', function(e){
     var a = e.target && e.target.closest ? e.target.closest('a[href="#expertise"]') : null;
     if(!a || !sceneActive) return;
-    var s = getScene();
-    if(s){
-      e.preventDefault();
-      var endY = (s.getBoundingClientRect().top + window.pageYOffset)
-        + Math.max(0, s.offsetHeight - (window.innerHeight || d.clientHeight));
-      window.scrollTo(0, Math.round(endY));
-    }
+    e.preventDefault();
+    jumpToExpertise();
   });
-  new MutationObserver(request).observe(d, {childList: true, subtree: true});
+  // The visitor can turn reduced motion on while the page is open; the
+  // scene must fall back to the stacked document immediately.
+  if(reduceMQ && reduceMQ.addEventListener){
+    reduceMQ.addEventListener('change', function(e){
+      reduce = e.matches;
+      applyNoScene();
+      request();
+    });
+  }
+  // Body-level mutations only: the AI chat mutates its own subtree constantly
+  // and must not trigger a full scene + reveal sweep.
+  function watchBody(){
+    if(!document.body) return;
+    try{
+      new MutationObserver(request).observe(document.body, {childList: true, subtree: false});
+    }catch(e){}
+  }
+  if(document.body){ watchBody(); }
+  else { document.addEventListener('DOMContentLoaded', watchBody); }
   request();
 
   // ---- Email fallback (mailto -> Gmail) ----
@@ -294,8 +331,20 @@ const String _motionJs = """
     }
   }
   attachEmailFallback();
-  // Re-attach on DOM changes (hydration)
-  new MutationObserver(attachEmailFallback).observe(d,{childList:true,subtree:true});
+  // Re-attach on DOM changes (hydration). Debounced to one pass per frame:
+  // the AI chat mutates its subtree on every keystroke.
+  var emailTick = false;
+  function scheduleEmail(){
+    if(emailTick) return;
+    emailTick = true;
+    requestAnimationFrame(function(){ emailTick = false; attachEmailFallback(); });
+  }
+  function watchMail(){
+    if(!document.body) return;
+    try{ new MutationObserver(scheduleEmail).observe(document.body,{childList:true,subtree:true}); }catch(e){}
+  }
+  if(document.body){ watchMail(); }
+  else { document.addEventListener('DOMContentLoaded', watchMail); }
 })();
 """;
 
@@ -306,22 +355,27 @@ const String _bgJs = """
 (function(){
   function boot(){
   var d=document.documentElement;
-  function reduced(){ return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  // Keep the MediaQueryList around: the visitor can change their OS motion
+  // preference while the page is open, and the canvas and the cursor have to
+  // follow — otherwise the constellation keeps drifting for someone who just
+  // asked the page to stop.
+  var reduceMQ=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+  function reduced(){ return !!(reduceMQ&&reduceMQ.matches); }
   function coarse(){ return window.matchMedia&&window.matchMedia('(pointer: coarse)').matches; }
+  var touch=coarse();
 
   // ---- Custom cursor ----
   var dot=document.querySelector('.cursor-dot');
   var ring=document.querySelector('.cursor-ring');
-  var usable=dot&&ring&&!reduced()&&!coarse()&&('PointerEvent' in window||'onmousemove' in window);
-  if(usable){ d.classList.add('has-custom-cursor'); }
+  // A fine pointer is the precondition for the custom cursor. The motion
+  // preference is separate: it can change mid-session, so it is applied by
+  // applyMotion() instead of being baked into this flag.
+  var usable=!!(dot&&ring&&!touch&&('PointerEvent' in window||'onmousemove' in window));
 
   var cv=document.getElementById('bg-canvas');
   if(!cv&&document.body){ cv=document.createElement('canvas'); cv.id='bg-canvas'; cv.className='bg-canvas'; cv.setAttribute('aria-hidden','true'); document.body.insertBefore(cv,document.body.firstChild); }
-  if(!cv||!cv.getContext||reduced()) return;
+  if(!cv||!cv.getContext) return;
   var ctx=cv.getContext('2d');
-  var touch=coarse();
-  var dpr=getCappedDpr();
-  ctx.scale(dpr, dpr);
 
   var SP=touch?42:28, W=0, H=0, dots=[], mouse={x:-99999,y:-99999};
   var INK='#23251d';
@@ -333,7 +387,20 @@ const String _bgJs = """
   function rgba(hex,a){ var r=hexToRgb(hex); return 'rgba('+r[0]+','+r[1]+','+r[2]+','+a+')'; }
   function getCappedDpr(){ return Math.min(window.devicePixelRatio||1, 1.5); }
 
-  function size(){ var dpr=getCappedDpr(); W=cv.width=window.innerWidth*dpr; H=cv.height=window.innerHeight*dpr; cv.style.width=window.innerWidth+"px"; cv.style.height=window.innerHeight+"px"; ctx.scale(dpr, dpr); build(); }
+  // The canvas backing store is in device pixels; everything drawn on it is
+  // in CSS pixels. W and H therefore have to be CSS pixels too, or the grid
+  // is laid out in device pixels and the spacing comes out dpr-times too
+  // tight. setTransform (not scale) resets the matrix, so repeated resizes
+  // do not compound the scale.
+  function size(){
+    var dpr=getCappedDpr();
+    var cw=window.innerWidth, ch=window.innerHeight;
+    cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr);
+    cv.style.width=cw+"px"; cv.style.height=ch+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W=cw; H=ch;
+    build();
+  }
   function build(){ dots=[]; var ix=Math.floor(W/SP), iy=Math.floor(H/SP);
     for(var i=0;i<ix;i++)for(var j=0;j<iy;j++)
       dots.push({x:i*SP+SP/2+(Math.random()-0.5)*5, y:j*SP+SP/2+(Math.random()-0.5)*5, ph:Math.random()*6.2832});
@@ -343,7 +410,24 @@ const String _bgJs = """
   window.addEventListener('mouseout',function(e){ if(!e.relatedTarget){mouse.x=-99999;mouse.y=-99999;} });
   size();
 
+  // The loop is tracked so it can be stopped: a visitor who turns reduced
+  // motion on mid-session must not be left with a drifting constellation.
+  var canvasRaf=0;
+  var reduceApplied=false;
+  function applyReduced(){
+    if(reduceApplied) return;
+    reduceApplied=true;
+    if(canvasRaf){ cancelAnimationFrame(canvasRaf); canvasRaf=0; }
+    if(cursorRaf){ cancelAnimationFrame(cursorRaf); cursorRaf=0; }
+    cv.style.display='none';
+    d.classList.remove('has-custom-cursor');
+  }
   function drawFrame(t){
+    canvasRaf=0;
+    if(reduced()){
+      applyReduced();
+      return;
+    }
     if(t===undefined){t=performance.now();}
     ctx.clearRect(0,0,W,H);
     var RD=140, time=t;
@@ -357,22 +441,45 @@ const String _bgJs = """
       var s=1+n*3.2;
       ctx.beginPath(); ctx.arc(p.x,p.y,s,0,6.2832); ctx.fillStyle=rgba(INK,Math.min(1,a)); ctx.fill();
     }
-    requestAnimationFrame(drawFrame);
+    canvasRaf=requestAnimationFrame(drawFrame);
   }
-  drawFrame();
+  function startCanvas(){ if(!canvasRaf&&!reduced()) canvasRaf=requestAnimationFrame(drawFrame); }
 
   // ---- Cursor motion (dot snaps, ring eases behind) ----
+  var mx=-100,my=-100,rx=-100,ry=-100,shown=false;
+  var cursorRaf=0;
+  function cursorFrame(){
+    cursorRaf=0;
+    if(reduced()){
+      applyReduced();
+      return;
+    }
+    rx+=(mx-rx)*0.18; ry+=(my-ry)*0.18;
+    dot.style.transform='translate('+(mx-4)+'px,'+(my-4)+'px)';
+    ring.style.transform='translate('+(rx-17)+'px,'+(ry-17)+'px)';
+    cursorRaf=requestAnimationFrame(cursorFrame);
+  }
+  function startCursor(){ if(usable&&!cursorRaf&&!reduced()) cursorRaf=requestAnimationFrame(cursorFrame); }
   if(usable){
-    var mx=-100,my=-100,rx=-100,ry=-100,shown=false;
     document.addEventListener('mousemove',function(e){ mx=e.clientX; my=e.clientY; if(!shown){shown=true;dot.style.opacity='1';ring.style.opacity='1';} },{passive:true});
-    (function loop(){ rx+=(mx-rx)*0.18; ry+=(my-ry)*0.18;
-      dot.style.transform='translate('+(mx-4)+'px,'+(my-4)+'px)';
-      ring.style.transform='translate('+(rx-17)+'px,'+(ry-17)+'px)';
-      requestAnimationFrame(loop);
-    })();
     document.addEventListener('mouseover',function(e){ var t=e.target; if(t&&t.closest&&t.closest('a,button,.card,input,textarea')) ring.classList.add('is-hover'); });
     document.addEventListener('mouseout',function(e){ var t=e.target; if(t&&t.closest&&t.closest('a,button,.card,input,textarea')) ring.classList.remove('is-hover'); });
   }
+
+  // ---- Follow the motion preference while the page is open ----
+  function applyMotion(){
+    if(reduced()){
+      applyReduced();
+      return;
+    }
+    reduceApplied=false;
+    cv.style.display='';
+    if(usable){ d.classList.add('has-custom-cursor'); }
+    startCanvas();
+    startCursor();
+  }
+  applyMotion();
+  if(reduceMQ&&reduceMQ.addEventListener){ reduceMQ.addEventListener('change',applyMotion); }
   }
   if(document.readyState==='loading'){window.addEventListener('DOMContentLoaded',boot);}else{boot();}
 })();
