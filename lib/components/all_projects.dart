@@ -30,11 +30,13 @@ class AllProjects extends StatefulComponent {
       ),
       css('.projects-grid').styles(
         display: Display.grid,
-        gridTemplate: GridTemplate(columns: GridTracks([
-          GridTrack(TrackSize.fr(1)),
-          GridTrack(TrackSize.fr(1)),
-          GridTrack(TrackSize.fr(1)),
-        ])),
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+          ]),
+        ),
         gap: Gap.all(20.px),
       ),
       css('.empty-state').styles(
@@ -51,10 +53,12 @@ class AllProjects extends StatefulComponent {
     ]),
     css.media(MediaQuery.all(maxWidth: 1000.px), [
       css('.all-projects .projects-grid').styles(
-        gridTemplate: GridTemplate(columns: GridTracks([
-          GridTrack(TrackSize.fr(1)),
-          GridTrack(TrackSize.fr(1)),
-        ])),
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+          ]),
+        ),
       ),
     ]),
     css.media(MediaQuery.all(maxWidth: 700.px), [
@@ -102,12 +106,10 @@ class _AllProjectsState extends State<AllProjects> {
         ]),
 
         div(classes: 'projects-grid', [
-          for (final project in filtered)
-            ProjectCard(project: project, isFeatured: false),
+          for (final project in filtered) ProjectCard(project: project, isFeatured: false),
         ]),
 
-        if (filtered.isEmpty)
-          div(classes: 'empty-state', [Component.text('No projects in this category yet.')]),
+        if (filtered.isEmpty) div(classes: 'empty-state', [Component.text('No projects in this category yet.')]),
       ]),
     ]);
   }

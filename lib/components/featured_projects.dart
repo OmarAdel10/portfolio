@@ -17,8 +17,7 @@ class FeaturedProjects extends StatelessComponent {
           ]),
         ]),
         div(classes: 'projects-grid', [
-          for (final project in mainProjects)
-            ProjectCard(project: project, isFeatured: true),
+          for (final project in mainProjects) ProjectCard(project: project, isFeatured: true),
         ]),
       ]),
     ]);
@@ -30,27 +29,27 @@ class FeaturedProjects extends StatelessComponent {
       css('&').styles(
         padding: .symmetric(vertical: 64.px),
       ),
-      
+
       css('.section-header').styles(
         textAlign: TextAlign.center,
         maxWidth: 600.px,
         margin: .symmetric(horizontal: 0.px),
         padding: .only(bottom: 48.px),
       ),
-      
+
       css('.section-title').styles(
         fontSize: 2.5.rem,
         fontWeight: FontWeight.w600,
         color: Color('#FFFFFF'),
         fontFamily: FontFamily('Space Grotesk'),
       ),
-      
+
       css('.section-subtitle').styles(
         fontSize: 1.125.rem,
         color: Color('#888888'),
         padding: .only(top: 16.px),
       ),
-      
+
       css('.projects-grid').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,

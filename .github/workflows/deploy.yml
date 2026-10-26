@@ -46,7 +46,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/jaspr --project-name=omaradel-portfolio --branch=master
+          command: pages deploy build/jaspr --project-name=omaradel --branch=master
 
   deploy-preview:
     name: Deploy to Cloudflare Pages (preview)
@@ -66,4 +66,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/jaspr --project-name=omaradel-portfolio --branch=${{ github.head_ref }}
+          command: pages deploy build/jaspr --project-name=omaradel --branch=${{ github.head_ref }}

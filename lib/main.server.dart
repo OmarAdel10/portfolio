@@ -24,30 +24,250 @@ const String _themeInitJs =
     "(function(){try{var t=localStorage.getItem('portfolio-theme');"
     "if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();";
 
+/// Critical CSS to prevent FOUC - hides .reveal and .intro-item elements
+/// before any scripts execute. Must be inlined FIRST in <head>.
+const String _criticalCss = '''
+  .intro-hold .reveal,
+  .intro-hold .intro-item {
+    opacity: 0 !important;
+    transform: translateY(22px) !important;
+  }
+  .intro-hold .cursor-dot,
+  .intro-hold .cursor-ring {
+    opacity: 0 !important;
+  }
+''';
+
 /// Marks JS as enabled, reveals `.reveal` elements, and handles email fallback.
 /// Direct click handlers on all `.email-fallback` links:
 /// tries mailto, then after 1.5s if page still has focus -> Gmail compose.
+/// Adds the intro hold class before first paint (unless reduced motion).
+/// Hero removes it when the intro finishes; failsafe removes it after 9s.
+const String _introHoldJs =
+    "(function(){try{"
+    "if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;"
+    "document.documentElement.classList.add('intro-hold');"
+    "setTimeout(function(){document.documentElement.classList.remove('intro-hold');},9000);"
+    "}catch(e){}})();";
+
 const String _motionJs = """
 (function(){
   var d=document.documentElement;
   d.classList.add('js-enabled');
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  var revealed=[],ticking=false;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function revealVisible(){
     var sheet='opacity .65s cubic-bezier(0.22,0.61,0.36,1), transform .65s cubic-bezier(0.22,0.61,0.36,1)';
     var els=[].slice.call(document.querySelectorAll('.reveal'));
     var vh=window.innerHeight||document.documentElement.clientHeight;
     for(var i=0;i<els.length;i++){
-      var el=els[i]; if(revealed.indexOf(el)>=0)continue;
+      var el=els[i];
+      // Skip only elements that already carry the revealed inline state.
+      // Hydration can wipe style attributes (DomRenderElement.update()), so
+      // bookkeeping by element identity poisons itself — re-check current
+      // style instead, so wiped elements get re-revealed on the next pass.
+      if(el.style.opacity==='1') continue;
+      // Once the pinned scrub is active it owns the reveal of the panel, so
+      // these elements must NOT get inline styles (they would beat the CSS
+      // custom properties that drive the scrub). Before the hero intro
+      // finishes (!heroReady) the panel stays hidden via the CSS defaults so
+      // it only appears on scroll; once the scene deactivates it reverts to
+      // the normal reveal-on-scroll path.
+      if(el.closest('.scene-stage') && (sceneActive || !heroReady)) continue;
       var r=el.getBoundingClientRect();
-      if(r.top<vh){ el.style.transition=sheet; el.style.opacity='1'; el.style.transform='translateY(0)'; revealed.push(el); }
+      if(r.top<vh){
+        if(reduce){
+          // Reduced motion: reveal immediately without animation
+          el.style.opacity='1';
+          el.style.transform='translateY(0)';
+        }else{
+          el.style.transition=sheet;
+          // Staggered one-by-one reveal: cards carry data-stagger-index and
+          // fade in with an increasing delay so they pop in sequentially.
+          var st=el.getAttribute('data-stagger-index');
+          if(st!==null){el.style.transitionDelay=(parseInt(st,10)*160)+'ms';}
+          el.style.opacity='1'; el.style.transform='translateY(0)';
+        }
+      }
     }
   }
-  function request(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; revealVisible(); }); } }
-  window.addEventListener('scroll',request,{passive:true});
-  window.addEventListener('resize',request);
-  var mut=new MutationObserver(request); mut.observe(d,{childList:true,subtree:true});
-  revealVisible(); setTimeout(revealVisible,500); setTimeout(revealVisible,1600);
+  // The scroll listener and the rAF scheduler live in the scene block below,
+  // so there is exactly one of each for the whole page.
+
+  // ---- Scroll-scrubbed hero -> Expertise scene ---------------------------
+  // After the hero intro finishes (.phase-done), the .scene wrapper (400vh)
+  // holds a sticky .scene-stage (left = hero, right = expertise). Scroll
+  // drives progress p (0..1); JS writes CSS custom properties and CSS applies
+  // the hero shift, expertise title and cards. Fully reversible on scroll up.
+  // No scroll-lock, no preventDefault — scrolling is never hijacked.
+  var sceneActive = false;
+  var heroReady = false;
+  var geometryReady = false;
+  var wrapperTop = 0, wrapperHeight = 0, vh = 0, heroShiftMax = 0;
+  var heroInner = null, titleEl = null, cards = [];
+
+  function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+  function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+  function getScene(){ return document.querySelector('.scene'); }
+  function getStage(){ return document.querySelector('.scene-stage'); }
+  function measureScene(){
+    var s = getScene();
+    if(!s) return;
+    var r = s.getBoundingClientRect();
+    wrapperTop = r.top + window.pageYOffset;
+    wrapperHeight = s.offsetHeight || r.height;
+    vh = window.innerHeight || d.clientHeight;
+    // The stage sticks right below the floating header pill.
+    var header = document.querySelector('.site-header');
+    var headerH = header ? Math.round(header.getBoundingClientRect().height) : 64;
+    d.style.setProperty('--scene-top', headerH + 'px');
+  }
+  // How far the hero may travel left before the hero column would clip it.
+  // Measured on the untransformed element, never per frame.
+  function measureHeroShift(){
+    heroShiftMax = 0;
+    if(!heroInner) return;
+    var hero = heroInner.closest('.hero');
+    if(!hero) return;
+    var prev = heroInner.style.transform;
+    heroInner.style.transform = 'none';
+    var hr = heroInner.getBoundingClientRect();
+    var herr = hero.getBoundingClientRect();
+    var hcs = window.getComputedStyle(hero);
+    heroInner.style.transform = prev;
+    var heroLeft = herr.left + (parseFloat(hcs.paddingLeft) || 0);
+    heroShiftMax = Math.max(0, hr.left - heroLeft);
+  }
+  // Strip any inline reveal state from the panel so the scrub owns it.
+  function resetSceneEls(){
+    var owned = [].slice.call(document.querySelectorAll('.scene-stage .reveal'));
+    owned.forEach(function(el){
+      el.style.opacity='';
+      el.style.transform='';
+      el.style.transition='';
+      el.style.transitionDelay='';
+      el.style.removeProperty('--reveal');
+      el.style.removeProperty('--card-blur');
+      el.classList.remove('lit');
+    });
+  }
+  function initSceneEls(){
+    heroInner = document.querySelector('.hero-inner');
+    titleEl = document.querySelector('.expertise .section-head');
+    cards = [].slice.call(document.querySelectorAll('.skill-card.reveal'));
+    cards.forEach(function(c){ c._done = false; });
+    resetSceneEls();
+    measureHeroShift();
+  }
+  function tickCard(card, local){
+    if(local >= 1 && !card._done){
+      card._done = true;
+      card.classList.add('lit');
+      setTimeout(function(){ card.classList.remove('lit'); }, 800);
+    }
+    if(local < 1){ card._done = false; card.classList.remove('lit'); }
+  }
+  function applyScene(p){
+    // Hero glides left (p 0.00 -> 0.30), existing shift look.
+    var h = easeOutCubic(clamp01(p / 0.30));
+    if(heroInner) heroInner.style.setProperty('--hero-shift', (heroShiftMax * h).toFixed(2) + 'px');
+    if(p > 0.01) d.classList.add('hero-shifted'); else d.classList.remove('hero-shifted');
+    // Expertise title (p 0.25 -> 0.40).
+    var t = easeOutCubic(clamp01((p - 0.25) / 0.15));
+    if(titleEl) titleEl.style.setProperty('--reveal', t);
+    // Cards, staggered with overlapping ranges.
+    var vals = [
+      easeOutCubic(clamp01((p - 0.40) / 0.20)),
+      easeOutCubic(clamp01((p - 0.55) / 0.20)),
+      easeOutCubic(clamp01((p - 0.70) / 0.20))
+    ];
+    for(var i=0;i<cards.length;i++){
+      var card = cards[i];
+      if(!card) continue;
+      var r = vals[i] !== undefined ? vals[i] : 0;
+      card.style.setProperty('--reveal', r);
+      // Depth blur: a revealed card picks up a little blur as the cards below
+      // it come in, so the stack reads as depth instead of a flat list.
+      var blur = 8 * (1 - r);
+      for(var j=i+1;j<cards.length;j++){
+        blur += 0.8 * (vals[j] !== undefined ? vals[j] : 0);
+      }
+      card.style.setProperty('--card-blur', blur.toFixed(2) + 'px');
+      tickCard(card, r);
+    }
+  }
+
+  var ticking = false;
+  function sceneTick(){
+    if(!geometryReady){ measureScene(); geometryReady = true; }
+    var scrollY = window.pageYOffset || d.scrollTop;
+    if(sceneActive){
+      var span = wrapperHeight - vh;
+      if(span > 0){
+        var p = clamp01((scrollY - wrapperTop) / span);
+        applyScene(p);
+      }
+    }
+    revealVisible();
+    ticking = false;
+  }
+  function request(){ if(!ticking){ ticking = true; requestAnimationFrame(sceneTick); } }
+
+  function applyNoScene(){
+    // The pinned scene needs room for the hero and the three cards side by
+    // side: below 900px wide (or 700px tall) the page falls back to the
+    // normal stacked document.
+    var noScene = reduce
+      || (window.innerWidth || d.clientWidth) < 900
+      || (window.innerHeight || d.clientHeight) < 700;
+    d.classList.toggle('no-scene', noScene);
+    var wantActive = !noScene && heroReady;
+    if(wantActive !== sceneActive){
+      sceneActive = wantActive;
+      var st = getStage();
+      if(st){
+        if(wantActive){ st.classList.add('scrubbed'); initSceneEls(); }
+        else { st.classList.remove('scrubbed'); d.classList.remove('hero-shifted'); resetSceneEls(); }
+      }
+      geometryReady = false;
+    }
+    measureScene();
+  }
+
+  // Initial layout class + first reveal pass.
+  applyNoScene();
+  revealVisible();
+
+  // Wait for the hero intro to finish (.phase-done), then activate the scrub.
+  function pollHero(){
+    if(!heroReady && document.querySelector('.hero.phase-done')){
+      heroReady = true;
+      applyNoScene();
+      request();
+    }
+  }
+  pollHero();
+  var heroPoll = setInterval(pollHero, 100);
+  setTimeout(function(){ clearInterval(heroPoll); }, 20000);
+
+  window.addEventListener('scroll', request, {passive: true});
+  window.addEventListener('resize', function(){ geometryReady = false; measureScene(); measureHeroShift(); applyNoScene(); request(); });
+  // Deep links / header nav link to '#expertise' resolve inside the pinned scene
+  // where the panel is hidden until p > 0.25: scroll to the end of the scene so
+  // the panel arrives fully revealed. Falls back to native scroll if the scene
+  // is not yet active (e.g. clicked right after load).
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href="#expertise"]') : null;
+    if(!a || !sceneActive) return;
+    var s = getScene();
+    if(s){
+      e.preventDefault();
+      var endY = (s.getBoundingClientRect().top + window.pageYOffset)
+        + Math.max(0, s.offsetHeight - (window.innerHeight || d.clientHeight));
+      window.scrollTo(0, Math.round(endY));
+    }
+  });
+  new MutationObserver(request).observe(d, {childList: true, subtree: true});
+  request();
 
   // ---- Email fallback (mailto -> Gmail) ----
   var EMAIL = 'omaradel1.dev@gmail.com';
@@ -100,6 +320,8 @@ const String _bgJs = """
   if(!cv||!cv.getContext||reduced()) return;
   var ctx=cv.getContext('2d');
   var touch=coarse();
+  var dpr=getCappedDpr();
+  ctx.scale(dpr, dpr);
 
   var SP=touch?42:28, W=0, H=0, dots=[], mouse={x:-99999,y:-99999};
   var INK='#23251d';
@@ -109,8 +331,9 @@ const String _bgJs = """
 
   function hexToRgb(h){ h=h.replace('#',''); if(h.length===3){ h=h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2); } var n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
   function rgba(hex,a){ var r=hexToRgb(hex); return 'rgba('+r[0]+','+r[1]+','+r[2]+','+a+')'; }
+  function getCappedDpr(){ return Math.min(window.devicePixelRatio||1, 1.5); }
 
-  function size(){ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; build(); }
+  function size(){ var dpr=getCappedDpr(); W=cv.width=window.innerWidth*dpr; H=cv.height=window.innerHeight*dpr; cv.style.width=window.innerWidth+"px"; cv.style.height=window.innerHeight+"px"; ctx.scale(dpr, dpr); build(); }
   function build(){ dots=[]; var ix=Math.floor(W/SP), iy=Math.floor(H/SP);
     for(var i=0;i<ix;i++)for(var j=0;j<iy;j++)
       dots.push({x:i*SP+SP/2+(Math.random()-0.5)*5, y:j*SP+SP/2+(Math.random()-0.5)*5, ph:Math.random()*6.2832});
@@ -134,7 +357,7 @@ const String _bgJs = """
       var s=1+n*3.2;
       ctx.beginPath(); ctx.arc(p.x,p.y,s,0,6.2832); ctx.fillStyle=rgba(INK,Math.min(1,a)); ctx.fill();
     }
-    if(!touch) requestAnimationFrame(drawFrame);
+    requestAnimationFrame(drawFrame);
   }
   drawFrame();
 
@@ -156,7 +379,8 @@ const String _bgJs = """
 """;
 
 /// Structured-data Person markup for search engines.
-const String _jsonLd = '{"@context":"https://schema.org","@type":"Person",'
+const String _jsonLd =
+    '{"@context":"https://schema.org","@type":"Person",'
     '"name":"Omar Adel","url":"https://omaradel.dev",'
     '"image":"https://omaradel.dev/images/avatar.jpg",'
     '"jobTitle":"Software Engineer",'
@@ -168,8 +392,7 @@ const String _jsonLd = '{"@context":"https://schema.org","@type":"Person",'
 /// are emitted from [head] as `property` meta elements instead.
 const Map<String, String> _ogMeta = {
   'og:title': 'Omar Adel — Software Engineer & App Developer',
-  'og:description':
-      'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+  'og:description': 'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
   'og:type': 'website',
   'og:url': productionUrl,
   'og:image': '$productionUrl/images/og-image.jpg',
@@ -188,60 +411,67 @@ void main() {
   );
 
   // Starts the app.
-  runApp(Document(
-    title: 'Omar Adel — Software Engineer & App Developer',
-    lang: 'en',
-    meta: {
-      'description':
-          'Personal portfolio of Omar Adel, a software engineer building cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'theme-color': '#eeefe9',
-      'keywords': 'Omar Adel, software engineer, Flutter, C# .NET, app developer, portfolio',
-      'author': 'Omar Adel',
-      'google-site-verification': 'Uzi0q0Piapes6QUGWVdSwhoOjirhtK-YkBMguFXrhPA',
-      'twitter:card': 'summary_large_image',
-      'twitter:title': 'Omar Adel — Software Engineer & App Developer',
-      'twitter:description':
-          'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
-      'twitter:image': '$productionUrl/images/og-image.jpg',
-      'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
-    },
-    head: [
-      script(content: _themeInitJs),
-      script(content: _motionJs),
-      script(content: _bgJs),
-      // Open Graph metas must carry `property` attributes (OGP spec); the
-      // `meta` map above emits `name`, so they are rendered here instead.
-      for (final entry in _ogMeta.entries)
-        meta(attributes: {'property': entry.key, 'content': entry.value}),
-      link(
-        rel: 'icon',
-        href: '/favicon.ico',
-        attributes: {'sizes': 'any'},
-      ),
-      link(
-        rel: 'icon',
-        href: '/images/favicon-32x32.png',
-        attributes: {'type': 'image/png', 'sizes': '32x32'},
-      ),
-      link(
-        rel: 'apple-touch-icon',
-        href: '/images/apple-touch-icon.png',
-        attributes: {'sizes': '180x180'},
-      ),
-      link(
-        rel: 'manifest',
-        href: '/site.webmanifest',
-      ),
-      link(
-        href: productionUrl,
-        attributes: {'rel': 'canonical'},
-      ),
-      script(attributes: {'type': 'application/ld+json'}, content: _jsonLd),
-    ],
-    body: div(classes: 'app-shell', [
-      div(classes: 'cursor-dot', []),
-      div(classes: 'cursor-ring', []),
-      const App(),
-    ]),
-  ));
+  runApp(
+    Document(
+      title: 'Omar Adel — Software Engineer & App Developer',
+      lang: 'en',
+      meta: {
+        'description':
+            'Personal portfolio of Omar Adel, a software engineer building cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+        'theme-color': '#eeefe9',
+        'keywords': 'Omar Adel, software engineer, Flutter, C# .NET, app developer, portfolio',
+        'author': 'Omar Adel',
+        'google-site-verification': 'Uzi0q0Piapes6QUGWVdSwhoOjirhtK-YkBMguFXrhPA',
+        'twitter:card': 'summary_large_image',
+        'twitter:title': 'Omar Adel — Software Engineer & App Developer',
+        'twitter:description':
+            'Cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling.',
+        'twitter:image': '$productionUrl/images/og-image.jpg',
+        'twitter:image:alt': 'Omar Adel — Software Engineer (portrait)',
+      },
+      head: [
+        // Critical CSS - MUST be first to prevent FOUC (flash of unstyled content)
+        .element(
+          tag: 'style',
+          children: [.text(_criticalCss)],
+        ),
+        script(content: _themeInitJs),
+        script(content: _introHoldJs),
+        script(content: _motionJs),
+        script(content: _bgJs),
+        // Open Graph metas must carry `property` attributes (OGP spec); the
+        // `meta` map above emits `name`, so they are rendered here instead.
+        for (final entry in _ogMeta.entries) meta(attributes: {'property': entry.key, 'content': entry.value}),
+        link(
+          rel: 'icon',
+          href: '/favicon.ico',
+          attributes: {'sizes': 'any'},
+        ),
+        link(
+          rel: 'icon',
+          href: '/images/favicon-32x32.png',
+          attributes: {'type': 'image/png', 'sizes': '32x32'},
+        ),
+        link(
+          rel: 'apple-touch-icon',
+          href: '/images/apple-touch-icon.png',
+          attributes: {'sizes': '180x180'},
+        ),
+        link(
+          rel: 'manifest',
+          href: '/site.webmanifest',
+        ),
+        link(
+          href: productionUrl,
+          attributes: {'rel': 'canonical'},
+        ),
+        script(attributes: {'type': 'application/ld+json'}, content: _jsonLd),
+      ],
+      body: div(classes: 'app-shell', [
+        div(classes: 'cursor-dot', []),
+        div(classes: 'cursor-ring', []),
+        const App(),
+      ]),
+    ),
+  );
 }

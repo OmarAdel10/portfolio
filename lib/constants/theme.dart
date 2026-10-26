@@ -110,6 +110,7 @@ const Map<String, String> lightVars = {
   '--hairline': '#bfc1b7',
   '--hairline-soft': '#dcdfd2',
   '--primary': '#f7a501',
+  '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#b17816',
   '--on-primary': '#23251d',
@@ -125,6 +126,16 @@ const Map<String, String> lightVars = {
   '--accent-purple': '#7c44a6',
   '--accent-purple-soft': '#e7d8ee',
   '--focus': 'rgba(59,130,246,0.5)',
+  '--cursor-fill': '#111111',
+  '--cursor-edge': '#ffffff',
+  // Mascot logo theming (dark lines + cream face in both themes; the dark
+  // theme maps them through its own --ink/--canvas, which resolve to the
+  // same visual pairing).
+  '--mascot-ink': 'var(--ink)',
+  '--mascot-paper': 'var(--canvas)',
+  // Hair rim color: only used by the dark-theme rule below, where the ink
+  // (== canvas) would otherwise vanish against the dark page background.
+  '--mascot-hair-edge': 'var(--ink)',
 };
 
 /// CSS custom properties that define the **dark** theme, derived from the
@@ -145,6 +156,7 @@ const Map<String, String> darkVars = {
   '--hairline': '#3a3c30',
   '--hairline-soft': '#2c2e25',
   '--primary': '#f7a501',
+  '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#f0b93e',
   '--on-primary': '#23251d',
@@ -160,6 +172,13 @@ const Map<String, String> darkVars = {
   '--accent-purple': '#b78fe0',
   '--accent-purple-soft': '#322740',
   '--focus': 'rgba(96,165,250,0.5)',
+  '--cursor-fill': '#ffffff',
+  '--cursor-edge': '#111111',
+  // Dark theme keeps the mascot readable: cream face, dark lines.
+  '--mascot-ink': 'var(--canvas)',
+  '--mascot-paper': 'var(--ink)',
+  // Lighter rim so the hair silhouette reads against the dark canvas.
+  '--mascot-hair-edge': 'var(--ash)',
 };
 
 List<StyleRule> get _cupertinoIconStyles => [
@@ -205,28 +224,34 @@ List<StyleRule> get styles => [
     '100%': Styles(raw: {'transform': 'translateY(0)'}),
   }),
   css.keyframes('heroRingPulse', {
-    '0%': Styles(raw: {'opacity': '0.30', 'transform': 'scale(1)'}),
-    '50%': Styles(raw: {'opacity': '0', 'transform': 'scale(1.07)'}),
-    '100%': Styles(raw: {'opacity': '0.30', 'transform': 'scale(1)'}),
-  }),
-  css.keyframes('heroRise', {
-    'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(16px)'}),
-    'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
-  }),
-  css.keyframes('fadeUp', {
-    'from': Styles(raw: {'opacity': '0', 'transform': 'translateY(20px)'}),
-    'to': Styles(raw: {'opacity': '1', 'transform': 'translateY(0)'}),
+    '0%': Styles(raw: {'transform': 'scale(1) rotate(0deg)', 'opacity': '0.3'}),
+    '25%': Styles(raw: {'transform': 'scale(1.1) rotate(5deg)', 'opacity': '0.35'}),
+    '50%': Styles(raw: {'transform': 'scale(1.2) rotate(0deg)', 'opacity': '0.4'}),
+    '75%': Styles(raw: {'transform': 'scale(1.1) rotate(-5deg)', 'opacity': '0.35'}),
+    '100%': Styles(raw: {'transform': 'scale(1) rotate(0deg)', 'opacity': '0.3'}),
   }),
   css.keyframes('mascotWiggle', {
     '0%, 100%': Styles(raw: {'transform': 'rotate(-8deg)'}),
     '50%': Styles(raw: {'transform': 'rotate(-2deg)'}),
   }),
 
-  // ---------- Scroll reveal (driven by IntersectionObserver in the head) ----------
-  css('html.js-enabled .reveal').styles(
+  // ---------- Scroll reveal (base styles - no JS required, prevents FOUC) ----------
+  css('.reveal').styles(
     raw: const {
       'opacity': '0',
       'transform': 'translateY(22px)',
+    },
+  ),
+  // Also hide during Hero intro (when .intro-hold is on html element)
+  css('.intro-hold .reveal').styles(
+    raw: const {
+      'opacity': '0',
+      'transform': 'translateY(22px)',
+    },
+  ),
+  // Enhanced transition when JS is enabled
+  css('html.js-enabled .reveal').styles(
+    raw: const {
       'transition':
           'opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1)',
     },
@@ -257,6 +282,8 @@ List<StyleRule> get styles => [
       'scroll-behavior': 'smooth',
       'scroll-padding-top': '78px',
       '-webkit-text-size-adjust': '100%',
+      // `clip` (not `hidden`) keeps position:sticky working.
+      'overflow-x': 'clip',
     },
   ),
   css('section[id]').styles(
@@ -435,6 +462,24 @@ List<StyleRule> get styles => [
   ),
 
   // ---------- Card vocabulary (PostHog: flat, hairline, 6px) ----------
+  // ---------- Outline buttons (for secondary CTAs like Ask Nono, Open CV) ----------
+  css('.btn-outline').styles(
+    backgroundColor: Colors.transparent,
+    color: cInk,
+    border: Border.all(color: cHairline, width: 1.px),
+    padding: .symmetric(vertical: 10.px, horizontal: 16.px),
+  ),
+  css('.btn-outline:hover').styles(
+    backgroundColor: cSoft,
+    border: Border.all(color: cPrimary, width: 1.px),
+    color: cInk,
+    textDecoration: .none,
+  ),
+  css('.btn-outline:active').styles(
+    backgroundColor: cHairline,
+    color: cInk,
+  ),
+
   css('.card').styles(
     backgroundColor: cCard,
     border: Border.all(color: cHairline, width: 1.px),
@@ -521,8 +566,11 @@ List<StyleRule> get styles => [
     ),
     css('.container').styles(padding: .symmetric(horizontal: 18.px)),
     css('.section-title').styles(fontSize: 26.px),
+    // Ensure touch targets ≥48×48px on mobile
+    css('.btn').styles(
+      padding: .symmetric(vertical: 14.px, horizontal: 16.px),
+    ),
   ]),
-
   // ---------- Marquee ticker ----------
   css.keyframes('marquee', {
     '0%': Styles(raw: {'transform': 'translateX(0)'}),
@@ -616,6 +664,13 @@ List<StyleRule> get styles => [
   ),
   css('.marquee-sep').styles(raw: const {'color': 'var(--primary)'}),
 
+  // Slow marquee on narrow viewports for readability
+  css.media(MediaQuery.all(maxWidth: 768.px), [
+    css('.marquee-track').styles(
+      raw: const {'animation': 'marquee 52s linear infinite'},
+    ),
+  ]),
+
   // Respect users who prefer reduced motion.
   css.media(MediaQuery.raw('(prefers-reduced-motion: reduce)'), [
     css('*, *::before, *::after').styles(
@@ -643,5 +698,654 @@ List<StyleRule> get styles => [
         'display': 'none',
       },
     ),
+    // Keep the mascot fully static under reduced motion (no blink, no head
+    // droop, no Zzz — the near-zero-duration global rule above would still
+    // let the `forwards` sleep animations snap to their end state).
+    css(
+      '.logo-fab.attention #ear-left, .logo-fab.attention #ear-right, '
+      '.logo-fab.attention #hair, .logo-fab.attention #eyelid-left, '
+      '.logo-fab.attention #eyelid-right, .logo-fab.attention #head, '
+      '.logo-fab.attention #eyebrow-left, .logo-fab.attention #eyebrow-right, '
+      '.logo-fab.sleeping #eyelid-left, .logo-fab.sleeping #eyelid-right, '
+      '.logo-fab.sleeping #head, .logo-fab.sleeping #ear-left, '
+      '.logo-fab.sleeping #ear-right, .logo-fab.sleeping #mascot, '
+      '.logo-fab.sleeping::before, .logo-fab.sleeping::after, '
+      '.logo-fab.surprised #mascot, .logo-fab.surprised #head, '
+      '.logo-fab.blink #eyelid-left, .logo-fab.blink #eyelid-right, '
+      '.logo-fab svg',
+    ).styles(
+      raw: const {
+        'animation': 'none !important',
+      },
+    ),
   ]),
+
+  // ---------- Intro staggered reveal (driven by Hero removing .intro-hold) ----------
+  css('.intro-hold .intro-item').styles(
+    raw: const {
+      'opacity': '0',
+      'transform': 'translateY(10px)',
+    },
+  ),
+  css('.intro-item').styles(
+    raw: const {
+      'transition': 'opacity 500ms ease-out, transform 500ms ease-out',
+      'transition-delay': 'calc(var(--i, 0) * 110ms)',
+    },
+  ),
+  css('.intro-hold .cursor-dot, .intro-hold .cursor-ring').styles(
+    raw: const {
+      'opacity': '0 !important',
+    },
+  ),
+
+  // ---------- Pinned scroll-scrubbed hero -> Expertise scene ----------
+  // Active only when html is NOT .no-scene (JS adds .no-scene on narrow
+  // viewports or prefers-reduced-motion). .scene is a 400vh scrollable wrapper;
+  // .scene-stage sticks for one full viewport while scroll drives progress p
+  // (0..1) via JS custom properties. Scrolling up reverses everything.
+  css('.scene').styles(
+    raw: const {
+      'height': 'auto',
+    },
+  ),
+  css('.scene-stage').styles(
+    raw: const {
+      'display': 'block',
+      'height': 'auto',
+      'position': 'static',
+    },
+  ),
+  css('html:not(.no-scene) .scene').styles(
+    raw: const {
+      'height': '400vh',
+    },
+  ),
+  // --scene-top is the measured header height; the stage sticks right below
+  // the floating header pill and fills what is left of the viewport.
+  // The stage paints the canvas colour so the dot matrix does not bleed into
+  // the empty right half while the scene is pinned (the hero band used to be
+  // an opaque full-width band, so this matches the original first screen).
+  css('html:not(.no-scene) .scene-stage').styles(
+    raw: const {
+      'position': 'sticky',
+      'top': 'var(--scene-top, 64px)',
+      'height': 'calc(100vh - var(--scene-top, 64px))',
+      'display': 'grid',
+      '--scene-col': '0.55',
+      'grid-template-columns': 'calc(var(--scene-col) * 100%) 1fr',
+      'grid-template-rows': '100%',
+      'align-items': 'stretch',
+      'background-color': 'var(--canvas)',
+    },
+  ),
+  // Hero — compacted inside the pinned stage so the whole bio fits in
+  // (100vh - header) at 1280x720 and 1440x900. The mobile / fallback hero
+  // keeps its original size because these rules are scoped to the scene.
+  css('html:not(.no-scene) .scene-stage .hero').styles(
+    raw: const {
+      'padding-top': '10px',
+      'padding-bottom': '10px',
+      // The hero block rests page-centred, which reaches past the hero
+      // column, so it must not be clipped by the hero box.
+      'overflow': 'visible',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-inner').styles(
+    raw: const {
+      'max-width': '500px',
+      'margin-left': 'auto',
+      'margin-right': 'auto',
+      // Resting offset: centre the hero block on the page instead of inside
+      // the left column. 100% is the hero column (the flex container), so
+      // dividing by the column ratio gives the page width. The scrub then
+      // glides the block flush to the left edge.
+      'left': 'calc((100% / var(--scene-col, 0.55) - 100%) / 2)',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-avatar-wrap').styles(
+    raw: const {
+      'width': '120px',
+      'height': '120px',
+      'margin-bottom': '14px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-avatar-glitch').styles(
+    raw: const {
+      'width': '120px',
+      'height': '120px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-eyebrow').styles(
+    raw: const {
+      'margin-bottom': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-name').styles(
+    raw: const {
+      'font-size': '52px',
+      'margin-bottom': '6px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-pill-wrap').styles(
+    raw: const {
+      'margin-top': '2px',
+      'margin-bottom': '14px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-pill').styles(
+    raw: const {
+      'height': '40px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-role').styles(
+    raw: const {
+      'font-size': '16px',
+      'margin-bottom': '10px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .hero .hero-desc').styles(
+    raw: const {
+      'font-size': '13px',
+      'line-height': '1.55',
+      'margin-bottom': '12px',
+      'max-width': '100%',
+    },
+  ),
+  // Expertise panel: right column, vertically centered, single card column.
+  // overflow-x: clip contains the title's 40px slide-in without creating a
+  // scroll container (which would break the sticky stage).
+  css('html:not(.no-scene) .scene-stage .expertise').styles(
+    raw: const {
+      'display': 'flex',
+      'flex-direction': 'column',
+      'justify-content': 'center',
+      'height': '100%',
+      'padding-top': '0',
+      'padding-bottom': '0',
+      'overflow-x': 'clip',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+    raw: const {
+      'margin-bottom': '20px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .eyebrow').styles(
+    raw: const {
+      'margin-bottom': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .section-title').styles(
+    raw: const {
+      'font-size': '26px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .section-subtitle').styles(
+    raw: const {
+      'font-size': '13px',
+      'margin-top': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+    raw: const {
+      'grid-template-columns': '1fr',
+      'gap': '10px',
+    },
+  ),
+  // Keep card text readable on the narrow right panel.
+  css('html:not(.no-scene) .scene-stage .skill-card').styles(
+    raw: const {
+      'padding': '14px',
+      'border': '1px solid var(--hairline-soft)',
+      'border-radius': '8px',
+      'opacity': 'var(--reveal, 0)',
+      'transform': 'translateY(calc(32px * (1 - var(--reveal, 0)))) scale(calc(0.94 + 0.06 * var(--reveal, 0)))',
+      'filter': 'blur(var(--card-blur, 0px))',
+      'transition': 'border-color 0.4s ease, box-shadow 0.4s ease',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .skill-icon').styles(
+    raw: const {
+      'width': '40px',
+      'height': '40px',
+      'font-size': '20px',
+      'margin-bottom': '8px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .skill-title').styles(
+    raw: const {
+      'font-size': '15px',
+      'margin-bottom': '6px',
+    },
+  ),
+  css('html:not(.no-scene) .scene-stage .skill-description').styles(
+    raw: const {
+      'font-size': '12.5px',
+      'line-height': '1.45',
+    },
+  ),
+  // Hero glides left (0.00->0.30) using the existing shift look, now scrubbed.
+  // The distance is measured by JS so the hero can never be clipped.
+  css('html:not(.no-scene) .hero.phase-done .hero-inner').styles(
+    raw: const {
+      'transform': 'translateX(calc(-1 * var(--hero-shift, 0px)))',
+    },
+  ),
+  css('html.hero-shifted .hero.phase-done .hero-inner').styles(
+    raw: const {
+      'align-items': 'flex-start',
+      'text-align': 'left',
+    },
+  ),
+  // Expertise title (0.25->0.40): fade in, slide from right, blur clears.
+  css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+    raw: const {
+      'opacity': 'var(--reveal, 0)',
+      'transform': 'translateX(calc(40px * (1 - var(--reveal, 0))))',
+      'filter': 'blur(calc(6px * (1 - var(--reveal, 0))))',
+      'transition': 'none',
+    },
+  ),
+  // Brief amber border glow when a card finishes revealing.
+  css('html:not(.no-scene) .scene-stage .skill-card.lit').styles(
+    raw: const {
+      'border-color': 'var(--primary)',
+      'box-shadow': '0 0 14px rgba(var(--primary-rgb), 0.35)',
+    },
+  ),
+  // Short and narrow viewports (e.g. 900x700) cannot fit the compacted hero
+  // and the three cards at once, so tighten the scene a little further.
+  css.media(MediaQuery.all(maxWidth: 1100.px, maxHeight: 760.px), [
+    css('html:not(.no-scene) .scene-stage .hero .hero-desc').styles(
+      raw: const {
+        'font-size': '12.5px',
+        'line-height': '1.45',
+      },
+    ),
+    css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+      raw: const {
+        'margin-bottom': '12px',
+      },
+    ),
+    css('html:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+      raw: const {
+        'gap': '8px',
+      },
+    ),
+    css('html:not(.no-scene) .scene-stage .skill-card').styles(
+      raw: const {
+        'padding': '10px',
+      },
+    ),
+  ]),
+
+  // ---------- Mascot logo (Ask Nono floating button) ----------
+  // The button (`.logo-fab`) stays still at rest; the AIAssistant state adds
+  // `.attention` for a ~1.2s playful sequence every 90–120s, or `.sleeping`
+  // after ~2.5 min of no interaction. Part selectors target the inlined
+  // layered SVG groups by ID (see lib/components/logo.dart).
+
+  // ===== ATTENTION =====
+  css.keyframes('logoEarWiggle', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '15%': Styles(raw: {'transform': 'rotate(-8deg)'}),
+    '30%': Styles(raw: {'transform': 'rotate(8deg)'}),
+    '45%': Styles(raw: {'transform': 'rotate(-5deg)'}),
+    '60%': Styles(raw: {'transform': 'rotate(5deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(-3deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+  // The right ear wiggles opposite the left, for an asymmetric, playful beat.
+  css.keyframes('logoEarWiggleRight', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '15%': Styles(raw: {'transform': 'rotate(8deg)'}),
+    '30%': Styles(raw: {'transform': 'rotate(-8deg)'}),
+    '45%': Styles(raw: {'transform': 'rotate(5deg)'}),
+    '60%': Styles(raw: {'transform': 'rotate(-5deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(3deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+  css.keyframes('logoHairSway', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '20%': Styles(raw: {'transform': 'rotate(-3deg)'}),
+    '40%': Styles(raw: {'transform': 'rotate(3deg)'}),
+    '60%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+    '80%': Styles(raw: {'transform': 'rotate(2deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+  css.keyframes('logoEyeBlink', {
+    '0%': Styles(raw: {'transform': 'scaleY(1)'}),
+    '10%': Styles(raw: {'transform': 'scaleY(0)'}),
+    '20%': Styles(raw: {'transform': 'scaleY(1)'}),
+    '100%': Styles(raw: {'transform': 'scaleY(1)'}),
+  }),
+  css.keyframes('logoHeadTilt', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '25%': Styles(raw: {'transform': 'rotate(-4deg)'}),
+    '50%': Styles(raw: {'transform': 'rotate(4deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+  css.keyframes('logoBrowRaise', {
+    // SVG user units: -30 ≈ 2.5px on screen — a subtle raise you can catch.
+    '0%': Styles(raw: {'transform': 'translateY(0)'}),
+    '30%': Styles(raw: {'transform': 'translateY(-30px)'}),
+    '60%': Styles(raw: {'transform': 'translateY(-15px)'}),
+    '100%': Styles(raw: {'transform': 'translateY(0)'}),
+  }),
+
+  // ===== SLEEP =====
+  css.keyframes('logoHeadNod', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '25%': Styles(raw: {'transform': 'rotate(2deg)'}),
+    '50%': Styles(raw: {'transform': 'rotate(-3deg)'}),
+    '75%': Styles(raw: {'transform': 'rotate(-1deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(-2deg)'}),
+  }),
+  css.keyframes('logoEarRelax', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(-10deg)'}),
+  }),
+  css.keyframes('logoEarRelaxRight', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(10deg)'}),
+  }),
+  css.keyframes('logoBreathing', {
+    '0%': Styles(raw: {'transform': 'scale(1)'}),
+    '50%': Styles(raw: {'transform': 'scale(1.01)'}),
+    '100%': Styles(raw: {'transform': 'scale(1)'}),
+  }),
+  // One "Z" drifting up and fading out.
+  css.keyframes('logoZzzFloat', {
+    '0%': Styles(raw: {'transform': 'translateY(0) scale(0.6)', 'opacity': '0'}),
+    '15%': Styles(raw: {'opacity': '1'}),
+    '85%': Styles(raw: {'opacity': '1'}),
+    '100%': Styles(raw: {'transform': 'translateY(-34px) scale(1.1)', 'opacity': '0'}),
+  }),
+  // Always-on gentle bob so the mascot feels alive even at rest.
+  css.keyframes('logoFloatBob', {
+    '0%': Styles(raw: {'transform': 'translateY(0)'}),
+    '50%': Styles(raw: {'transform': 'translateY(-8px)'}),
+    '100%': Styles(raw: {'transform': 'translateY(0)'}),
+  }),
+  // One quick blink, played when AIAssistantState adds `.blink` at a random
+  // 3–9s cadence (Dart-driven — CSS loops can't do random intervals).
+  css.keyframes('logoBlink', {
+    '0%': Styles(raw: {'transform': 'scaleY(1)'}),
+    '50%': Styles(raw: {'transform': 'scaleY(0.05)'}),
+    '100%': Styles(raw: {'transform': 'scaleY(1)'}),
+  }),
+  css('.logo-fab.blink #eyelid-left, .logo-fab.blink #eyelid-right').styles(
+    raw: const {
+      'animation': 'logoBlink 0.18s ease-in-out',
+      'transform-origin': '50% 20%',
+    },
+  ),
+
+  // ===== SURPRISE (startled self-wake) =====
+  // Quick body jolt: pop up, settle back.
+  css.keyframes('logoStartle', {
+    '0%': Styles(raw: {'transform': 'scale(1)'}),
+    '30%': Styles(raw: {'transform': 'scale(1.07) rotate(-1deg)'}),
+    '60%': Styles(raw: {'transform': 'scale(0.98)'}),
+    '100%': Styles(raw: {'transform': 'scale(1)'}),
+  }),
+  // Head snaps up as it startles.
+  css.keyframes('logoHeadJolt', {
+    '0%': Styles(raw: {'transform': 'rotate(0deg)'}),
+    '35%': Styles(raw: {'transform': 'rotate(-4deg)'}),
+    '70%': Styles(raw: {'transform': 'rotate(2deg)'}),
+    '100%': Styles(raw: {'transform': 'rotate(0deg)'}),
+  }),
+
+  // ===== Button shell (transparent floating character) =====
+  css('.logo-fab').styles(
+    raw: const {
+      'width': '120px',
+      'height': '120px',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'background': 'transparent',
+      'border': 'none',
+      'padding': '0',
+      'cursor': 'pointer',
+      'transition': 'transform 0.3s ease',
+      // Let ears/hair/Zzz exceed the bounds while animating.
+      'overflow': 'visible',
+      'position': 'relative',
+    },
+  ),
+  css('.logo-fab svg').styles(
+    raw: const {
+      'width': '112px',
+      'height': '112px',
+      'display': 'block',
+      // Silhouette shadow that follows the character, not a circle. The bob
+      // lives on the svg (not the button) so the hover scale on the button
+      // isn't overridden by the running animation.
+      'filter': 'drop-shadow(0 10px 18px rgba(35, 37, 29, 0.28))',
+      'animation': 'logoFloatBob 5.5s ease-in-out infinite',
+    },
+  ),
+  css('.logo-fab:hover').styles(
+    raw: const {
+      'transform': 'scale(1.06)',
+    },
+  ),
+  css('.logo-fab:active').styles(
+    raw: const {'transform': 'scale(0.95)'},
+  ),
+  css('.logo-fab:focus-visible').styles(
+    raw: const {'outline': '2px solid var(--primary)', 'outline-offset': '2px'},
+  ),
+
+  // ===== Sleep-only shapes (hidden by default inside the SVG's own style) =====
+  // Closed-lid arcs: a soft ink stroke in place of the open eye.
+  css(
+    '.logo-fab #eye-closed-left path, .logo-fab #eye-closed-right path',
+  ).styles(
+    raw: const {
+      'fill': 'none',
+      'stroke': 'var(--mascot-ink)',
+      'stroke-width': '9',
+      'stroke-linecap': 'round',
+    },
+  ),
+  // Sleep mouth: a small ring (dark outline, face-colored center).
+  css('.logo-fab #mouth-sleep ellipse').styles(
+    raw: const {
+      'fill': 'var(--mascot-paper)',
+      'stroke': 'var(--mascot-ink)',
+      'stroke-width': '8',
+    },
+  ),
+  // Fade these in/out smoothly when the sleeping class toggles.
+  css(
+    '.logo-fab #eye-closed-left, .logo-fab #eye-closed-right, '
+    '.logo-fab #mouth-sleep',
+  ).styles(
+    raw: const {
+      'transition': 'opacity 1.2s ease',
+    },
+  ),
+
+  // Dark mode only: the ink (== canvas) would vanish against the dark page
+  // background, so the hair gets a thin lighter rim and the whole mascot a
+  // faint cream glow. Light mode needs neither — dark ink on light canvas.
+  css('html[data-theme="dark"] .logo-fab #hair path').styles(
+    raw: const {
+      'stroke': 'var(--mascot-hair-edge)',
+      // ≈1.1px on screen: the viewBox is ~1420 units shown at 112px, so the
+      // SVG's own stroke-width:1 renders at ~0.08px — invisible.
+      'stroke-width': '14',
+      'stroke-linejoin': 'round',
+    },
+  ),
+  css('html[data-theme="dark"] .logo-fab svg').styles(
+    raw: const {
+      'filter':
+          'drop-shadow(0 10px 18px rgba(35, 37, 29, 0.28)) '
+          'drop-shadow(0 0 20px rgba(233, 234, 226, 0.12))',
+    },
+  ),
+
+  // ===== Attention state (part-level selectors) =====
+  css('.logo-fab.attention #ear-left').styles(
+    raw: const {
+      'animation': 'logoEarWiggle 1.2s ease-in-out',
+      'transform-origin': '100% 50%',
+    },
+  ),
+  css('.logo-fab.attention #ear-right').styles(
+    raw: const {
+      'animation': 'logoEarWiggleRight 1.2s ease-in-out',
+      'transform-origin': '0% 50%',
+    },
+  ),
+  css('.logo-fab.attention #hair').styles(
+    raw: const {
+      'animation': 'logoHairSway 1.2s ease-in-out',
+      'transform-origin': '50% 100%',
+    },
+  ),
+  css('.logo-fab.attention #eyelid-left, .logo-fab.attention #eyelid-right').styles(
+    raw: const {
+      'animation': 'logoEyeBlink 1.2s ease-in-out',
+      'transform-origin': '50% 20%',
+    },
+  ),
+  css('.logo-fab.attention #head').styles(
+    raw: const {
+      'animation': 'logoHeadTilt 1.2s ease-in-out',
+    },
+  ),
+  css('.logo-fab.attention #eyebrow-left, .logo-fab.attention #eyebrow-right').styles(
+    raw: const {
+      'animation': 'logoBrowRaise 1.2s ease-in-out',
+    },
+  ),
+
+  // ===== Sleep state =====
+  // Eyes: the open eye (pupil + line-work eyelid) fades out and two gentle
+  // closed-lid arcs fade in — a real "peacefully closed" look instead of the
+  // old squashed-eyelid dot.
+  css(
+    '.logo-fab.sleeping #pupil-left, .logo-fab.sleeping #pupil-right, '
+    '.logo-fab.sleeping #eyelid-left, .logo-fab.sleeping #eyelid-right',
+  ).styles(
+    raw: const {
+      'opacity': '0',
+      'transition': 'opacity 1s ease',
+    },
+  ),
+  css(
+    '.logo-fab.sleeping #eye-closed-left, .logo-fab.sleeping #eye-closed-right',
+  ).styles(
+    raw: const {
+      'opacity': '1',
+      // Arcs fade in just after the eye starts fading out.
+      'transition': 'opacity 1.2s ease 0.4s',
+    },
+  ),
+  // Mouth: the smile fades out and a small "o" fades in.
+  css('.logo-fab.sleeping #mouth').styles(
+    raw: const {
+      'opacity': '0',
+      'transition': 'opacity 1s ease',
+    },
+  ),
+  css('.logo-fab.sleeping #mouth-sleep').styles(
+    raw: const {
+      'opacity': '1',
+      'transition': 'opacity 1.2s ease 0.4s',
+    },
+  ),
+  css('.logo-fab.sleeping #head').styles(
+    raw: const {
+      'animation': 'logoHeadNod 4s ease-in-out forwards',
+    },
+  ),
+  css('.logo-fab.sleeping #ear-left').styles(
+    raw: const {
+      'animation': 'logoEarRelax 2s ease-out forwards',
+      'transform-origin': '100% 50%',
+    },
+  ),
+  css('.logo-fab.sleeping #ear-right').styles(
+    raw: const {
+      'animation': 'logoEarRelaxRight 2s ease-out forwards',
+      'transform-origin': '0% 50%',
+    },
+  ),
+  css('.logo-fab.sleeping #mascot').styles(
+    raw: const {
+      'animation': 'logoBreathing 3s ease-in-out infinite',
+    },
+  ),
+
+  // ===== Surprise state (startled self-wake) =====
+  // Eyes need nothing here: dropping .sleeping snaps them wide open, which
+  // is exactly the jolt we want. The sleep "o" mouth doubles as a shock
+  // mouth, and the brows shoot up and hold for the whole reaction.
+  css('.logo-fab.surprised #mascot').styles(
+    raw: const {
+      'animation': 'logoStartle 0.6s ease-out',
+    },
+  ),
+  css('.logo-fab.surprised #head').styles(
+    raw: const {
+      'animation': 'logoHeadJolt 0.5s ease-out',
+    },
+  ),
+  css(
+    '.logo-fab.surprised #eyebrow-left, .logo-fab.surprised #eyebrow-right',
+  ).styles(
+    raw: const {
+      // SVG transforms are in user units, not screen px — the viewBox is
+      // ~1420 units shown at 112px (scale ≈ 0.08), so -60 units ≈ 5px on
+      // screen: a clear shock raise.
+      'transform': 'translateY(-60px)',
+      'transition': 'transform 0.25s ease-out',
+    },
+  ),
+  css('.logo-fab.surprised #mouth-sleep').styles(
+    raw: const {
+      'opacity': '1',
+    },
+  ),
+  css('.logo-fab.surprised #mouth').styles(
+    raw: const {
+      'opacity': '0',
+    },
+  ),
+
+  // Zzz bubbles: two CSS "Z" glyphs drifting up from the head, staggered.
+  // Rendered as text content so they follow --mascot-ink in both themes.
+  css('.logo-fab.sleeping::before, .logo-fab.sleeping::after').styles(
+    raw: const {
+      'content': '"Z"',
+      'position': 'absolute',
+      'top': '-4px',
+      'right': '2px',
+      'font-family': 'var(--font-sans, system-ui, sans-serif)',
+      'font-size': '13px',
+      'font-weight': '700',
+      // var(--ink) is the only ink tone that contrasts with the *page*
+      // background in both themes (var(--mascot-ink) equals the dark canvas
+      // in dark mode, which made the Zzz invisible there).
+      'color': 'var(--ink)',
+      'pointer-events': 'none',
+      'animation': 'logoZzzFloat 3s ease-in-out infinite',
+    },
+  ),
+  css('.logo-fab.sleeping::after').styles(
+    raw: const {
+      'animation-delay': '1.5s',
+      'right': '12px',
+      'top': '2px',
+      'font-size': '10px',
+    },
+  ),
 ];

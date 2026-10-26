@@ -10,6 +10,7 @@ import 'components/experience.dart';
 import 'components/testimonials.dart';
 import 'components/contact.dart';
 import 'components/footer.dart';
+import 'components/ai_assistant.dart';
 
 // The main component of your application.
 //
@@ -30,9 +31,17 @@ class AppState extends State<App> {
     return div(classes: 'app', [
       const Header(),
       div(classes: 'main-content', [
-        const Hero(),
-        const MarqStrip(),
-        const Expertise(),
+        div(classes: 'scene', [
+          div(classes: 'scene-stage', [
+            const Hero(),
+            const Expertise(),
+          ]),
+        ]),
+        div(
+          classes: 'intro-item',
+          styles: Styles(raw: {'--i': '7'}),
+          [const MarqStrip()],
+        ),
         const FeaturedProject(),
         const AllProjects(),
         const Experience(),
@@ -40,6 +49,11 @@ class AppState extends State<App> {
         const Contact(),
       ]),
       const Footer(),
+      div(
+        classes: 'intro-item',
+        styles: Styles(raw: {'--i': '8'}),
+        [const AIAssistant()],
+      ),
     ]);
   }
 
@@ -61,7 +75,9 @@ const List<String> _marqueeTerms = [
   'Flutter',
   'Dart',
   'Jaspr',
-  'C# .NET',
+  'Rust',
+  'C# ',
+  '.NET',
   'Python',
   'JavaScript',
   'TypeScript',

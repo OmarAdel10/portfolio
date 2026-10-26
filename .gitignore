@@ -10,3 +10,4 @@ build/
 # OS / editor crud
 .DS_Store
 *.log
+.playwright-mcp/

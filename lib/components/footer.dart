@@ -14,7 +14,7 @@ class Footer extends StatelessComponent {
           div(classes: 'footer-brand', [
             a(href: '#top', classes: 'footer-logo', [Component.text('Omar Adel')]),
             p(classes: 'footer-tagline', [
-              Component.text('Software Engineer · Flutter, C# .NET & AI Tooling'),
+              Component.text('Software Engineer · Flutter, .NET & AI · Mobile, Web & Desktop'),
             ]),
             // div(classes: 'footer-socials', [
             //   a(href: githubUrl, classes: 'social-badge', [Component.text('GitHub')]),
@@ -93,8 +93,16 @@ class Footer extends StatelessComponent {
         color: cInk,
         textDecoration: .none,
         fontFamily: fSansStack,
+        transition: Transition(
+          'transform',
+          duration: Duration(milliseconds: 200),
+          curve: Curve.easeOut,
+        ),
       ),
-      css('.footer-logo:hover').styles(textDecoration: .none),
+      css('.footer-logo:hover').styles(
+        textDecoration: .none,
+        raw: const {'transform': 'scale(1.05) rotate(-1deg)'},
+      ),
       css('.footer-tagline').styles(
         fontSize: 14.px,
         color: cMute,
