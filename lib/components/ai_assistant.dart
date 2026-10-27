@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+import 'package:universal_web/js_interop.dart';
+import 'package:universal_web/web.dart' as web;
 
 import '../constants/theme.dart';
 import 'hero.dart';
@@ -10,7 +12,8 @@ import 'logo.dart';
 
 /// Conversational Nono assistant placeholder UI.
 ///
-/// Keyboard shortcut: Ctrl+/ (or Cmd+/) to open.
+/// Keyboard shortcut: Ctrl+/ (or Cmd+/) — or Ctrl+\ (or Cmd+\) — to open;
+/// Esc to close.
 /// No backend integration yet — UI only placeholder to reserve space and convey
 /// future intent.
 ///
@@ -40,6 +43,7 @@ class AIAssistantState extends State<AIAssistant> {
   Timer? _blinkEndTimer;
   Timer? _selfWakeTimer;
   Timer? _surpriseEndTimer;
+  web.EventListener? _keyListener;
 
   final _random = Random();
 
@@ -89,6 +93,26 @@ class AIAssistantState extends State<AIAssistant> {
 
   void _close() {
     if (_isOpen) setState(() => _isOpen = false);
+  }
+
+  /// Global keyboard shortcuts: Ctrl+/ or Ctrl+\ (Cmd on Mac) toggles the
+  /// assistant; Esc closes it. Ignored while typing in an editable field so
+  /// visitors aren't interrupted mid-input.
+  void _onKeyDown(web.Event raw) {
+    if (raw is! web.KeyboardEvent) return;
+    final ke = raw;
+    final target = ke.target;
+    if (target is web.Element) {
+      final tag = target.tagName;
+      if (tag == 'INPUT' || tag == 'TEXTAREA') return;
+    }
+    final hasModifier = ke.ctrlKey || ke.metaKey;
+    if (!hasModifier) return;
+    if (ke.key == '/' || ke.key == '\\') {
+      _toggle();
+    } else if (ke.key == 'Escape' && _isOpen) {
+      _close();
+    }
   }
 
   /// Any user interaction (hover, click) wakes the mascot and restarts the
@@ -196,6 +220,8 @@ class AIAssistantState extends State<AIAssistant> {
       _scheduleAttention(first: true);
       _scheduleBlink();
       _resetIdleTimer();
+      _keyListener = _onKeyDown.toJS;
+      web.window.addEventListener('keydown', _keyListener);
     }
   }
 
@@ -208,6 +234,10 @@ class AIAssistantState extends State<AIAssistant> {
     _blinkEndTimer?.cancel();
     _selfWakeTimer?.cancel();
     _surpriseEndTimer?.cancel();
+    if (_keyListener != null) {
+      web.window.removeEventListener('keydown', _keyListener);
+      _keyListener = null;
+    }
     super.dispose();
   }
 
@@ -235,11 +265,20 @@ class AIAssistantState extends State<AIAssistant> {
         ],
       ),
 
-      // Modal (hidden when closed)
+      // Modal overlay (hidden when closed). Dimmed page behind it doubles as
+      // the backdrop; clicking anywhere outside the modal card closes it.
       if (_isOpen)
-        div(classes: 'ai-modal-overlay', [
-          div(classes: 'ai-modal', [
-            div(classes: 'ai-modal-header', [
+        div(
+          classes: 'ai-modal-overlay',
+          events: {'click': (_) => _close()},
+          [
+            div(
+              classes: 'ai-modal',
+              // Keep clicks *inside* the card from bubbling to the overlay
+              // and re-closing the modal while the visitor is interacting.
+              events: {'click': (e) => e.stopPropagation()},
+              [
+                div(classes: 'ai-modal-header', [
               h3(classes: 'ai-modal-title', [Component.text('Ask Nono')]),
               button(
                 classes: 'ai-modal-close',
@@ -277,14 +316,12 @@ class AIAssistantState extends State<AIAssistant> {
                 ),
               ]),
               div(classes: 'ai-hint', [
-                Component.text('Keyboard shortcut: Ctrl+/ (or Cmd+/) to open'),
+                Component.text('Shortcuts: Ctrl+/ or Ctrl+\\ to open · Esc to close'),
               ]),
             ]),
           ]),
         ]),
 
-      // Backdrop to close modal on outside click
-      if (_isOpen) div(classes: 'ai-backdrop', []),
     ]);
   }
 
@@ -423,12 +460,6 @@ class AIAssistantState extends State<AIAssistant> {
       fontSize: 12.px,
       color: cMute,
       textAlign: TextAlign.center,
-    ),
-
-    css('.ai-backdrop').styles(
-      position: Position.fixed(),
-      raw: const {'inset': '0'},
-      zIndex: ZIndex(9998),
     ),
 
     css.keyframes('aiFadeIn', {

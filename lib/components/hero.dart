@@ -513,7 +513,7 @@ class HeroState extends State<Hero> {
             [
               button(
                 attributes: {'type': 'button'},
-                classes: 'btn hero-btn hero-btn-primary',
+                classes: 'btn hero-btn btn-warm',
                 onClick: _openCV,
                 [
                   span(classes: 'hero-btn-ico', [
@@ -524,17 +524,26 @@ class HeroState extends State<Hero> {
                   span(classes: 'hero-btn-label', [Component.text('Open CV')]),
                 ],
               ),
-              button(
-                attributes: {'type': 'button'},
-                classes: 'btn hero-btn hero-btn-ghost',
-                onClick: _askNono,
+              div(
+                classes: 'hero-btn-column',
                 [
-                  span(classes: 'hero-btn-ico', [
-                    RawText(
-                      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-                    ),
-                  ]),
-                  span(classes: 'hero-btn-label', [Component.text('Ask Nono')]),
+                  button(
+                    attributes: {'type': 'button'},
+                    classes: 'btn hero-btn btn-warm-ghost',
+                    onClick: _askNono,
+                    [
+                      span(classes: 'hero-btn-ico', [
+                        RawText(
+                          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+                        ),
+                      ]),
+                      span(classes: 'hero-btn-label', [Component.text('Ask Nono')]),
+                    ],
+                  ),
+                  span(
+                    classes: 'hero-btn-hint',
+                    [Component.text('(Ctrl+\\)')],
+                  ),
                 ],
               ),
             ],
@@ -557,15 +566,15 @@ class HeroState extends State<Hero> {
       css('.hero-inner').styles(
         display: Display.flex,
         flexDirection: FlexDirection.column,
-        alignItems: AlignItems.start,
-        textAlign: TextAlign.left,
+        alignItems: AlignItems.center,
+        textAlign: TextAlign.center,
         position: Position.relative(),
       ),
       // Avatar.
       css('.hero-avatar-wrap').styles(
         margin: .only(bottom: 24.px),
         display: Display.flex,
-        justifyContent: JustifyContent.start,
+        justifyContent: JustifyContent.center,
         position: Position.relative(),
         width: 112.px,
         height: 112.px,
@@ -759,34 +768,18 @@ class HeroState extends State<Hero> {
           'white-space': 'nowrap',
         },
       ),
-      // The hero buttons reuse the site-wide `.btn` metrics — one button
-      // system, two weights. The compound selector outranks `.btn` so the
-      // palette rules win regardless of stylesheet order.
-      css('.hero .hero-btn-primary').styles(
+      css('.hero-btn-column').styles(
         raw: const {
-          'background': 'var(--primary)',
-          'border-color': 'var(--primary)',
-          'color': 'var(--on-primary)',
+          'display': 'flex',
+          'flex-direction': 'column',
+          'align-items': 'center',
+          'gap': '4px',
         },
       ),
-      css('.hero .hero-btn-primary:hover').styles(
-        raw: const {
-          'background': 'var(--primary-pressed)',
-          'border-color': 'var(--primary-pressed)',
-        },
-      ),
-      css('.hero .hero-btn-ghost').styles(
-        raw: const {
-          'background': 'transparent',
-          'border-color': 'var(--hairline)',
-          'color': 'var(--ink)',
-        },
-      ),
-      css('.hero .hero-btn-ghost:hover').styles(
-        raw: const {
-          'background': 'var(--soft)',
-          'border-color': 'var(--ink)',
-        },
+      css('.hero-btn-hint').styles(
+        fontSize: 11.px,
+        color: cMute,
+        whiteSpace: .noWrap,
       ),
       // Positioning line + mono stack.
       css('.hero-desc').styles(

@@ -6,9 +6,9 @@ import 'package:universal_web/web.dart' as web;
 import '../constants/theme.dart';
 import 'cupertino_icon.dart';
 
-/// Sticky top navigation. The floating pill's left edge sits on the same
-/// spine as every working section (the container's content edge), so the
-/// header reads as the first line of the page rather than a centred island.
+/// Sticky top navigation. The floating pill is centred on the page (logo |
+/// nav | theme toggle), so the header reads as a balanced header rather than
+/// a left-aligned island.
 class Header extends StatefulComponent {
   const Header({super.key});
 
@@ -45,10 +45,10 @@ class Header extends StatefulComponent {
         backgroundColor: cCanvas,
         border: Border.all(color: cHairline, width: 1.px),
         radius: .all(.circular(radiusFull.px)),
-        margin: .only(left: Unit.zero, right: .auto),
+        margin: .symmetric(horizontal: Unit.auto),
         raw: const {
           'width': 'fit-content',
-          'max-width': '100%',
+          'max-width': 'calc(100% - 40px)',
           'box-shadow': '0 10px 30px rgba(0,0,0,0.18)',
           'pointer-events': 'auto',
         },

@@ -26,7 +26,7 @@ class Contact extends StatelessComponent {
         ]),
 
         div(classes: 'contact-cta reveal', [
-          a(href: mailtoUrl, classes: 'btn btn-primary contact-cta-btn email-fallback', [
+          a(href: mailtoUrl, classes: 'btn btn-warm contact-cta-btn email-fallback', [
             const CupertinoIcon(
               icon: CupertinoIconName.envelopeFill,
               color: CupertinoIconColor.onPrimary,

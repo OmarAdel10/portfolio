@@ -30,6 +30,7 @@ const Color cDark = Color.variable('--dark');
 const Color cPrimary = Color.variable('--primary');
 const Color cPrimaryPressed = Color.variable('--primary-pressed');
 const Color cPrimaryActive = Color.variable('--primary-active');
+const Color cPrimarySoft = Color.variable('--primary-soft');
 const Color cOnPrimary = Color.variable('--on-primary');
 const Color cOnDark = Color.variable('--on-dark');
 const Color cHairline = Color.variable('--hairline');
@@ -154,6 +155,7 @@ const Map<String, String> lightVars = {
   '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#b17816',
+  '--primary-soft': '#d9a441',
   '--on-primary': '#23251d',
   '--on-dark': '#ffffff',
   '--link-blue': '#1d4ed8',
@@ -200,6 +202,7 @@ const Map<String, String> darkVars = {
   '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#f0b93e',
+  '--primary-soft': '#c9943c',
   '--on-primary': '#23251d',
   '--on-dark': '#e9eae2',
   '--link-blue': '#7aa7f7',
@@ -506,6 +509,34 @@ List<StyleRule> get styles => [
     color: cOnPrimary,
   ),
 
+  // ---------- Warm buttons (hero / CTA) ----------
+  // Flatter, warmer, less saturated than the primary pop — especially in
+  // dark mode where #f7a501 reads as too loud. No hover lift.
+  css('.btn-warm').styles(
+    backgroundColor: cPrimarySoft,
+    color: cOnPrimary,
+  ),
+  css('.btn-warm:hover').styles(
+    backgroundColor: cPrimaryPressed,
+    color: cOnPrimary,
+    raw: const {'transform': 'none'},
+  ),
+  css('.btn-warm:active').styles(
+    backgroundColor: cPrimaryActive,
+    color: cOnPrimary,
+  ),
+  css('.btn-warm-ghost').styles(
+    backgroundColor: Colors.transparent,
+    border: Border.all(color: cMute, width: 1.px),
+    color: cBody,
+  ),
+  css('.btn-warm-ghost:hover').styles(
+    backgroundColor: cSoft,
+    border: Border.all(color: cInk, width: 1.px),
+    color: cInk,
+    raw: const {'transform': 'none'},
+  ),
+
   // ---------- Card vocabulary (PostHog: flat, hairline, 6px) ----------
   css('.card').styles(
     backgroundColor: cCard,
@@ -586,6 +617,15 @@ List<StyleRule> get styles => [
       'z-index': '0',
       'pointer-events': 'none',
       'display': 'block',
+    },
+  ),
+  // Section crossfade: as one section leaves the viewport top it fades out;
+  // as the next enters from the bottom it fades in. Driven by --section-opacity
+  // from _motionJs. Disabled under reduced motion (JS skips it there).
+  css('.section-crossfade').styles(
+    raw: const {
+      'opacity': 'var(--section-opacity, 1)',
+      'transition': 'opacity var(--dur-panel) var(--ease-out)',
     },
   ),
   css('.app').styles(raw: const {'position': 'relative', 'z-index': '1'}),
@@ -825,18 +865,18 @@ List<StyleRule> get styles => [
       'opacity': 'var(--hero-opacity, 1)',
       'transform': 'var(--hero-transform, none)',
       'filter': 'var(--hero-filter, none)',
-      'transform-origin': 'left center',
+      'transform-origin': 'center center',
       // Once the hero has faded out it must not keep swallowing clicks meant
       // for the panel that replaced it.
       'pointer-events': 'var(--hero-pointer-events, auto)',
-      // The hero block reuses the page container, so its content edge lands on
-      // the same spine as every section below (x=59 at a 1280 viewport).
+      // The hero block reuses the page container, now centred so its content
+      // sits in the middle of the page rather than on the left spine.
       'max-width': '1200px',
       'width': '100%',
       'margin-left': 'auto',
       'margin-right': 'auto',
-      'align-items': 'flex-start',
-      'text-align': 'left',
+      'align-items': 'center',
+      'text-align': 'center',
     },
   ),
   css('html.scrubbing .scene-stage .hero .hero-inner').styles(
