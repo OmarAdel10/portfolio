@@ -243,7 +243,6 @@ const String _motionJs = """
   // Initial layout class + first reveal pass.
   applyNoScene();
   revealVisible();
-  applySectionCrossfade();
 
   // The document-space y at the end of the scene, where the expertise panel
   // is fully revealed and the pin releases.
@@ -319,24 +318,21 @@ const String _motionJs = """
   function initSectionEls(){
     sectionEls = [].slice.call(document.querySelectorAll(sectionSel));
     sectionEls.forEach(function(el){ el.classList.add('section-crossfade'); });
+    applySectionCrossfade();
   }
   function applySectionCrossfade(){
-    if(reduce) return;
+    if(reduce || !sectionEls) return;
     var vh = window.innerHeight || d.clientHeight;
     for(var i=0;i<sectionEls.length;i++){
       var el = sectionEls[i];
       var r = el.getBoundingClientRect();
       var top = r.top;
-      var sectionOut = top < 0 ? easeOutCubic(clamp01(-top / (vh * 0.4))) : 0;
+      // Fade out once the section has actually left the top of the viewport
+      // (use the bottom edge so tall sections don't vanish while on screen).
+      var sectionOut = r.bottom < 0 ? easeOutCubic(clamp01(-r.bottom / (vh * 0.4))) : 0;
+      // Fade in as the section's top edge enters from the bottom.
       var sectionIn = top < vh ? easeOutCubic(clamp01((vh - top) / (vh * 0.4))) : 0;
-      var opacity;
-      if(sectionOut > 0.001){
-        opacity = 1 - sectionOut;
-      } else if(sectionIn < 0.999){
-        opacity = sectionIn;
-      } else {
-        opacity = 1;
-      }
+      var opacity = Math.min(sectionIn, 1 - sectionOut);
       el.style.setProperty('--section-opacity', opacity.toFixed(3));
     }
   }

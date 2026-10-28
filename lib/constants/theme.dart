@@ -625,7 +625,6 @@ List<StyleRule> get styles => [
   css('.section-crossfade').styles(
     raw: const {
       'opacity': 'var(--section-opacity, 1)',
-      'transition': 'opacity var(--dur-panel) var(--ease-out)',
     },
   ),
   css('.app').styles(raw: const {'position': 'relative', 'z-index': '1'}),
