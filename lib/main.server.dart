@@ -486,7 +486,8 @@ const String _bgJs = """
 
     function startVanta(){
       if(vantaObj){ vantaObj.destroy(); vantaObj=null; }
-      if(reduced()||typeof window.VANTA==='undefined') return;
+      if(reduced()){ return; }
+      if(typeof window.VANTA==='undefined'){ startDotMatrix(); return; }
       try{
         vantaObj=window.VANTA.GLOBE({
           el: cv,
@@ -591,9 +592,9 @@ void main() {
         script(content: _motionJs),
         // three.js + Vanta.globe for the animated full-page background.
         // Loaded via CDN; _bgJs falls back to the dot-matrix if they don't arrive.
-        script(attributes: {'src': 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js'}),
-        script(attributes: {'src': 'https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js'}),
-        script(content: _bgJs),
+        script(attributes: {'src': 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'defer': ''}),
+        script(attributes: {'src': 'https://cdn.jsdelivr.net/npm/vanta@0.0.8/dist/vanta.globe.min.js', 'defer': ''}),
+        script(attributes: {'defer': ''}, content: _bgJs),
         // Open Graph metas must carry `property` attributes (OGP spec); the
         // `meta` map above emits `name`, so they are rendered here instead.
         for (final entry in _ogMeta.entries) meta(attributes: {'property': entry.key, 'content': entry.value}),
