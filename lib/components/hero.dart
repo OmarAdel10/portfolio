@@ -743,7 +743,7 @@ class HeroState extends State<Hero> {
         raw: const {
           'display': 'flex',
           'flex-wrap': 'wrap',
-          'align-items': 'center',
+          'align-items': 'flex-start',
           'gap': '12px',
         },
         margin: .only(top: 28.px, bottom: 0.px),
