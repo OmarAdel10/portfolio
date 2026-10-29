@@ -61,26 +61,30 @@ class Experience extends StatelessComponent {
         ]),
 
         div(classes: 'experience-list reveal', [
-          for (final exp in experiences) _buildRow(exp),
+          for (var i = 0; i < experiences.length; i++) _buildRow(experiences[i], i),
         ]),
       ]),
     ]);
   }
 
-  Component _buildRow(_Experience exp) {
-    return div(classes: 'experience-row', [
-      div(classes: 'experience-year', [Component.text(exp.period)]),
-      div(classes: 'experience-body', [
-        h3(classes: 'experience-title', [Component.text(exp.title)]),
-        p(classes: 'experience-company', [
-          Component.text('${exp.company}, ${exp.location}'),
+  Component _buildRow(_Experience exp, int i) {
+    return div(
+      classes: 'experience-row reveal',
+      attributes: {'data-stagger-index': i.toString()},
+      [
+        div(classes: 'experience-year', [Component.text(exp.period)]),
+        div(classes: 'experience-body', [
+          h3(classes: 'experience-title', [Component.text(exp.title)]),
+          p(classes: 'experience-company', [
+            Component.text('${exp.company}, ${exp.location}'),
+          ]),
+          p(classes: 'experience-desc', [Component.text(exp.description)]),
+          p(classes: 'experience-tech', [
+            Component.text(exp.technologies.join(', ')),
+          ]),
         ]),
-        p(classes: 'experience-desc', [Component.text(exp.description)]),
-        p(classes: 'experience-tech', [
-          Component.text(exp.technologies.join(', ')),
-        ]),
-      ]),
-    ]);
+      ],
+    );
   }
 
   @css

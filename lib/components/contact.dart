@@ -25,23 +25,31 @@ class Contact extends StatelessComponent {
           ]),
         ]),
 
-        div(classes: 'contact-cta reveal', [
-          a(href: mailtoUrl, classes: 'btn btn-warm contact-cta-btn email-fallback', [
-            const CupertinoIcon(
-              icon: CupertinoIconName.envelopeFill,
-              color: CupertinoIconColor.onPrimary,
-              size: CupertinoIconSize.sm,
-            ),
-            Component.text('Send an email'),
-          ]),
-        ]),
+        div(
+          classes: 'contact-cta reveal',
+          attributes: {'data-stagger-index': '0'},
+          [
+            a(href: mailtoUrl, classes: 'btn btn-warm contact-cta-btn email-fallback', [
+              const CupertinoIcon(
+                icon: CupertinoIconName.envelopeFill,
+                color: CupertinoIconColor.onPrimary,
+                size: CupertinoIconSize.sm,
+              ),
+              Component.text('Send an email'),
+            ]),
+          ],
+        ),
 
-        div(classes: 'contact-links reveal', [
-          _link('GitHub', 'github.com/OmarAdel10', githubUrl),
-          _link('LinkedIn', 'linkedin.com/in/omaradel10', linkedinUrl),
-          _link('WhatsApp', 'wa.me/201552210048', whatsappUrl),
-          _link('Phone', phoneNumber, phoneUrl, external: false),
-        ]),
+        div(
+          classes: 'contact-links reveal',
+          attributes: {'data-stagger-index': '1'},
+          [
+            _link('GitHub', 'github.com/OmarAdel10', githubUrl),
+            _link('LinkedIn', 'linkedin.com/in/omaradel10', linkedinUrl),
+            _link('WhatsApp', 'wa.me/201552210048', whatsappUrl),
+            _link('Phone', phoneNumber, phoneUrl, external: false),
+          ],
+        ),
       ]),
     ]);
   }

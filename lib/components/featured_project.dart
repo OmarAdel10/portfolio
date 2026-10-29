@@ -28,32 +28,36 @@ class FeaturedProject extends StatelessComponent {
           ]),
         ]),
 
-        div(classes: 'fp-card card reveal', [
-          div(classes: 'fp-media', [
-            if (project.logoUrl case final logo?)
-              div(classes: 'fp-logo-wrap', [
-                img(src: logo, alt: project.name, classes: 'fp-logo'),
-              ])
-            else
-              div(classes: 'fp-media-glyph', [
-                CupertinoIcon(
-                  icon: CupertinoIconName.photoFill,
-                  color: CupertinoIconColor.primary,
-                  size: CupertinoIconSize.xl,
-                ),
-              ]),
-          ]),
-          div(classes: 'fp-body', [
-            h3(classes: 'fp-title', [Component.text(project.name.replaceAll(' · ', ' '))]),
-            p(classes: 'fp-desc', [Component.text(project.description)]),
-            p(classes: 'fp-stack', [Component.text(project.stackLabel)]),
-            div(classes: 'fp-links', [
-              a(href: project.url, classes: 'fp-github-link', target: Target.blank, [
-                Component.text('GitHub'),
+        div(
+          classes: 'fp-card card reveal',
+          attributes: {'data-stagger-index': '0'},
+          [
+            div(classes: 'fp-media', [
+              if (project.logoUrl case final logo?)
+                div(classes: 'fp-logo-wrap', [
+                  img(src: logo, alt: project.name, classes: 'fp-logo'),
+                ])
+              else
+                div(classes: 'fp-media-glyph', [
+                  CupertinoIcon(
+                    icon: CupertinoIconName.photoFill,
+                    color: CupertinoIconColor.primary,
+                    size: CupertinoIconSize.xl,
+                  ),
+                ]),
+            ]),
+            div(classes: 'fp-body', [
+              h3(classes: 'fp-title', [Component.text(project.name.replaceAll(' · ', ' '))]),
+              p(classes: 'fp-desc', [Component.text(project.description)]),
+              p(classes: 'fp-stack', [Component.text(project.stackLabel)]),
+              div(classes: 'fp-links', [
+                a(href: project.url, classes: 'fp-github-link', target: Target.blank, [
+                  Component.text('GitHub'),
+                ]),
               ]),
             ]),
-          ]),
-        ]),
+          ],
+        ),
       ]),
     ]);
   }

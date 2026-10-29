@@ -621,10 +621,25 @@ List<StyleRule> get styles => [
   ),
   // Section crossfade: as one section leaves the viewport top it fades out;
   // as the next enters from the bottom it fades in. Driven by --section-opacity
-  // from _motionJs. Disabled under reduced motion (JS skips it there).
+  // from _motionJs. Sections also blur + scale down as they leave the viewport
+  // center (--section-blur, --section-scale) so the next section pops into focus.
+  // Disabled under reduced motion (JS skips it there).
   css('.section-crossfade').styles(
     raw: const {
       'opacity': 'var(--section-opacity, 1)',
+      'filter': 'blur(var(--section-blur, 0px))',
+      'transform': 'scale(var(--section-scale, 1))',
+      'transform-origin': 'center center',
+    },
+  ),
+  // Reveal children within a crossfading section unblur + scale up card-by-card
+  // with stagger (--child-reveal, --child-blur, --child-scale driven by _motionJs).
+  css('.section-crossfade .reveal').styles(
+    raw: const {
+      'opacity': 'var(--child-reveal, 1)',
+      'transform': 'translateY(calc(16px * (1 - var(--child-reveal, 0)))) scale(var(--child-scale, 1))',
+      'filter': 'blur(var(--child-blur, 0px))',
+      'transition': 'none',
     },
   ),
   css('.app').styles(raw: const {'position': 'relative', 'z-index': '1'}),

@@ -19,32 +19,36 @@ class About extends StatelessComponent {
           ]),
         ]),
         div(classes: 'about-layout', [
-          div(classes: 'about-body reveal', [
-            p(classes: 'about-p', [
-              Component.text(
-                'Most of my projects cross the seam between the app and the system behind it — an offline-first Flutter front end, .NET or Python services, a database at the edge, and payments that have to reconcile. The interesting problems live where those pieces disagree.',
-              ),
-            ]),
-            p(classes: 'about-p', [
-              Component.text(
-                'I use AI daily in my workflow — Claude Code, Codex, Gemini CLI — as a force multiplier for the parts I\'ve already thought through. Obsessed with the details that make an app feel ',
-              ),
-              em([Component.text('right')]),
-              Component.text(
-                ': micro-interactions, consistent spacing, animations that don\'t get in the way. The kind of polish you only notice when it\'s missing.',
-              ),
-            ]),
-            p(classes: 'about-p', [
-              Component.text(
-                'Night person. Mornings are for other people. I procrastinate like it\'s a discipline, then learn an entire semester\'s worth of material in one night when the deadline hits — works every time.',
-              ),
-            ]),
-            p(classes: 'about-p', [
-              Component.text(
-                'Mostly at my desk, studying, shipping, breaking things on purpose to understand them. But the friends I do have? We make it count when we hang out.',
-              ),
-            ]),
-          ]),
+          div(
+            classes: 'about-body reveal',
+            attributes: {'data-stagger-index': '0'},
+            [
+              p(classes: 'about-p', [
+                Component.text(
+                  'Most of my projects cross the seam between the app and the system behind it — an offline-first Flutter front end, .NET or Python services, a database at the edge, and payments that have to reconcile. The interesting problems live where those pieces disagree.',
+                ),
+              ]),
+              p(classes: 'about-p', [
+                Component.text(
+                  'I use AI daily in my workflow — Claude Code, Codex, Gemini CLI — as a force multiplier for the parts I\'ve already thought through. Obsessed with the details that make an app feel ',
+                ),
+                em([Component.text('right')]),
+                Component.text(
+                  ': micro-interactions, consistent spacing, animations that don\'t get in the way. The kind of polish you only notice when it\'s missing.',
+                ),
+              ]),
+              p(classes: 'about-p', [
+                Component.text(
+                  'Night person. Mornings are for other people. I procrastinate like it\'s a discipline, then learn an entire semester\'s worth of material in one night when the deadline hits — works every time.',
+                ),
+              ]),
+              p(classes: 'about-p', [
+                Component.text(
+                  'Mostly at my desk, studying, shipping, breaking things on purpose to understand them. But the friends I do have? We make it count when we hang out.',
+                ),
+              ]),
+            ],
+          ),
           aside(classes: 'about-facts reveal', [
             _fact('Role', 'Software Engineer'),
             _fact('Stack', 'Flutter, .NET, Python, TypeScript'),

@@ -113,7 +113,12 @@ class _AllProjectsState extends State<AllProjects> {
         ]),
 
         div(classes: 'projects-grid', [
-          for (final project in filtered) ProjectCard(project: project),
+          for (var i = 0; i < filtered.length; i++)
+            div(
+              classes: 'reveal',
+              attributes: {'data-stagger-index': i.toString()},
+              [ProjectCard(project: filtered[i])],
+            ),
         ]),
 
         if (filtered.isEmpty) div(classes: 'empty-state', [Component.text('No projects in this category yet.')]),
