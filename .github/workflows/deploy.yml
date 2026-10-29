@@ -42,7 +42,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: wrangler deploy
+          command: deploy
         if: github.ref == 'refs/heads/master'
 
       - name: Deploy Worker to staging
@@ -50,7 +50,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: wrangler deploy --env staging
+          command: deploy --env staging
         if: github.ref == 'refs/heads/development'
 
   deploy-production:
