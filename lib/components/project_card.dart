@@ -7,55 +7,55 @@ import 'cupertino_icon.dart';
 
 class ProjectCard extends StatelessComponent {
   final Project project;
-  final bool isFeatured;
 
-  const ProjectCard({required this.project, this.isFeatured = false, super.key});
+  const ProjectCard({required this.project, super.key});
 
   @override
   Component build(BuildContext context) {
     return article(classes: 'pcard card', [
-      // Language / category strip
+      // Language meta (quiet mono, no pill).
       div(classes: 'pcard-top', [
-        span(classes: 'tag', [Component.text(project.language)]),
-        if (isFeatured || project.isFeatured) span(classes: 'tag tag-accent', [Component.text('Featured')]),
+        span(classes: 'pcard-lang', [Component.text(project.language.replaceAll(' · ', ', '))]),
       ]),
 
       div(classes: 'pcard-icon', [
         _buildLogo(),
       ]),
 
-      h3(classes: 'pcard-title', [Component.text(project.name)]),
+      h3(classes: 'pcard-title', [
+        a(
+          href: project.url,
+          target: Target.blank,
+          attributes: {'rel': 'noopener noreferrer'},
+          classes: 'pcard-title-link',
+          [
+            Component.text(project.name.replaceAll(' · ', ' ')),
+          ],
+        ),
+      ]),
       p(classes: 'pcard-desc', [Component.text(project.description)]),
 
-      div(classes: 'pcard-tags', [
-        for (final topic in project.topics.take(5)) span(classes: 'tag tag-outline', [Component.text(topic)]),
+      p(classes: 'pcard-stack', [
+        Component.text(project.stackLabel),
       ]),
 
-      div(classes: 'pcard-links', [
-        a(href: project.url, classes: 'btn btn-secondary', [
-          Component.text('View on GitHub'),
-          CupertinoIcon(
-            icon: CupertinoIconName.arrowRight,
-            color: CupertinoIconColor.primary,
-            size: CupertinoIconSize.sm,
+      if (project.homepage != null && project.homepage!.isNotEmpty)
+        div(classes: 'pcard-links', [
+          a(
+            href: project.homepage!,
+            classes: 'pcard-demo-link',
+            target: Target.blank,
+            attributes: {'rel': 'noopener noreferrer'},
+            [
+              Component.text('Live Demo'),
+            ],
           ),
         ]),
-        if (project.homepage != null && project.homepage!.isNotEmpty)
-          a(href: project.homepage!, classes: 'btn btn-tertiary', [
-            Component.text('Live Demo'),
-            CupertinoIcon(
-              icon: CupertinoIconName.arrowRight,
-              color: CupertinoIconColor.primary,
-              size: CupertinoIconSize.sm,
-            ),
-          ]),
-      ]),
     ]);
   }
 
   Component _buildLogo() {
     if (project.logoUrl != null) {
-      // Theme-aware logos: show light logo in light mode, dark logo in dark mode
       if (project.logoUrlLight != null || project.logoUrlDark != null) {
         return div(classes: 'pcard-logo-wrap', [
           if (project.logoUrlLight != null)
@@ -127,12 +127,13 @@ class ProjectCard extends StatelessComponent {
         display: Display.flex,
         justifyContent: JustifyContent.spaceBetween,
         alignItems: AlignItems.center,
-        margin: .only(bottom: 18.px),
+        margin: .only(bottom: 16.px),
       ),
-
-      css('.tag-accent').styles(
-        backgroundColor: cPrimary,
-        color: cOnPrimary,
+      css('.pcard-lang').styles(
+        fontFamily: fMonoStack,
+        fontSize: fontMicro.px,
+        color: cMute,
+        letterSpacing: 0.02.em,
       ),
 
       css('.pcard-icon').styles(
@@ -141,16 +142,17 @@ class ProjectCard extends StatelessComponent {
         display: Display.flex,
         alignItems: AlignItems.center,
         justifyContent: JustifyContent.center,
-        padding: Padding.all(10.px),
+        padding: Padding.all(8.px),
         fontSize: 26.px,
-        // Fixed light tile: product logos are designed for a light surface, so
-        // this contrasts correctly in both the light and dark themes.
-        // backgroundColor: Colors.white,
         backgroundColor: cHairlineSoft,
         border: Border.all(color: cHairlineSoft, width: 1.px),
         radius: .all(.circular(radiusSm.px)),
         margin: .only(bottom: 16.px),
+        raw: const {
+          'transition': 'transform var(--dur-control) var(--ease-out)',
+        },
       ),
+
       css('.pcard-logo-wrap').styles(
         raw: const {
           'position': 'relative',
@@ -168,60 +170,92 @@ class ProjectCard extends StatelessComponent {
       ),
       css('.pcard-logo-light').styles(
         raw: const {
-          // Visible in light theme, hidden in dark
-          // The CSS variable --canvas is light in light mode, dark in dark mode
-          // We use media query in CSS instead for cleaner handling
+          'display': 'block',
         },
       ),
       css('.pcard-logo-dark').styles(
         raw: const {
-          // Visible in dark theme, hidden in light
+          'display': 'none',
         },
       ),
 
       css('.pcard-title').styles(
-        fontSize: 20.px,
+        fontSize: fontTitleMd.px,
         fontWeight: FontWeight.w700,
         color: cInk,
         margin: .only(bottom: 8.px),
       ),
-
-      css('.pcard-desc').styles(
-        fontSize: 14.5.px,
-        lineHeight: 1.6.em,
-        color: cMute,
-        margin: .only(bottom: 18.px),
-        flex: Flex.grow(1),
+      css('.pcard-title-link').styles(
+        color: cInk,
+        textDecoration: .none,
+        raw: const {
+          'transition': 'color var(--dur-micro) var(--ease-out)',
+        },
+      ),
+      css('.pcard-title-link:hover').styles(
+        color: cInk,
+        textDecoration: .none,
+        raw: const {
+          'text-decoration': 'underline',
+          'text-decoration-color': 'var(--primary)',
+          'text-underline-offset': '4px',
+        },
       ),
 
-      css('.pcard-tags').styles(
-        display: Display.flex,
-        flexWrap: FlexWrap.wrap,
-        gap: Gap.all(8.px),
-        margin: .only(bottom: 20.px),
+      css('.pcard-desc').styles(
+        fontSize: fontBodySm.px,
+        lineHeight: 1.55.em,
+        color: cBody,
+        margin: .only(bottom: 16.px),
+        raw: const {
+          'display': '-webkit-box',
+          '-webkit-line-clamp': '3',
+          '-webkit-box-orient': 'vertical',
+          'overflow': 'hidden',
+        },
+      ),
+
+      css('.pcard-stack').styles(
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+        color: cMute,
+        margin: .only(top: .auto, bottom: 16.px),
       ),
 
       css('.pcard-links').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
-        gap: Gap.all(10.px),
+        gap: Gap.all(8.px),
         alignItems: AlignItems.center,
         padding: .only(top: 16.px),
         border: Border.only(
           top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
         ),
       ),
+      css('.pcard-demo-link').styles(
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+        color: cMute,
+        textDecoration: .none,
+        padding: .only(bottom: 2.px),
+        raw: const {
+          'border-bottom': '1px solid var(--hairline)',
+          'transition':
+              'color var(--dur-micro) var(--ease-out), '
+              'border-color var(--dur-micro) var(--ease-out)',
+        },
+      ),
+      css('.pcard-demo-link:hover').styles(
+        color: cInk,
+        textDecoration: .none,
+        raw: const {'border-bottom-color': 'var(--primary)'},
+      ),
     ]),
-    // Theme-based logo visibility
-    css.media(MediaQuery.raw('(prefers-color-scheme: light)'), [
-      css('.pcard-logo-light').styles(raw: const {'display': 'block'}),
-      css('.pcard-logo-dark').styles(raw: const {'display': 'none'}),
-    ]),
-    css.media(MediaQuery.raw('(prefers-color-scheme: dark)'), [
-      css('.pcard-logo-light').styles(raw: const {'display': 'none'}),
-      css('.pcard-logo-dark').styles(raw: const {'display': 'block'}),
-    ]),
-    // Also handle manual theme toggle via [data-theme]
+    // Logo variants follow the *site* theme, never the OS one: the palette is
+    // driven by `data-theme` alone, so a dark-OS visitor on the light site
+    // must still get the light logo.
+    css('html:not([data-theme]) .pcard-logo-light').styles(raw: const {'display': 'block'}),
+    css('html:not([data-theme]) .pcard-logo-dark').styles(raw: const {'display': 'none'}),
     css('html[data-theme="light"] .pcard-logo-light').styles(raw: const {'display': 'block'}),
     css('html[data-theme="light"] .pcard-logo-dark').styles(raw: const {'display': 'none'}),
     css('html[data-theme="dark"] .pcard-logo-light').styles(raw: const {'display': 'none'}),

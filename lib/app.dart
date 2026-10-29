@@ -4,12 +4,14 @@ import 'package:jaspr/jaspr.dart';
 import 'components/header.dart';
 import 'components/hero.dart';
 import 'components/expertise.dart';
+import 'components/about.dart';
 import 'components/featured_project.dart';
 import 'components/all_projects.dart';
 import 'components/experience.dart';
 import 'components/testimonials.dart';
 import 'components/contact.dart';
 import 'components/footer.dart';
+import 'components/ai_assistant.dart';
 
 // The main component of your application.
 //
@@ -29,10 +31,19 @@ class AppState extends State<App> {
   Component build(BuildContext context) {
     return div(classes: 'app', [
       const Header(),
-      div(classes: 'main-content', [
-        const Hero(),
-        const MarqStrip(),
-        const Expertise(),
+      main_(classes: 'main-content', [
+        div(classes: 'scene', [
+          div(classes: 'scene-stage', [
+            const Hero(),
+            const Expertise(),
+          ]),
+        ]),
+        div(
+          classes: 'intro-item',
+          styles: Styles(raw: {'--i': '7'}),
+          [const MarqStrip()],
+        ),
+        const About(),
         const FeaturedProject(),
         const AllProjects(),
         const Experience(),
@@ -40,6 +51,11 @@ class AppState extends State<App> {
         const Contact(),
       ]),
       const Footer(),
+      div(
+        classes: 'intro-item',
+        styles: Styles(raw: {'--i': '8'}),
+        [const AIAssistant()],
+      ),
     ]);
   }
 
@@ -61,7 +77,9 @@ const List<String> _marqueeTerms = [
   'Flutter',
   'Dart',
   'Jaspr',
-  'C# .NET',
+  'Rust',
+  'C#',
+  '.NET',
   'Python',
   'JavaScript',
   'TypeScript',
@@ -97,7 +115,9 @@ class MarqStrip extends StatelessComponent {
           for (final t in _marqueeTerms)
             span(classes: 'marquee-item', [
               Component.text(t),
-              span(classes: 'marquee-sep', [Component.text('·')]),
+              // A hairline rule, not a middle dot: the separator is drawn,
+              // so the term itself stays clean text.
+              span(classes: 'marquee-sep', []),
             ]),
         ],
       ]),
@@ -108,7 +128,7 @@ class MarqStrip extends StatelessComponent {
   static List<StyleRule> get styles => [
     css('.marquee').styles(
       raw: const {
-        'padding': '22px 0',
+        'padding': '24px 0',
         'border-top': '1px solid var(--hairline-soft)',
         'border-bottom': '1px solid var(--hairline-soft)',
       },
