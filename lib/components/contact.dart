@@ -4,200 +4,130 @@ import 'package:jaspr/jaspr.dart';
 import '../constants/theme.dart';
 import 'cupertino_icon.dart';
 
+/// The closing call to action. Centred register: one headline, one primary
+/// action, and the remaining channels as a quiet mono list instead of a row
+/// of identical pills. The mascot lives in the footer now, so this block
+/// stays typographic.
 class Contact extends StatelessComponent {
   const Contact({super.key});
 
   @override
   Component build(BuildContext context) {
-    return section(classes: 'contact section', id: 'contact', [
+    return section(classes: 'contact section section--centered', id: 'contact', [
       div(classes: 'container', [
-        div(classes: 'contact-card card reveal', [
-          // Cartoon mascot signing off the page above the CTA.
-          div(classes: 'contact-mascot', [
-            img(
-              src: '/images/avatar.png',
-              alt: '',
-            ),
-          ]),
-          span(classes: 'eyebrow', [Component.text('Get in touch')]),
-          h2(classes: 'contact-title', [Component.text('Available for select freelance opportunities')]),
-          p(classes: 'contact-desc', [
+        div(classes: 'section-head reveal', [
+          span(classes: 'eyebrow', [Component.text('Available for work')]),
+          h2(classes: 'section-title', [Component.text('Tell me what you are building')]),
+          p(classes: 'section-subtitle', [
             Component.text(
-              'Have an exciting project you need help with? Send me an email or reach out via any of the channels below.',
+              'Send an email, or reach out on whichever channel suits you. I read every message.',
             ),
-          ]),
-          // a(href: 'javascript:void(0)', classes: 'contact-email email-fallback', [Component.text(emailAddress)]),
-          div(classes: 'contact-links', [
-            a(href: githubUrl, classes: 'contact-link', [
-              span(
-                classes: 'contact-link-icon contact-icon--github',
-                [
-                  const CupertinoIcon(
-                    icon: CupertinoIconName.linkCircleFill,
-                    color: CupertinoIconColor.blue,
-                    size: CupertinoIconSize.sm,
-                  ),
-                ],
-              ),
-              span(classes: 'contact-link-label', [Component.text('GitHub')]),
-              span(classes: 'contact-link-value', [Component.text('github.com/OmarAdel10')]),
-            ]),
-            a(href: linkedinUrl, classes: 'contact-link', [
-              span(
-                classes: 'contact-link-icon contact-icon--linkedin',
-                [
-                  const CupertinoIcon(
-                    icon: CupertinoIconName.personCropRectangleFill,
-                    color: CupertinoIconColor.purple,
-                    size: CupertinoIconSize.sm,
-                  ),
-                ],
-              ),
-              span(classes: 'contact-link-label', [Component.text('LinkedIn')]),
-              span(classes: 'contact-link-value', [Component.text('linkedin.com/in/omaradel10')]),
-            ]),
-            a(href: 'javascript:void(0)', classes: 'contact-link email-fallback', [
-              span(
-                classes: 'contact-link-icon contact-icon--email',
-                [const CupertinoIcon(icon: CupertinoIconName.envelopeFill, size: CupertinoIconSize.sm)],
-              ),
-              span(classes: 'contact-link-label', [Component.text('Email')]),
-              span(classes: 'contact-link-value', [Component.text(emailAddress)]),
-            ]),
-            a(href: whatsappUrl, classes: 'contact-link', [
-              span(
-                classes: 'contact-link-icon contact-icon--whatsapp',
-                [
-                  const CupertinoIcon(
-                    icon: CupertinoIconName.chatBubble2Fill,
-                    color: CupertinoIconColor.green,
-                    size: CupertinoIconSize.sm,
-                  ),
-                ],
-              ),
-              span(classes: 'contact-link-label', [Component.text('WhatsApp')]),
-              span(classes: 'contact-link-value', [Component.text(phoneNumber)]),
-            ]),
           ]),
         ]),
+
+        div(
+          classes: 'contact-cta reveal',
+          attributes: {'data-stagger-index': '0'},
+          [
+            a(href: mailtoUrl, classes: 'btn btn-warm contact-cta-btn email-fallback', [
+              const CupertinoIcon(
+                icon: CupertinoIconName.envelopeFill,
+                color: CupertinoIconColor.onPrimary,
+                size: CupertinoIconSize.sm,
+              ),
+              Component.text('Send an email'),
+            ]),
+          ],
+        ),
+
+        div(
+          classes: 'contact-links reveal',
+          attributes: {'data-stagger-index': '1'},
+          [
+            _link('GitHub', 'github.com/OmarAdel10', githubUrl),
+            _link('LinkedIn', 'linkedin.com/in/omaradel10', linkedinUrl),
+            _link('WhatsApp', 'wa.me/201552210048', whatsappUrl),
+            _link('Phone', phoneNumber, phoneUrl, external: false),
+          ],
+        ),
       ]),
     ]);
+  }
+
+  Component _link(String label, String value, String href, {bool external = true}) {
+    return a(
+      href: href,
+      classes: 'contact-link',
+      target: external ? Target.blank : null,
+      attributes: external ? {'rel': 'noopener noreferrer'} : const {},
+      [
+        span(classes: 'contact-link-label', [Component.text(label)]),
+        span(classes: 'contact-link-value', [Component.text(value)]),
+      ],
+    );
   }
 
   @css
   static List<StyleRule> get styles => [
     css('.contact', [
-      css('.contact-card').styles(
-        maxWidth: 760.px,
-        margin: .only(left: .auto, right: .auto),
-        padding: Padding.all(40.px),
-        textAlign: TextAlign.center,
+      css('.contact-cta').styles(
         display: Display.flex,
-        flexDirection: FlexDirection.column,
-        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        margin: .only(bottom: 48.px),
       ),
-      // Cartoon mascot at the top of the contact card.
-      css('.contact-mascot').styles(
-        width: 72.px,
-        height: 72.px,
-        radius: .all(.circular(radiusFull.px)),
-        backgroundColor: cCard,
-        border: Border.all(color: cHairline, width: 2.px),
-        overflow: .hidden,
-        margin: .only(bottom: 18.px),
-        raw: const {
-          'transform': 'rotate(-6deg)',
-          'animation': 'mascotWiggle 6.5s ease-in-out infinite',
-        },
-      ),
-      css('.contact-mascot img').styles(
-        raw: const {
-          'width': '100%',
-          'height': '100%',
-          'border-radius': '50%',
-          'display': 'block',
-        },
-      ),
-      css('.contact-title').styles(
-        fontSize: 30.px,
-        fontWeight: FontWeight.w800,
-        letterSpacing: (-0.5).px,
-        color: cInk,
-        maxWidth: 560.px,
-        margin: .only(bottom: 14.px),
-      ),
-      css('.contact-desc').styles(
-        fontSize: 16.px,
-        lineHeight: 1.6.em,
-        color: cMute,
-        maxWidth: 520.px,
-        margin: .only(bottom: 24.px),
-      ),
-      css('.contact-email').styles(
-        display: .inlineBlock,
-        fontSize: 20.px,
-        fontWeight: FontWeight.w700,
-        color: cLinkTeal,
-        textDecoration: .none,
-        margin: .only(bottom: 28.px),
-      ),
-      css('.contact-email:hover').styles(textDecoration: TextDecoration(line: TextDecorationLine.underline)),
+
+      // The channel list is the mono second voice: label on the left, the
+      // address on the right, hairline rules doing the separating.
       css('.contact-links').styles(
         display: Display.flex,
-        flexWrap: FlexWrap.wrap,
-        justifyContent: JustifyContent.center,
-        gap: Gap.all(12.px),
-        width: 100.percent,
+        flexDirection: FlexDirection.column,
+        maxWidth: 520.px,
+        margin: .only(left: .auto, right: .auto),
+        border: Border.only(
+          top: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
       ),
       css('.contact-link').styles(
-        display: Display.inlineFlex,
-        alignItems: AlignItems.center,
-        gap: Gap.all(10.px),
-        padding: .symmetric(vertical: 12.px, horizontal: 16.px),
-        border: Border.all(color: cHairline, width: 1.px),
-        radius: .all(.circular(radiusMd.px)),
-        backgroundColor: cCard,
-        textDecoration: .none,
-        color: cInk,
-      ),
-      css('.contact-link:hover').styles(
-        border: Border.all(color: cPrimary, width: 1.px),
-        textDecoration: .none,
-      ),
-      css('.contact-link-icon').styles(
-        width: 24.px,
-        height: 24.px,
         display: Display.flex,
-        alignItems: AlignItems.center,
-        justifyContent: JustifyContent.center,
-        fontSize: 13.px,
-        fontWeight: FontWeight.w700,
-        color: cOnPrimary,
-        backgroundColor: cPrimary,
-        radius: .all(.circular(radiusSm.px)),
+        alignItems: AlignItems.baseline,
+        justifyContent: JustifyContent.spaceBetween,
+        gap: Gap.all(24.px),
+        padding: .symmetric(vertical: 16.px),
+        border: Border.only(
+          bottom: BorderSide.solid(color: cHairlineSoft, width: 1.px),
+        ),
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+        textDecoration: .none,
       ),
-      css('.contact-icon--github').styles(backgroundColor: cAccentBlueSoft),
-      css('.contact-icon--linkedin').styles(backgroundColor: cAccentPurpleSoft),
-      css('.contact-icon--whatsapp').styles(backgroundColor: cAccentGreenSoft),
       css('.contact-link-label').styles(
-        fontSize: 14.px,
-        fontWeight: FontWeight.w700,
-        color: cInk,
+        color: cMute,
+        fontWeight: FontWeight.w500,
+        whiteSpace: .noWrap,
       ),
       css('.contact-link-value').styles(
-        fontSize: 13.5.px,
-        color: cMute,
-        flex: Flex(grow: 1, shrink: 1),
-        minWidth: 0.px,
+        color: cInk,
+        textAlign: TextAlign.right,
+        raw: const {
+          'transition': 'color var(--dur-micro) var(--ease-out)',
+        },
       ),
+      css('.contact-link:hover .contact-link-value').styles(
+        color: cInk,
+        raw: const {
+          'text-decoration': 'underline',
+          'text-decoration-color': 'var(--primary)',
+          'text-underline-offset': '4px',
+        },
+      ),
+      css('.contact-link:hover .contact-link-label').styles(color: cBody),
     ]),
     css.media(MediaQuery.all(maxWidth: 480.px), [
-      css('.contact .contact-card').styles(padding: Padding.all(26.px)),
-      css('.contact .contact-title').styles(fontSize: 25.px),
       css('.contact .contact-link').styles(
-        width: 100.percent,
-        justifyContent: JustifyContent.start,
+        gap: Gap.all(16.px),
+        padding: .symmetric(vertical: 12.px),
       ),
+      css('.contact .contact-link-value').styles(fontSize: fontMicro.px),
     ]),
   ];
 }

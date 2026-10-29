@@ -15,30 +15,28 @@ class Expertise extends StatelessComponent {
         description:
             'Offline-first Flutter apps for Android, iOS, Windows, and Linux — BLoC/HydratedBLOC state, Firebase, Shorebird updates, SQLite, and local speech recognition built into the flow.',
         icon: CupertinoIconName.devicePhonePortrait,
-        color: CupertinoIconColor.blue,
       ),
       _Skill(
         title: 'Backend, Cloud & Payments',
         description:
             '.NET Core and Python services, Turso and Cloud Firestore databases, Cloudflare Workers gateways, and payment-terminal SDK integrations that reconcile invoices automatically.',
         icon: CupertinoIconName.cloudFill,
-        color: CupertinoIconColor.green,
       ),
       _Skill(
         title: 'AI & Agentic Tooling',
         description:
             'Deep learning and offline speech-to-text models, plus agent-driven development with Claude Code, Codex, and Gemini CLI workflows that ship faster without cutting corners.',
         icon: CupertinoIconName.sparkles,
-        color: CupertinoIconColor.purple,
       ),
     ];
 
     return section(classes: 'expertise section', id: 'expertise', [
       div(classes: 'container', [
         div(classes: 'section-head reveal', [
-          span(classes: 'eyebrow', [Component.text('Expertise')]),
-          h2(classes: 'section-title', [Component.text('My Expertise')]),
-          p(classes: 'section-subtitle', [Component.text('Technologies and areas I specialize in')]),
+          h2(classes: 'section-title', [Component.text('Expertise')]),
+          p(classes: 'section-subtitle', [
+            Component.text('Three areas I work in end to end'),
+          ]),
         ]),
         div(classes: 'skills-grid', [
           for (var i = 0; i < skills.length; i++) _buildSkillCard(skills[i], i),
@@ -47,13 +45,20 @@ class Expertise extends StatelessComponent {
     ]);
   }
 
+  /// A hairline-ruled column, not a card: the rule above the column is the
+  /// only chrome, so the panel reads as a table of practice rather than a
+  /// tile grid.
   Component _buildSkillCard(_Skill s, int i) {
     return div(
-      classes: 'skill-card card reveal',
+      classes: 'skill-card reveal',
       attributes: {'data-stagger-index': i.toString()},
       [
         div(classes: 'skill-icon', [
-          CupertinoIcon(icon: s.icon, color: s.color, size: CupertinoIconSize.lg),
+          CupertinoIcon(
+            icon: s.icon,
+            color: CupertinoIconColor.current,
+            size: CupertinoIconSize.lg,
+          ),
         ]),
         h3(classes: 'skill-title', [Component.text(s.title)]),
         p(classes: 'skill-description', [Component.text(s.description)]),
@@ -64,51 +69,62 @@ class Expertise extends StatelessComponent {
   @css
   static List<StyleRule> get styles => [
     css('.expertise', [
-      css('.skills-grid', [
-        css('&').styles(
-          display: Display.grid,
-          gridTemplate: GridTemplate(
-            columns: GridTracks([
-              GridTrack(TrackSize.fr(1)),
-              GridTrack(TrackSize.fr(1)),
-              GridTrack(TrackSize.fr(1)),
-            ]),
-          ),
-          gap: Gap.all(20.px),
+      css('.skills-grid').styles(
+        display: Display.grid,
+        gridTemplate: GridTemplate(
+          columns: GridTracks([
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+            GridTrack(TrackSize.fr(1)),
+          ]),
         ),
-      ]),
+        gap: Gap.all(24.px),
+        alignItems: AlignItems.start,
+      ),
       css('.skill-card').styles(
-        padding: Padding.all(28.px),
         display: Display.flex,
         flexDirection: FlexDirection.column,
+        raw: const {
+          'border-top': '1px solid var(--hairline)',
+          'padding-top': '24px',
+        },
       ),
+      // Monochrome ink — amber stays the single chromatic accent on the page.
       css('.skill-icon').styles(
-        width: 52.px,
-        height: 52.px,
         display: Display.flex,
         alignItems: AlignItems.center,
-        justifyContent: JustifyContent.center,
-        fontSize: 26.px,
-        backgroundColor: cSoft,
-        border: Border.all(color: cHairlineSoft, width: 1.px),
-        radius: .all(.circular(radiusMd.px)),
+        justifyContent: JustifyContent.start,
         margin: .only(bottom: 20.px),
+        raw: const {
+          'color': 'var(--ink)',
+        },
+      ),
+      css('.skill-icon .cupertino-icon').styles(
+        raw: const {
+          'width': '44px',
+          'height': '44px',
+        },
       ),
       css('.skill-title').styles(
-        fontSize: 20.px,
+        fontSize: fontTitleSm.px,
         fontWeight: FontWeight.w700,
+        lineHeight: 1.35.em,
         color: cInk,
         margin: .only(bottom: 10.px),
       ),
       css('.skill-description').styles(
-        fontSize: 15.px,
-        lineHeight: 1.6.em,
+        fontSize: fontBodySm.px,
+        lineHeight: 1.55.em,
         color: cBody,
       ),
     ]),
-    css.media(MediaQuery.all(maxWidth: 720.px), [
+    // Below the scene breakpoint the page is a normal stacked document, so
+    // the three columns fold to one there too — the panel must read the same
+    // whether it is scrubbed into the stage or scrolled past.
+    css.media(MediaQuery.all(maxWidth: 899.px), [
       css('.expertise .skills-grid').styles(
         gridTemplate: GridTemplate(columns: GridTracks([GridTrack(TrackSize.fr(1))])),
+        gap: Gap.all(32.px),
       ),
     ]),
   ];
@@ -118,12 +134,10 @@ class _Skill {
   final String title;
   final String description;
   final CupertinoIconName icon;
-  final CupertinoIconColor color;
 
   const _Skill({
     required this.title,
     required this.description,
     required this.icon,
-    required this.color,
   });
 }

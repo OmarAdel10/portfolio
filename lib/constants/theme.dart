@@ -30,6 +30,7 @@ const Color cDark = Color.variable('--dark');
 const Color cPrimary = Color.variable('--primary');
 const Color cPrimaryPressed = Color.variable('--primary-pressed');
 const Color cPrimaryActive = Color.variable('--primary-active');
+const Color cPrimarySoft = Color.variable('--primary-soft');
 const Color cOnPrimary = Color.variable('--on-primary');
 const Color cOnDark = Color.variable('--on-dark');
 const Color cHairline = Color.variable('--hairline');
@@ -58,6 +59,7 @@ const FontFamily fSansStack = FontFamily.list([FontFamily(_plex), FontFamilies.s
 const FontFamily fMonoStack = FontFamily.list([FontFamily(_mono), FontFamilies.monospace]);
 
 // --- Spacing / radius (fixed, theme-independent) ----------------------------
+// One 8px-based rhythm. Every gap, pad and margin in the site snaps to it.
 const double spaceXs = 4;
 const double spaceSm = 8;
 const double spaceMd = 12;
@@ -66,7 +68,19 @@ const double spaceXl = 24;
 const double space2xl = 32;
 const double space3xl = 48;
 const double space4xl = 64;
-const double spaceSection = 80;
+const double space5xl = 96;
+const double spaceSectionTop = 96;
+const double spaceSectionBottom = 64;
+
+// --- Type scale (one ladder; no ad-hoc sizes anywhere) -----------------------
+const double fontMicro = 12; // eyebrows, badges
+const double fontMeta = 14; // filters, meta lines
+const double fontBodySm = 15; // card body
+const double fontBody = 16; // body copy
+const double fontTitleSm = 17; // small card titles
+const double fontTitleMd = 20; // card titles
+const double fontTitleLg = 32; // section titles
+const double fontDisplay = 48; // hero wordmark
 
 const double radiusXs = 2;
 const double radiusSm = 4;
@@ -83,16 +97,44 @@ const double bpLarge = 1280;
 // --- External data / constants --------------------------------------------------
 const String githubUrl = 'https://github.com/OmarAdel10';
 const String linkedinUrl = 'https://www.linkedin.com/in/omaradel10';
-const String emailUrl = 'mailto:omaradel1.dev@gmail.com';
+// The hero's primary CTA opens this. Served from the site's own static root,
+// so it resolves on the production domain, preview deploys and localhost alike.
+const String cvUrl = '/assets/Resume.pdf';
 const String emailAddress = 'omaradel1.dev@gmail.com';
 // Pre-filled mailto template (opens the default mail app).
 const String mailtoUrl =
-    'mailto:omaradel1.dev@gmail.com?subject=Project%20inquiry%20%E2%80%93%20portfolio'
+    'mailto:$emailAddress?subject=Project%20inquiry%20%E2%80%93%20portfolio'
     '&body=Hi%20Omar%2C%0A%0A'
     'I%20came%20across%20your%20portfolio%20and%20would%20like%20to%20discuss%20a%20potential%20project.%0A%0A';
 const String phoneNumber = '+20 155 221 0048';
 const String phoneUrl = 'tel:+201552210048';
 const String whatsappUrl = 'https://wa.me/201552210048';
+
+/// Motion tokens — the durations and easings for **interface** motion.
+///
+/// Four steps: micro (state flips), control (hovers/presses), panel (a
+/// component arriving), section (a whole section arriving).
+///
+/// Two things sit deliberately outside this scale, because they are not
+/// interface feedback but authored choreography: the mascot's idle life
+/// cycle (blink, doze, startle) and the hero's one-shot intro score. Both
+/// name their own timings where they live — `AIAssistantState` in
+/// `components/ai_assistant.dart` and `_Intro` in `components/hero.dart`.
+const Map<String, String> motionVars = {
+  '--ease-out': 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+  '--ease-inout': 'cubic-bezier(0.65, 0, 0.35, 1)',
+  '--dur-micro': '160ms',
+  '--dur-control': '240ms',
+  '--dur-panel': '400ms',
+  '--dur-section': '600ms',
+};
+
+/// Dart mirrors of the motion tokens, for the `Transition` API (which cannot
+/// read CSS custom properties).
+const Duration durMicro = Duration(milliseconds: 160);
+const Duration durControl = Duration(milliseconds: 240);
+const Duration durPanel = Duration(milliseconds: 400);
+const Duration durSection = Duration(milliseconds: 600);
 
 /// CSS custom properties that define the **light** (PostHog cream) theme.
 const Map<String, String> lightVars = {
@@ -113,6 +155,7 @@ const Map<String, String> lightVars = {
   '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#b17816',
+  '--primary-soft': '#d9a441',
   '--on-primary': '#23251d',
   '--on-dark': '#ffffff',
   '--link-blue': '#1d4ed8',
@@ -159,6 +202,7 @@ const Map<String, String> darkVars = {
   '--primary-rgb': '247,165,1',
   '--primary-pressed': '#dd9001',
   '--primary-active': '#f0b93e',
+  '--primary-soft': '#c9943c',
   '--on-primary': '#23251d',
   '--on-dark': '#e9eae2',
   '--link-blue': '#7aa7f7',
@@ -218,42 +262,27 @@ List<StyleRule> get styles => [
     'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap',
   ),
   // ---------- Keyframes (premium minimal motion) ----------
-  css.keyframes('heroAvatarFloat', {
-    '0%': Styles(raw: {'transform': 'translateY(0)'}),
-    '50%': Styles(raw: {'transform': 'translateY(-7px)'}),
-    '100%': Styles(raw: {'transform': 'translateY(0)'}),
-  }),
-  css.keyframes('heroRingPulse', {
-    '0%': Styles(raw: {'transform': 'scale(1) rotate(0deg)', 'opacity': '0.3'}),
-    '25%': Styles(raw: {'transform': 'scale(1.1) rotate(5deg)', 'opacity': '0.35'}),
-    '50%': Styles(raw: {'transform': 'scale(1.2) rotate(0deg)', 'opacity': '0.4'}),
-    '75%': Styles(raw: {'transform': 'scale(1.1) rotate(-5deg)', 'opacity': '0.35'}),
-    '100%': Styles(raw: {'transform': 'scale(1) rotate(0deg)', 'opacity': '0.3'}),
-  }),
   css.keyframes('mascotWiggle', {
     '0%, 100%': Styles(raw: {'transform': 'rotate(-8deg)'}),
     '50%': Styles(raw: {'transform': 'rotate(-2deg)'}),
   }),
 
-  // ---------- Scroll reveal (base styles - no JS required, prevents FOUC) ----------
-  css('.reveal').styles(
+  // ---------- Scroll reveal ----------
+  // One entrance treatment sitewide: a short 12px rise with a 400ms ease-out.
+  // Content is only hidden when JS is available to reveal it, so a no-JS
+  // reader (or a crawler) sees the whole page.
+  css('html.js-enabled .reveal').styles(
     raw: const {
       'opacity': '0',
-      'transform': 'translateY(22px)',
+      'transform': 'translateY(12px)',
+      'transition': 'opacity var(--dur-panel) var(--ease-out), transform var(--dur-panel) var(--ease-out)',
     },
   ),
-  // Also hide during Hero intro (when .intro-hold is on html element)
+  // Also hide during the Hero intro (when .intro-hold is on the html element).
   css('.intro-hold .reveal').styles(
     raw: const {
       'opacity': '0',
-      'transform': 'translateY(22px)',
-    },
-  ),
-  // Enhanced transition when JS is enabled
-  css('html.js-enabled .reveal').styles(
-    raw: const {
-      'transition':
-          'opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1)',
+      'transform': 'translateY(12px)',
     },
   ),
   css('html.js-enabled .reveal.in').styles(
@@ -265,6 +294,7 @@ List<StyleRule> get styles => [
 
   // ---------- Theme variables ----------
   css(':root').styles(raw: lightVars),
+  css(':root').styles(raw: motionVars),
   css('html[data-theme="dark"]').styles(raw: darkVars),
 
   // ---------- Cupertino icons ----------
@@ -280,15 +310,13 @@ List<StyleRule> get styles => [
   css('html').styles(
     raw: const {
       'scroll-behavior': 'smooth',
+      // One mechanism for fragment offsets: `scroll-padding-top` on the root
+      // scroller. Adding `scroll-margin-top` to the targets as well would
+      // stack the two and leave a dead band above every section head.
       'scroll-padding-top': '78px',
       '-webkit-text-size-adjust': '100%',
       // `clip` (not `hidden`) keeps position:sticky working.
       'overflow-x': 'clip',
-    },
-  ),
-  css('section[id]').styles(
-    raw: const {
-      'scroll-margin-top': '78px',
     },
   ),
   css('body').styles(
@@ -300,8 +328,8 @@ List<StyleRule> get styles => [
     fontSize: 16.px,
     lineHeight: 1.5.em,
     transition: Transition.combine([
-      Transition('background-color', duration: Duration(milliseconds: 320), curve: Curve.easeOut),
-      Transition('color', duration: Duration(milliseconds: 320), curve: Curve.easeOut),
+      Transition('background-color', duration: durControl, curve: Curve.easeOut),
+      Transition('color', duration: durControl, curve: Curve.easeOut),
     ]),
   ),
   css('h1, h2, h3, h4, h5, h6').styles(
@@ -363,14 +391,50 @@ List<StyleRule> get styles => [
     padding: .symmetric(horizontal: 24.px),
   ),
   css('.section').styles(
-    padding: .symmetric(vertical: spaceSection.px),
+    padding: Padding.fromLTRB(
+      Unit.zero,
+      spaceSectionTop.px,
+      Unit.zero,
+      spaceSectionBottom.px,
+    ),
   ),
 
   // ---------- Section header (eyebrow + title + subtitle) ----------
+  // Every "working" section starts on the same left spine (the container's
+  // content edge). Reflective sections opt into `.section--centered`.
+  // The head block itself spans the full content width so the hairline rule
+  // below can act as the section's top edge; the *text* keeps a measure.
   css('.section-head').styles(
-    maxWidth: 720.px,
-    margin: .only(left: .auto, right: .auto, bottom: 48.px),
-    textAlign: .center,
+    margin: .only(left: Unit.zero, right: .auto, bottom: 40.px),
+    textAlign: TextAlign.left,
+    position: Position.relative(),
+  ),
+  // A hairline rule draws across as the head is revealed: the section
+  // announces itself instead of fading in from nowhere.
+  css('.section-head::before').styles(
+    raw: const {
+      'content': "''",
+      'position': 'absolute',
+      'top': '-24px',
+      'left': '0',
+      'right': '0',
+      'height': '1px',
+      'background-color': 'var(--hairline)',
+      'transform-origin': 'left center',
+      'transition': 'transform var(--dur-panel) var(--ease-out)',
+    },
+  ),
+  // The rule only draws once JS is present to animate it; without JS it is
+  // simply there.
+  css('html.js-enabled .section-head::before').styles(
+    raw: const {
+      'transform': 'scaleX(0)',
+    },
+  ),
+  css('html.js-enabled .section-head.in::before').styles(
+    raw: const {
+      'transform': 'scaleX(1)',
+    },
   ),
   css('.eyebrow').styles(
     display: .inlineBlock,
@@ -383,18 +447,29 @@ List<StyleRule> get styles => [
     margin: .only(bottom: 12.px),
   ),
   css('.section-title').styles(
-    fontSize: 34.px,
+    fontSize: 32.px,
     fontWeight: FontWeight.w800,
-    lineHeight: 1.25.em,
+    lineHeight: 1.2.em,
     letterSpacing: (-0.6).px,
     color: cInk,
+    maxWidth: 720.px,
   ),
   css('.section-subtitle').styles(
-    margin: .only(left: .auto, right: .auto, top: 14.px),
-    fontSize: 17.px,
+    margin: .only(left: Unit.zero, right: .auto, top: 12.px),
+    fontSize: 16.px,
     lineHeight: 1.6.em,
     color: cMute,
-    maxWidth: 620.px,
+    maxWidth: 600.px,
+    textAlign: TextAlign.left,
+  ),
+  // Centred register — used only where the shift is deliberate.
+  css('.section--centered .section-head').styles(
+    margin: .only(left: .auto, right: .auto, bottom: 40.px),
+    textAlign: TextAlign.center,
+    maxWidth: 720.px,
+  ),
+  css('.section--centered .section-subtitle').styles(
+    margin: .only(left: .auto, right: .auto, top: 12.px),
     textAlign: TextAlign.center,
   ),
 
@@ -413,10 +488,10 @@ List<StyleRule> get styles => [
     textDecoration: .none,
     whiteSpace: .noWrap,
     transition: Transition.combine([
-      Transition('background-color', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
-      Transition('color', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
-      Transition('border-color', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
-      Transition('transform', duration: Duration(milliseconds: 160), curve: Curve.easeOut),
+      Transition('background-color', duration: durMicro, curve: Curve.easeOut),
+      Transition('color', duration: durMicro, curve: Curve.easeOut),
+      Transition('border-color', duration: durMicro, curve: Curve.easeOut),
+      Transition('transform', duration: durMicro, curve: Curve.easeOut),
     ]),
   ),
   css('.btn:hover').styles(raw: const {'transform': 'translateY(-1px)'}),
@@ -433,62 +508,45 @@ List<StyleRule> get styles => [
     backgroundColor: cPrimaryActive,
     color: cOnPrimary,
   ),
-  css('.btn-secondary').styles(
-    backgroundColor: cSoft,
-    color: cInk,
+
+  // ---------- Warm buttons (hero / CTA) ----------
+  // Flatter, warmer, less saturated than the primary pop — especially in
+  // dark mode where #f7a501 reads as too loud. No hover lift.
+  css('.btn-warm').styles(
+    backgroundColor: cPrimarySoft,
+    color: cOnPrimary,
   ),
-  css('.btn-secondary:hover').styles(
-    backgroundColor: cHairline,
-    color: cInk,
-    textDecoration: .none,
+  css('.btn-warm:hover').styles(
+    backgroundColor: cPrimaryPressed,
+    color: cOnPrimary,
+    raw: const {'transform': 'none'},
   ),
-  css('.btn-secondary:active').styles(
-    backgroundColor: cStone,
-    color: cInk,
+  css('.btn-warm:active').styles(
+    backgroundColor: cPrimaryActive,
+    color: cOnPrimary,
   ),
-  css('.btn-tertiary').styles(
+  css('.btn-warm-ghost').styles(
     backgroundColor: Colors.transparent,
-    color: cInk,
-    padding: .symmetric(vertical: 10.px, horizontal: 12.px),
+    border: Border.all(color: cMute, width: 1.px),
+    color: cBody,
   ),
-  css('.btn-tertiary:hover').styles(
+  css('.btn-warm-ghost:hover').styles(
     backgroundColor: cSoft,
+    border: Border.all(color: cInk, width: 1.px),
     color: cInk,
-    textDecoration: .none,
-  ),
-  css('.btn-tertiary:active').styles(
-    backgroundColor: cHairline,
-    color: cInk,
+    raw: const {'transform': 'none'},
   ),
 
   // ---------- Card vocabulary (PostHog: flat, hairline, 6px) ----------
-  // ---------- Outline buttons (for secondary CTAs like Ask Nono, Open CV) ----------
-  css('.btn-outline').styles(
-    backgroundColor: Colors.transparent,
-    color: cInk,
-    border: Border.all(color: cHairline, width: 1.px),
-    padding: .symmetric(vertical: 10.px, horizontal: 16.px),
-  ),
-  css('.btn-outline:hover').styles(
-    backgroundColor: cSoft,
-    border: Border.all(color: cPrimary, width: 1.px),
-    color: cInk,
-    textDecoration: .none,
-  ),
-  css('.btn-outline:active').styles(
-    backgroundColor: cHairline,
-    color: cInk,
-  ),
-
   css('.card').styles(
     backgroundColor: cCard,
     border: Border.all(color: cHairline, width: 1.px),
     radius: .all(.circular(radiusMd.px)),
     transition: Transition.combine([
-      Transition('transform', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
-      Transition('border-color', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
-      Transition('box-shadow', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
-      Transition('background-color', duration: Duration(milliseconds: 220), curve: Curve.easeOut),
+      Transition('transform', duration: durControl, curve: Curve.easeOut),
+      Transition('border-color', duration: durControl, curve: Curve.easeOut),
+      Transition('box-shadow', duration: durControl, curve: Curve.easeOut),
+      Transition('background-color', duration: durControl, curve: Curve.easeOut),
     ]),
   ),
   css('.card:hover').styles(
@@ -498,77 +556,50 @@ List<StyleRule> get styles => [
     },
   ),
 
-  // ---------- Inline chip / tag ----------
-  css('.tag').styles(
-    display: .inlineFlex,
-    alignItems: .center,
-    fontSize: 12.px,
-    fontWeight: FontWeight.w600,
-    lineHeight: 1.33.em,
-    textTransform: .upperCase,
-    letterSpacing: 0.04.em,
-    color: cBody,
-    backgroundColor: cSoft,
-    padding: .symmetric(vertical: 3.px, horizontal: 8.px),
-    radius: .all(.circular(radiusSm.px)),
-  ),
-  css('.tag-outline').styles(
-    color: cMute,
-    backgroundColor: Colors.transparent,
-    border: Border.all(color: cHairline, width: 1.px),
-  ),
-
   // ---------- Pill tabs (project filters) ----------
   css('.pill').styles(
     display: .inlineFlex,
     alignItems: .center,
     justifyContent: .center,
-    fontSize: 13.px,
+    fontSize: fontMeta.px,
     fontWeight: FontWeight.w500,
     lineHeight: 1.em,
     color: cBody,
     backgroundColor: Colors.transparent,
-    padding: .symmetric(vertical: 8.px, horizontal: 14.px),
+    padding: .symmetric(vertical: 8.px, horizontal: 16.px),
     radius: .all(.circular(radiusFull.px)),
     border: Border.all(color: Colors.transparent, width: 1.px),
     cursor: .pointer,
     transition: Transition.combine([
-      Transition('background-color', duration: Duration(milliseconds: 150), curve: Curve.easeOut),
-      Transition('color', duration: Duration(milliseconds: 150), curve: Curve.easeOut),
+      Transition('background-color', duration: durMicro, curve: Curve.easeOut),
+      Transition('color', duration: durMicro, curve: Curve.easeOut),
     ]),
   ),
   css('.pill:hover').styles(
     color: cInk,
     backgroundColor: cSoft,
   ),
-  css('.pill-active').styles(
-    backgroundColor: cInk,
-    color: cCanvas,
-  ),
-  css('.pill-active:hover').styles(
-    backgroundColor: cInk,
-    color: cCanvas,
-  ),
 
   // ---------- Responsive ----------
+  // The left spine survives the breakpoints: only the rhythm tightens.
   css.media(MediaQuery.all(maxWidth: 768.px), [
     css('.section').styles(
-      padding: .symmetric(vertical: 52.px),
+      padding: Padding.fromLTRB(Unit.zero, 64.px, Unit.zero, 48.px),
     ),
     css('.section-head').styles(
-      margin: .only(left: .auto, right: .auto, bottom: 36.px),
+      margin: .only(left: Unit.zero, right: .auto, bottom: 32.px),
     ),
-    css('.section-title').styles(fontSize: 28.px),
+    css('.section-subtitle').styles(maxWidth: 100.percent),
   ]),
   css.media(MediaQuery.all(maxWidth: 480.px), [
     css('.section').styles(
-      padding: .symmetric(vertical: 44.px),
+      padding: Padding.fromLTRB(Unit.zero, 48.px, Unit.zero, 32.px),
     ),
-    css('.container').styles(padding: .symmetric(horizontal: 18.px)),
-    css('.section-title').styles(fontSize: 26.px),
-    // Ensure touch targets ≥48×48px on mobile
+    css('.container').styles(padding: .symmetric(horizontal: 16.px)),
+    // Touch targets stay at least 48px tall. The type ladder does not bend
+    // for width: a long section title wraps instead of shrinking.
     css('.btn').styles(
-      padding: .symmetric(vertical: 14.px, horizontal: 16.px),
+      padding: .symmetric(vertical: 16.px, horizontal: 16.px),
     ),
   ]),
   // ---------- Marquee ticker ----------
@@ -586,6 +617,29 @@ List<StyleRule> get styles => [
       'z-index': '0',
       'pointer-events': 'none',
       'display': 'block',
+    },
+  ),
+  // Section crossfade: as one section leaves the viewport top it fades out;
+  // as the next enters from the bottom it fades in. Driven by --section-opacity
+  // from _motionJs. Sections also blur + scale down as they leave the viewport
+  // center (--section-blur, --section-scale) so the next section pops into focus.
+  // Disabled under reduced motion (JS skips it there).
+  css('.section-crossfade').styles(
+    raw: const {
+      'opacity': 'var(--section-opacity, 1)',
+      'filter': 'blur(var(--section-blur, 0px))',
+      'transform': 'scale(var(--section-scale, 1))',
+      'transform-origin': 'center center',
+    },
+  ),
+  // Reveal children within a crossfading section unblur + scale up card-by-card
+  // with stagger (--child-reveal, --child-blur, --child-scale driven by _motionJs).
+  css('.section-crossfade .reveal').styles(
+    raw: const {
+      'opacity': 'var(--child-reveal, 1)',
+      'transform': 'translateY(calc(16px * (1 - var(--child-reveal, 0)))) scale(var(--child-scale, 1))',
+      'filter': 'blur(var(--child-blur, 0px))',
+      'transition': 'none',
     },
   ),
   css('.app').styles(raw: const {'position': 'relative', 'z-index': '1'}),
@@ -624,7 +678,8 @@ List<StyleRule> get styles => [
       'border': '1.5px solid var(--hairline)',
       'transform': 'translate(-50%, -50%)',
       'opacity': '1',
-      'transition': 'width 180ms ease-out, height 180ms ease-out, border-color 180ms ease-out, opacity 200ms ease-out',
+      'transition':
+          'width var(--dur-control) var(--ease-out), height var(--dur-control) var(--ease-out), border-color var(--dur-control) var(--ease-out), opacity var(--dur-micro) var(--ease-out)',
     },
   ),
   css('html.has-custom-cursor .cursor-ring.is-hover').styles(
@@ -654,15 +709,26 @@ List<StyleRule> get styles => [
   ),
   css('.marquee-track:hover').styles(raw: const {'animation-play-state': 'paused'}),
   css('.marquee-item').styles(
+    fontFamily: fMonoStack,
     raw: const {
-      'padding': '0 14px',
+      'padding': '0 10px',
       'color': 'var(--mute)',
-      'font-size': '15px',
-      'font-weight': '600',
+      'font-size': '14px',
+      'font-weight': '500',
       'letter-spacing': '0.02em',
     },
   ),
-  css('.marquee-sep').styles(raw: const {'color': 'var(--primary)'}),
+  // The separator is a drawn hairline, not a middle dot in the text.
+  css('.marquee-sep').styles(
+    raw: const {
+      'display': 'inline-block',
+      'width': '1px',
+      'height': '12px',
+      'margin': '0 2px',
+      'vertical-align': 'middle',
+      'background-color': 'var(--hairline)',
+    },
+  ),
 
   // Slow marquee on narrow viewports for readability
   css.media(MediaQuery.all(maxWidth: 768.px), [
@@ -729,7 +795,7 @@ List<StyleRule> get styles => [
   ),
   css('.intro-item').styles(
     raw: const {
-      'transition': 'opacity 500ms ease-out, transform 500ms ease-out',
+      'transition': 'opacity var(--dur-panel) var(--ease-out), transform var(--dur-panel) var(--ease-out)',
       'transition-delay': 'calc(var(--i, 0) * 110ms)',
     },
   ),
@@ -740,10 +806,16 @@ List<StyleRule> get styles => [
   ),
 
   // ---------- Pinned scroll-scrubbed hero -> Expertise scene ----------
-  // Active only when html is NOT .no-scene (JS adds .no-scene on narrow
-  // viewports or prefers-reduced-motion). .scene is a 400vh scrollable wrapper;
-  // .scene-stage sticks for one full viewport while scroll drives progress p
-  // (0..1) via JS custom properties. Scrolling up reverses everything.
+  // Active only when html is .js-enabled (JS adds .js-enabled
+  // on load). .scene is a 400vh
+  // scrollable wrapper; .scene-stage sticks for one full viewport while
+  // scroll drives progress p (0..1) via JS custom properties. Scrolling up
+  // reverses everything.
+  //
+  // The `js-enabled` half of the gate is load-bearing: the panel is
+  // invisible until the scrub reveals it, so without JS the pinned scene
+  // would strand the expertise content at opacity 0. Gated on both classes,
+  // a no-JS document renders as the ordinary stacked page.
   css('.scene').styles(
     raw: const {
       'height': 'auto',
@@ -756,7 +828,7 @@ List<StyleRule> get styles => [
       'position': 'static',
     },
   ),
-  css('html:not(.no-scene) .scene').styles(
+  css('html.js-enabled .scene').styles(
     raw: const {
       'height': '400vh',
     },
@@ -766,216 +838,185 @@ List<StyleRule> get styles => [
   // The stage paints the canvas colour so the dot matrix does not bleed into
   // the empty right half while the scene is pinned (the hero band used to be
   // an opaque full-width band, so this matches the original first screen).
-  css('html:not(.no-scene) .scene-stage').styles(
+  css('html.js-enabled .scene-stage').styles(
     raw: const {
       'position': 'sticky',
       'top': 'var(--scene-top, 64px)',
-      'height': 'calc(100vh - var(--scene-top, 64px))',
-      'display': 'grid',
-      '--scene-col': '0.55',
-      'grid-template-columns': 'calc(var(--scene-col) * 100%) 1fr',
-      'grid-template-rows': '100%',
-      'align-items': 'stretch',
+      // `dvh` tracks the visible viewport when the browser chrome collapses;
+      // `min()` keeps the `vh` fallback for engines that do not know `dvh`.
+      'height': 'calc(min(100vh, 100dvh) - var(--scene-top, 64px))',
+      // One stage, two overlapping layers. The expertise panel is painted
+      // above the hero because it comes later in the DOM.
+      'display': 'block',
       'background-color': 'var(--canvas)',
+      'overflow': 'hidden',
     },
   ),
-  // Hero — compacted inside the pinned stage so the whole bio fits in
-  // (100vh - header) at 1280x720 and 1440x900. The mobile / fallback hero
-  // keeps its original size because these rules are scoped to the scene.
-  css('html:not(.no-scene) .scene-stage .hero').styles(
+  // Hero — sits on the same left spine as every section below it, inside the
+  // pinned stage. It recedes in place (scale / lift / blur / fade) instead of
+  // gliding sideways, so nothing re-rags mid-scroll.
+  css('html.js-enabled .scene-stage .hero').styles(
     raw: const {
-      'padding-top': '10px',
-      'padding-bottom': '10px',
-      // The hero block rests page-centred, which reaches past the hero
-      // column, so it must not be clipped by the hero box.
+      'position': 'absolute',
+      'inset': '0',
+      'display': 'flex',
+      'align-items': 'center',
+      'padding-top': '0',
+      'padding-bottom': '0',
+      // The hero block is scaled down around its left edge, so it must not be
+      // clipped by the hero box.
       'overflow': 'visible',
+      'z-index': '1',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-inner').styles(
+  // The recede lives on .hero-inner. The animated intro cursor is a sibling
+  // of it (a direct child of .hero), so the fixed cursor keeps the viewport
+  // as its containing block. The transform and the filter are only set while
+  // the scrub is running, so at rest the hero renders exactly as it would
+  // without the scene — no compositing layer, no filter region.
+  css('html.js-enabled .scene-stage .hero .hero-inner').styles(
     raw: const {
-      'max-width': '500px',
+      'opacity': 'var(--hero-opacity, 1)',
+      'transform': 'var(--hero-transform, none)',
+      'filter': 'var(--hero-filter, none)',
+      'transform-origin': 'center center',
+      // Once the hero has faded out it must not keep swallowing clicks meant
+      // for the panel that replaced it.
+      'pointer-events': 'var(--hero-pointer-events, auto)',
+      // The hero block reuses the page container, now centred so its content
+      // sits in the middle of the page rather than on the left spine.
+      'max-width': '1200px',
+      'width': '100%',
       'margin-left': 'auto',
       'margin-right': 'auto',
-      // Resting offset: centre the hero block on the page instead of inside
-      // the left column. 100% is the hero column (the flex container), so
-      // dividing by the column ratio gives the page width. The scrub then
-      // glides the block flush to the left edge.
-      'left': 'calc((100% / var(--scene-col, 0.55) - 100%) / 2)',
+      'align-items': 'center',
+      'text-align': 'center',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-avatar-wrap').styles(
+  css('html.scrubbing .scene-stage .hero .hero-inner').styles(
     raw: const {
-      'width': '120px',
-      'height': '120px',
-      'margin-bottom': '14px',
+      'will-change': 'transform, opacity, filter',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-avatar-glitch').styles(
+  css('html.js-enabled .scene-stage .hero .hero-avatar-wrap').styles(
     raw: const {
-      'width': '120px',
-      'height': '120px',
+      'width': '112px',
+      'height': '112px',
+      'margin-bottom': '24px',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-eyebrow').styles(
+  css('html.js-enabled .scene-stage .hero .hero-avatar-glitch').styles(
     raw: const {
-      'margin-bottom': '8px',
+      'width': '112px',
+      'height': '112px',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-name').styles(
+  css('html.js-enabled .scene-stage .hero .hero-name').styles(
     raw: const {
-      'font-size': '52px',
-      'margin-bottom': '6px',
+      'font-size': '48px',
+      'margin-bottom': '16px',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-pill-wrap').styles(
+  css('html.js-enabled .scene-stage .hero .hero-actions').styles(
     raw: const {
-      'margin-top': '2px',
-      'margin-bottom': '14px',
+      'margin-top': '28px',
+      'margin-bottom': '0',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-pill').styles(
+  // Expertise panel — the full stage. Three hairline-ruled columns instead
+  // of cards: a deliberately different form from the project grid below, and
+  // it leaves room for the real type ladder (no 12.5px mini-scale).
+  css('html.js-enabled .scene-stage .expertise').styles(
     raw: const {
-      'height': '40px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-role').styles(
-    raw: const {
-      'font-size': '16px',
-      'margin-bottom': '10px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .hero .hero-desc').styles(
-    raw: const {
-      'font-size': '13px',
-      'line-height': '1.55',
-      'margin-bottom': '12px',
-      'max-width': '100%',
-    },
-  ),
-  // Expertise panel: right column, vertically centered, single card column.
-  // overflow-x: clip contains the title's 40px slide-in without creating a
-  // scroll container (which would break the sticky stage).
-  css('html:not(.no-scene) .scene-stage .expertise').styles(
-    raw: const {
+      'position': 'absolute',
+      'inset': '0',
       'display': 'flex',
       'flex-direction': 'column',
       'justify-content': 'center',
-      'height': '100%',
       'padding-top': '0',
       'padding-bottom': '0',
-      'overflow-x': 'clip',
+      'overflow': 'hidden',
+      // The panel has no interactive controls, so it must not steal clicks
+      // from the hero underneath it before the scene has started.
+      'pointer-events': 'none',
+      'z-index': '2',
     },
   ),
-  css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+  // Head enters first: the hairline rule draws, then the title rises.
+  css('html.js-enabled .scene-stage .expertise .section-head').styles(
     raw: const {
-      'margin-bottom': '20px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .expertise .eyebrow').styles(
-    raw: const {
-      'margin-bottom': '8px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .expertise .section-title').styles(
-    raw: const {
-      'font-size': '26px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .expertise .section-subtitle').styles(
-    raw: const {
-      'font-size': '13px',
-      'margin-top': '8px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
-    raw: const {
-      'grid-template-columns': '1fr',
-      'gap': '10px',
-    },
-  ),
-  // Keep card text readable on the narrow right panel.
-  css('html:not(.no-scene) .scene-stage .skill-card').styles(
-    raw: const {
-      'padding': '14px',
-      'border': '1px solid var(--hairline-soft)',
-      'border-radius': '8px',
-      'opacity': 'var(--reveal, 0)',
-      'transform': 'translateY(calc(32px * (1 - var(--reveal, 0)))) scale(calc(0.94 + 0.06 * var(--reveal, 0)))',
-      'filter': 'blur(var(--card-blur, 0px))',
-      'transition': 'border-color 0.4s ease, box-shadow 0.4s ease',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .skill-icon').styles(
-    raw: const {
-      'width': '40px',
-      'height': '40px',
-      'font-size': '20px',
-      'margin-bottom': '8px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .skill-title').styles(
-    raw: const {
-      'font-size': '15px',
-      'margin-bottom': '6px',
-    },
-  ),
-  css('html:not(.no-scene) .scene-stage .skill-description').styles(
-    raw: const {
-      'font-size': '12.5px',
-      'line-height': '1.45',
-    },
-  ),
-  // Hero glides left (0.00->0.30) using the existing shift look, now scrubbed.
-  // The distance is measured by JS so the hero can never be clipped.
-  css('html:not(.no-scene) .hero.phase-done .hero-inner').styles(
-    raw: const {
-      'transform': 'translateX(calc(-1 * var(--hero-shift, 0px)))',
-    },
-  ),
-  css('html.hero-shifted .hero.phase-done .hero-inner').styles(
-    raw: const {
-      'align-items': 'flex-start',
+      'opacity': 'var(--head-reveal, 0)',
+      'transform': 'translateY(calc(12px * (1 - var(--head-reveal, 0))))',
+      'filter': 'blur(calc(4px * (1 - var(--head-reveal, 0))))',
+      'transition': 'none',
+      'margin-left': '0',
+      'margin-right': 'auto',
+      'margin-bottom': '40px',
       'text-align': 'left',
     },
   ),
-  // Expertise title (0.25->0.40): fade in, slide from right, blur clears.
-  css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+  css('html.js-enabled .scene-stage .expertise .section-head::before').styles(
     raw: const {
-      'opacity': 'var(--reveal, 0)',
-      'transform': 'translateX(calc(40px * (1 - var(--reveal, 0))))',
-      'filter': 'blur(calc(6px * (1 - var(--reveal, 0))))',
+      'transform': 'scaleX(var(--head-reveal, 0))',
       'transition': 'none',
     },
   ),
-  // Brief amber border glow when a card finishes revealing.
-  css('html:not(.no-scene) .scene-stage .skill-card.lit').styles(
+  css('html.js-enabled .scene-stage .expertise .section-subtitle').styles(
     raw: const {
-      'border-color': 'var(--primary)',
-      'box-shadow': '0 0 14px rgba(var(--primary-rgb), 0.35)',
+      'opacity': 'var(--sub-reveal, 0)',
+      'transform': 'translateY(calc(8px * (1 - var(--sub-reveal, 0))))',
+      'transition': 'none',
     },
   ),
-  // Short and narrow viewports (e.g. 900x700) cannot fit the compacted hero
-  // and the three cards at once, so tighten the scene a little further.
-  css.media(MediaQuery.all(maxWidth: 1100.px, maxHeight: 760.px), [
-    css('html:not(.no-scene) .scene-stage .hero .hero-desc').styles(
+  css('html.js-enabled .scene-stage .expertise .skills-grid').styles(
+    raw: const {
+      'grid-template-columns': 'repeat(3, 1fr)',
+      'gap': '24px',
+      'align-items': 'start',
+    },
+  ),
+  css.media(MediaQuery.all(maxWidth: 899.px), [
+    css('html.js-enabled .scene-stage .expertise .skills-grid').styles(
       raw: const {
-        'font-size': '12.5px',
-        'line-height': '1.45',
+        'grid-template-columns': '1fr',
+        'gap': '32px',
       },
     ),
-    css('html:not(.no-scene) .scene-stage .expertise .section-head').styles(
+  ]),
+  // Columns reveal one at a time; the rack-focus blur clears as each arrives.
+  css('html.js-enabled .scene-stage .skill-card').styles(
+    raw: const {
+      'opacity': 'var(--col-reveal, 0)',
+      'transform': 'translateY(calc(16px * (1 - var(--col-reveal, 0))))',
+      'filter': 'blur(var(--col-blur, 0px))',
+      'transition': 'none',
+    },
+  ),
+  // Narrower stages tighten the gutter; shorter ones shrink the portrait.
+  css.media(MediaQuery.all(maxWidth: 1024.px), [
+    css('html.js-enabled .scene-stage .expertise .skills-grid').styles(
       raw: const {
-        'margin-bottom': '12px',
+        'gap': '16px',
       },
     ),
-    css('html:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+  ]),
+  css.media(MediaQuery.all(maxHeight: 780.px), [
+    css('html.js-enabled .scene-stage .hero .hero-avatar-wrap').styles(
       raw: const {
-        'gap': '8px',
+        'width': '96px',
+        'height': '96px',
+        'margin-bottom': '16px',
       },
     ),
-    css('html:not(.no-scene) .scene-stage .skill-card').styles(
+    css('html.js-enabled .scene-stage .hero .hero-avatar-glitch').styles(
       raw: const {
-        'padding': '10px',
+        'width': '96px',
+        'height': '96px',
+      },
+    ),
+    css('html.js-enabled .scene-stage .expertise .section-head').styles(
+      raw: const {
+        'margin-bottom': '32px',
       },
     ),
   ]),
@@ -1111,7 +1152,7 @@ List<StyleRule> get styles => [
       'border': 'none',
       'padding': '0',
       'cursor': 'pointer',
-      'transition': 'transform 0.3s ease',
+      'transition': 'transform var(--dur-control) var(--ease-out)',
       // Let ears/hair/Zzz exceed the bounds while animating.
       'overflow': 'visible',
       'position': 'relative',
@@ -1307,7 +1348,7 @@ List<StyleRule> get styles => [
       // ~1420 units shown at 112px (scale ≈ 0.08), so -60 units ≈ 5px on
       // screen: a clear shock raise.
       'transform': 'translateY(-60px)',
-      'transition': 'transform 0.25s ease-out',
+      'transition': 'transform var(--dur-control) var(--ease-out)',
     },
   ),
   css('.logo-fab.surprised #mouth-sleep').styles(

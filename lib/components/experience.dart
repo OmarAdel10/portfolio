@@ -3,9 +3,8 @@ import 'package:jaspr/jaspr.dart';
 
 import '../constants/theme.dart';
 
-// TODO(owner): Replace the placeholder role entries below with your real
-// professional history before deploying. They follow tamalsen.dev's structure
-// (title, company, location, period, description, technology chips).
+// The education and training chapter. Each row is a two-column entry:
+// the period in mono on the left, the detail on the right.
 class Experience extends StatelessComponent {
   const Experience({super.key});
 
@@ -18,22 +17,32 @@ class Experience extends StatelessComponent {
         location: 'Egypt',
         period: '2023 – 2027',
         description:
-            'Relevant coursework in Computer Networks, Machine Learning, Artificial Neural Networks, Cloud Computing, Data Warehousing, Digital Logic Design, Deep Learning, and Databases.',
-        technologies: ['Computer Networks', 'Machine Learning', 'Deep Learning', 'Cloud Computing', 'Databases'],
+            'A computer science degree with a practical bend — from digital logic '
+            'and data warehousing up to neural networks and cloud.',
+        technologies: [
+          'Computer Networks',
+          'Machine Learning',
+          'Deep Learning',
+          'Artificial Neural Networks',
+          'Cloud Computing',
+          'Data Warehousing',
+          'Digital Logic Design',
+          'Databases',
+        ],
       ),
       _Experience(
-        title: 'Professional Training · Flutter & Dart Development',
+        title: 'Flutter & Dart Development',
         company: 'Route IT Academy',
-        location: 'Specialization',
+        location: 'Professional Training',
         period: 'Certification',
         description:
             'Intensive training on building production-ready Flutter applications — Dart fundamentals, state management, API integration, and cross-platform deployment.',
         technologies: ['Flutter', 'Dart', 'State Management', 'REST'],
       ),
       _Experience(
-        title: 'Mastering Clean Architecture & SOLID Principles',
+        title: 'Clean Architecture & SOLID Principles',
         company: 'Usama Elgendy',
-        location: 'Architecture',
+        location: 'Instructor',
         period: 'Certification',
         description:
             'Deep-dive into layered, testable application architecture — SOLID principles, dependency injection, and Clean Architecture patterns applied to real mobile codebases.',
@@ -44,92 +53,100 @@ class Experience extends StatelessComponent {
     return section(classes: 'experience section', id: 'experience', [
       div(classes: 'container', [
         div(classes: 'section-head reveal', [
-          span(classes: 'eyebrow', [Component.text('Education')]),
+          span(classes: 'eyebrow', [Component.text('Background')]),
           h2(classes: 'section-title', [Component.text('Education & Training')]),
           p(classes: 'section-subtitle', [
             Component.text('Computer science foundation and hands-on professional certification'),
           ]),
         ]),
 
-        div(classes: 'experience-list', [
-          for (final exp in experiences) _buildCard(exp),
+        div(classes: 'experience-list reveal', [
+          for (var i = 0; i < experiences.length; i++) _buildRow(experiences[i], i),
         ]),
       ]),
     ]);
   }
 
-  Component _buildCard(_Experience exp) {
-    return div(classes: 'experience-card card reveal', [
-      div(classes: 'experience-head', [
-        div(classes: 'experience-meta', [
+  Component _buildRow(_Experience exp, int i) {
+    return div(
+      classes: 'experience-row reveal',
+      attributes: {'data-stagger-index': i.toString()},
+      [
+        div(classes: 'experience-year', [Component.text(exp.period)]),
+        div(classes: 'experience-body', [
           h3(classes: 'experience-title', [Component.text(exp.title)]),
           p(classes: 'experience-company', [
-            Component.text(exp.company),
-            Component.text(' · '),
-            Component.text(exp.location),
+            Component.text('${exp.company}, ${exp.location}'),
+          ]),
+          p(classes: 'experience-desc', [Component.text(exp.description)]),
+          p(classes: 'experience-tech', [
+            Component.text(exp.technologies.join(', ')),
           ]),
         ]),
-        span(classes: 'experience-period', [Component.text(exp.period)]),
-      ]),
-      p(classes: 'experience-desc', [Component.text(exp.description)]),
-      div(classes: 'experience-tech', [
-        for (final tech in exp.technologies) span(classes: 'tag tag-outline', [Component.text(tech)]),
-      ]),
-    ]);
+      ],
+    );
   }
 
   @css
   static List<StyleRule> get styles => [
     css('.experience', [
+      // The list spans the full content width so the row rules line up with
+      // the section-head rule above them.
       css('.experience-list').styles(
         display: Display.flex,
         flexDirection: FlexDirection.column,
-        gap: Gap.all(20.px),
-        maxWidth: 900.px,
-        margin: .only(left: .auto, right: .auto),
       ),
-      css('.experience-card').styles(
-        padding: Padding.all(28.px),
+      css('.experience-row').styles(
+        display: Display.grid,
+        gap: Gap.all(24.px),
+        padding: Padding.symmetric(vertical: 32.px),
+        raw: const {
+          'grid-template-columns': '128px minmax(0, 1fr)',
+        },
       ),
-      css('.experience-head').styles(
-        display: Display.flex,
-        flexWrap: FlexWrap.wrap,
-        justifyContent: JustifyContent.spaceBetween,
-        alignItems: AlignItems.start,
-        gap: Gap.all(10.px),
-        margin: .only(bottom: 12.px),
+      css('.experience-row + .experience-row').styles(
+        raw: const {'border-top': '1px solid var(--hairline-soft)'},
+      ),
+      css('.experience-year').styles(
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+        color: cMute,
+        whiteSpace: .noWrap,
+        padding: .only(top: 3.px),
       ),
       css('.experience-title').styles(
-        fontSize: 20.px,
+        fontSize: fontTitleMd.px,
         fontWeight: FontWeight.w700,
         color: cInk,
         margin: .only(bottom: 4.px),
       ),
       css('.experience-company').styles(
-        fontSize: 15.px,
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
         color: cMute,
-      ),
-      css('.experience-period').styles(
-        fontSize: 13.px,
-        fontWeight: FontWeight.w600,
-        color: cMute,
-        padding: .symmetric(vertical: 4.px, horizontal: 10.px),
-        border: Border.all(color: cHairline, width: 1.px),
-        radius: .all(.circular(radiusFull.px)),
-        backgroundColor: cSoft,
-        whiteSpace: .noWrap,
+        margin: .only(bottom: 12.px),
       ),
       css('.experience-desc').styles(
-        fontSize: 15.px,
+        fontSize: fontBodySm.px,
         lineHeight: 1.65.em,
         color: cBody,
-        margin: .only(bottom: 16.px),
+        maxWidth: 640.px,
+        margin: .only(bottom: 12.px),
       ),
       css('.experience-tech').styles(
-        display: Display.flex,
-        flexWrap: FlexWrap.wrap,
-        gap: Gap.all(8.px),
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+        color: cMute,
       ),
+    ]),
+    css.media(MediaQuery.all(maxWidth: 720.px), [
+      css('.experience .experience-row').styles(
+        display: Display.flex,
+        flexDirection: FlexDirection.column,
+        gap: Gap.all(8.px),
+        padding: Padding.symmetric(vertical: 24.px),
+      ),
+      css('.experience .experience-year').styles(padding: .zero),
     ]),
   ];
 }

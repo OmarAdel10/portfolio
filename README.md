@@ -144,7 +144,7 @@ Edit the constants at the top of `lib/constants/theme.dart`:
 | Constant | Used for |
 | --- | --- |
 | `githubUrl`, `linkedinUrl` | Header/footer/contact links |
-| `emailAddress`, `emailUrl`, `mailtoUrl` | Email link + prefilled mailto template |
+| `emailAddress`, `mailtoUrl` | Email link + prefilled mailto template (`mailtoUrl` is derived from `emailAddress`) |
 | `phoneNumber`, `phoneUrl`, `whatsappUrl` | Contact card (WhatsApp / phone) |
 
 The email fallback script in `lib/main.server.dart` (`EMAIL`, `SUBJ`, `BODY`) carries its own copy of the address/subject/body — keep it in sync when changing contact details.

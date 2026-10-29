@@ -19,14 +19,27 @@ class AllProjects extends StatefulComponent {
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
         alignItems: AlignItems.center,
-        justifyContent: JustifyContent.spaceBetween,
+        justifyContent: JustifyContent.start,
         gap: Gap.all(16.px),
-        margin: .only(bottom: 28.px),
+        margin: .only(bottom: 32.px),
       ),
       css('.project-pills').styles(
         display: Display.flex,
         flexWrap: FlexWrap.wrap,
         gap: Gap.all(8.px),
+      ),
+      // Amber marks exactly one thing: the active filter chip.
+      css('.all-projects .pill').styles(
+        fontFamily: fMonoStack,
+        fontSize: fontMeta.px,
+      ),
+      css('.all-projects .pill-active').styles(
+        backgroundColor: cPrimary,
+        color: cOnPrimary,
+      ),
+      css('.all-projects .pill-active:hover').styles(
+        backgroundColor: cPrimaryPressed,
+        color: cOnPrimary,
       ),
       css('.projects-grid').styles(
         display: Display.grid,
@@ -42,13 +55,8 @@ class AllProjects extends StatefulComponent {
       css('.empty-state').styles(
         textAlign: TextAlign.center,
         color: cMute,
-        fontSize: 16.px,
+        fontSize: fontBody.px,
         padding: Padding.all(48.px),
-      ),
-      css('.projects-count').styles(
-        fontSize: 14.px,
-        color: cMute,
-        whiteSpace: .noWrap,
       ),
     ]),
     css.media(MediaQuery.all(maxWidth: 1000.px), [
@@ -83,7 +91,9 @@ class _AllProjectsState extends State<AllProjects> {
     return section(classes: 'all-projects section', id: 'projects-work', [
       div(classes: 'container', [
         div(classes: 'section-head reveal', [
-          span(classes: 'eyebrow', [Component.text('Portfolio')]),
+          span(classes: 'eyebrow', [
+            Component.text('${filtered.length} ${filtered.length == 1 ? 'project' : 'projects'}'),
+          ]),
           h2(classes: 'section-title', [Component.text('My Work')]),
           p(classes: 'section-subtitle', [
             Component.text('Selected projects across app development, backend services, and AI tooling.'),
@@ -95,18 +105,20 @@ class _AllProjectsState extends State<AllProjects> {
             for (final cat in projectCategories)
               button(
                 classes: 'pill ${_category == cat ? 'pill-active' : ''}',
+                attributes: {'aria-pressed': _category == cat ? 'true' : 'false'},
                 onClick: () => setState(() => _category = cat),
                 [Component.text(cat)],
               ),
           ]),
         ]),
 
-        div(classes: 'projects-count', [
-          Component.text('${filtered.length} ${filtered.length == 1 ? 'project' : 'projects'}'),
-        ]),
-
         div(classes: 'projects-grid', [
-          for (final project in filtered) ProjectCard(project: project, isFeatured: false),
+          for (var i = 0; i < filtered.length; i++)
+            div(
+              classes: 'reveal',
+              attributes: {'data-stagger-index': i.toString()},
+              [ProjectCard(project: filtered[i])],
+            ),
         ]),
 
         if (filtered.isEmpty) div(classes: 'empty-state', [Component.text('No projects in this category yet.')]),
