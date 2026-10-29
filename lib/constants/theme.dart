@@ -602,6 +602,11 @@ List<StyleRule> get styles => [
       padding: .symmetric(vertical: 16.px, horizontal: 16.px),
     ),
   ]),
+  css.media(MediaQuery.all(maxWidth: 480.px), [
+    // Mascot scales down 30% on phones so it stays in scale with the hero.
+    css('.logo-fab').styles(raw: const {'transform': 'scale(0.7)'}),
+    css('.logo-fab:hover').styles(raw: const {'transform': 'scale(0.7)'}),
+  ]),
   // ---------- Marquee ticker ----------
   css.keyframes('marquee', {
     '0%': Styles(raw: {'transform': 'translateX(0)'}),

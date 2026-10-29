@@ -188,8 +188,7 @@ class HeroState extends State<Hero> {
 
   void _beginIntro() {
     final reduce = web.window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    final coarse = web.window.matchMedia('(pointer: coarse)').matches;
-    if (reduce || coarse) {
+    if (reduce) {
       _skipToFinal();
       return;
     }
@@ -347,7 +346,7 @@ class HeroState extends State<Hero> {
       _phase = _Phase.done;
       // The selection knobs were part of the sweep. Once the sweep is over
       // they retire and only the soft amber wash on the name remains.
-      _handlesVisible = false;
+      _handlesVisible = true;
       _handleTransition = 'opacity var(--dur-control) var(--ease-out)';
     });
     _scrollPoll?.cancel();
@@ -381,7 +380,7 @@ class HeroState extends State<Hero> {
       _highlight = 1;
       _endLeft = '100%';
       // The knobs belong to the sweep; a skipped intro never shows them.
-      _handlesVisible = false;
+      _handlesVisible = true;
       _pillVisible = true;
       _cursorOpacity = 0;
       _cursorTransition = 'none';
