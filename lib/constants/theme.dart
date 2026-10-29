@@ -806,8 +806,8 @@ List<StyleRule> get styles => [
   ),
 
   // ---------- Pinned scroll-scrubbed hero -> Expertise scene ----------
-  // Active only when html is .js-enabled and NOT .no-scene (JS adds .no-scene
-  // on narrow viewports or prefers-reduced-motion). .scene is a 400vh
+  // Active only when html is .js-enabled (JS adds .js-enabled
+  // on load). .scene is a 400vh
   // scrollable wrapper; .scene-stage sticks for one full viewport while
   // scroll drives progress p (0..1) via JS custom properties. Scrolling up
   // reverses everything.
@@ -828,7 +828,7 @@ List<StyleRule> get styles => [
       'position': 'static',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene').styles(
+  css('html.js-enabled .scene').styles(
     raw: const {
       'height': '400vh',
     },
@@ -838,7 +838,7 @@ List<StyleRule> get styles => [
   // The stage paints the canvas colour so the dot matrix does not bleed into
   // the empty right half while the scene is pinned (the hero band used to be
   // an opaque full-width band, so this matches the original first screen).
-  css('html.js-enabled:not(.no-scene) .scene-stage').styles(
+  css('html.js-enabled .scene-stage').styles(
     raw: const {
       'position': 'sticky',
       'top': 'var(--scene-top, 64px)',
@@ -855,7 +855,7 @@ List<StyleRule> get styles => [
   // Hero — sits on the same left spine as every section below it, inside the
   // pinned stage. It recedes in place (scale / lift / blur / fade) instead of
   // gliding sideways, so nothing re-rags mid-scroll.
-  css('html.js-enabled:not(.no-scene) .scene-stage .hero').styles(
+  css('html.js-enabled .scene-stage .hero').styles(
     raw: const {
       'position': 'absolute',
       'inset': '0',
@@ -874,7 +874,7 @@ List<StyleRule> get styles => [
   // as its containing block. The transform and the filter are only set while
   // the scrub is running, so at rest the hero renders exactly as it would
   // without the scene — no compositing layer, no filter region.
-  css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-inner').styles(
+  css('html.js-enabled .scene-stage .hero .hero-inner').styles(
     raw: const {
       'opacity': 'var(--hero-opacity, 1)',
       'transform': 'var(--hero-transform, none)',
@@ -898,26 +898,26 @@ List<StyleRule> get styles => [
       'will-change': 'transform, opacity, filter',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-avatar-wrap').styles(
+  css('html.js-enabled .scene-stage .hero .hero-avatar-wrap').styles(
     raw: const {
       'width': '112px',
       'height': '112px',
       'margin-bottom': '24px',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-avatar-glitch').styles(
+  css('html.js-enabled .scene-stage .hero .hero-avatar-glitch').styles(
     raw: const {
       'width': '112px',
       'height': '112px',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-name').styles(
+  css('html.js-enabled .scene-stage .hero .hero-name').styles(
     raw: const {
       'font-size': '48px',
       'margin-bottom': '16px',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-actions').styles(
+  css('html.js-enabled .scene-stage .hero .hero-actions').styles(
     raw: const {
       'margin-top': '28px',
       'margin-bottom': '0',
@@ -926,7 +926,7 @@ List<StyleRule> get styles => [
   // Expertise panel — the full stage. Three hairline-ruled columns instead
   // of cards: a deliberately different form from the project grid below, and
   // it leaves room for the real type ladder (no 12.5px mini-scale).
-  css('html.js-enabled:not(.no-scene) .scene-stage .expertise').styles(
+  css('html.js-enabled .scene-stage .expertise').styles(
     raw: const {
       'position': 'absolute',
       'inset': '0',
@@ -943,7 +943,7 @@ List<StyleRule> get styles => [
     },
   ),
   // Head enters first: the hairline rule draws, then the title rises.
-  css('html.js-enabled:not(.no-scene) .scene-stage .expertise .section-head').styles(
+  css('html.js-enabled .scene-stage .expertise .section-head').styles(
     raw: const {
       'opacity': 'var(--head-reveal, 0)',
       'transform': 'translateY(calc(12px * (1 - var(--head-reveal, 0))))',
@@ -955,20 +955,20 @@ List<StyleRule> get styles => [
       'text-align': 'left',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .expertise .section-head::before').styles(
+  css('html.js-enabled .scene-stage .expertise .section-head::before').styles(
     raw: const {
       'transform': 'scaleX(var(--head-reveal, 0))',
       'transition': 'none',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .expertise .section-subtitle').styles(
+  css('html.js-enabled .scene-stage .expertise .section-subtitle').styles(
     raw: const {
       'opacity': 'var(--sub-reveal, 0)',
       'transform': 'translateY(calc(8px * (1 - var(--sub-reveal, 0))))',
       'transition': 'none',
     },
   ),
-  css('html.js-enabled:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+  css('html.js-enabled .scene-stage .expertise .skills-grid').styles(
     raw: const {
       'grid-template-columns': 'repeat(3, 1fr)',
       'gap': '24px',
@@ -976,7 +976,7 @@ List<StyleRule> get styles => [
     },
   ),
   // Columns reveal one at a time; the rack-focus blur clears as each arrives.
-  css('html.js-enabled:not(.no-scene) .scene-stage .skill-card').styles(
+  css('html.js-enabled .scene-stage .skill-card').styles(
     raw: const {
       'opacity': 'var(--col-reveal, 0)',
       'transform': 'translateY(calc(16px * (1 - var(--col-reveal, 0))))',
@@ -986,27 +986,27 @@ List<StyleRule> get styles => [
   ),
   // Narrower stages tighten the gutter; shorter ones shrink the portrait.
   css.media(MediaQuery.all(maxWidth: 1024.px), [
-    css('html.js-enabled:not(.no-scene) .scene-stage .expertise .skills-grid').styles(
+    css('html.js-enabled .scene-stage .expertise .skills-grid').styles(
       raw: const {
         'gap': '16px',
       },
     ),
   ]),
   css.media(MediaQuery.all(maxHeight: 780.px), [
-    css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-avatar-wrap').styles(
+    css('html.js-enabled .scene-stage .hero .hero-avatar-wrap').styles(
       raw: const {
         'width': '96px',
         'height': '96px',
         'margin-bottom': '16px',
       },
     ),
-    css('html.js-enabled:not(.no-scene) .scene-stage .hero .hero-avatar-glitch').styles(
+    css('html.js-enabled .scene-stage .hero .hero-avatar-glitch').styles(
       raw: const {
         'width': '96px',
         'height': '96px',
       },
     ),
-    css('html.js-enabled:not(.no-scene) .scene-stage .expertise .section-head').styles(
+    css('html.js-enabled .scene-stage .expertise .section-head').styles(
       raw: const {
         'margin-bottom': '32px',
       },

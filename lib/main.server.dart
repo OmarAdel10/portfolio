@@ -220,25 +220,10 @@ const String _motionJs = """
   }
   function request(){ if(!ticking){ ticking = true; requestAnimationFrame(sceneTick); } }
 
-  function applyNoScene(){
-    // The pinned scene runs at all widths so the hero scroll animation works
-    // on mobile viewports too. It is only disabled under prefers-reduced-motion.
-    var noScene = reduce;
-    d.classList.toggle('no-scene', noScene);
-    var wantActive = !noScene;
-    if(wantActive !== sceneActive){
-      sceneActive = wantActive;
-      if(getStage()){
-        if(wantActive){ initSceneEls(); }
-        else { resetSceneEls(); }
-      }
-      geometryReady = false;
-    }
-    measureScene();
-  }
-
   // Initial layout class + first reveal pass.
-  applyNoScene();
+  sceneActive = !reduce;
+  measureScene();
+  if(sceneActive){ initSceneEls(); }
   revealVisible();
 
   // The document-space y at the end of the scene, where the expertise panel
@@ -274,7 +259,7 @@ const String _motionJs = """
   }
 
   window.addEventListener('scroll', request, {passive: true});
-  window.addEventListener('resize', function(){ geometryReady = false; applyNoScene(); request(); });
+  window.addEventListener('resize', function(){ geometryReady = false; measureScene(); request(); });
   // Deep links / header nav link to '#expertise' resolve inside the pinned scene
   // where the panel is hidden until the scrub has run: scroll to the end of the
   // scene so the panel arrives fully revealed.
@@ -289,7 +274,10 @@ const String _motionJs = """
   if(reduceMQ && reduceMQ.addEventListener){
     reduceMQ.addEventListener('change', function(e){
       reduce = e.matches;
-      applyNoScene();
+      sceneActive = !reduce;
+      geometryReady = false;
+      measureScene();
+      if(sceneActive){ initSceneEls(); } else { resetSceneEls(); }
       request();
     });
   }

@@ -289,8 +289,7 @@ class HeaderState extends State<Header> {
       // While the scene is pinned the panel's own box never moves, so its top
       // says nothing. Use the scene instead: the chapter opens when the
       // scrub starts bringing the panel in.
-      final noScene = web.document.documentElement?.classList.contains('no-scene') ?? false;
-      final pinned = !noScene;
+      final pinned = true;
       if (pinned) {
         final scene = web.document.querySelector('.scene');
         if (scene != null) {
