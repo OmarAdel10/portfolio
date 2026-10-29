@@ -222,10 +222,9 @@ const String _motionJs = """
 
   function applyNoScene(){
     // The pinned scene needs room for the hero and the three columns: below
-    // 900px wide (or 700px tall) the page falls back to the normal stacked
-    // document.
+    // 700px tall the page falls back to the normal stacked document. Width is
+    // intentionally not gated so the scene runs on mobile viewports too.
     var noScene = reduce
-      || (window.innerWidth || d.clientWidth) < 900
       || (window.innerHeight || d.clientHeight) < 700;
     d.classList.toggle('no-scene', noScene);
     var wantActive = !noScene;
