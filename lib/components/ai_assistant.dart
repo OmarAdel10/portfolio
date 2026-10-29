@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
@@ -7,6 +8,7 @@ import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
 import '../constants/theme.dart';
+import '../data/nono_corpus.dart';
 import 'hero.dart';
 import 'logo.dart';
 
@@ -22,6 +24,32 @@ import 'logo.dart';
 /// sequence every 90–120s, falls asleep after ~1.5–2 minutes without user
 /// interaction, and — if nobody wakes it — startles awake by itself after
 /// ~2–2.5 minutes asleep (see `.logo-fab` styles in theme.dart).
+
+/// One chat message rendered in the Nono modal.
+class _Message {
+  final String role; // 'user' | 'assistant'
+  final String text;
+  final List<String> sources;
+  final bool isStreaming;
+  _Message({
+    required this.role,
+    required this.text,
+    this.sources = const [],
+    this.isStreaming = false,
+  });
+}
+
+/// A [Sink<String>] that accumulates decoded text so we can tell how much of
+/// the UTF-8 stream has been decoded across `Utf8Decoder` chunked conversion.
+class _StringSink implements Sink<String> {
+  final _buffer = StringBuffer();
+  @override
+  void add(String data) => _buffer.write(data);
+  @override
+  void close() {}
+  String get value => _buffer.toString();
+}
+
 class AIAssistant extends StatefulComponent {
   const AIAssistant({super.key});
 
@@ -45,7 +73,17 @@ class AIAssistantState extends State<AIAssistant> {
   Timer? _surpriseEndTimer;
   web.EventListener? _keyListener;
 
-  final _random = Random();
+  final _random = math.Random();
+
+  // ── Chat state ─────────────────────────────────────────────────────────
+  final List<_Message> _messages = [];
+  bool _isLoading = false;
+  String? _error;
+  String _inputValue = '';
+  String _sseBuffer = '';
+  web.ReadableStreamDefaultReader? _reader;
+  Sink<List<int>>? _byteSink;
+  int _utf8DecodedLength = 0;
 
   /// How often the mascot plays its attention sequence (90–120s, randomized
   /// so it feels organic rather than metronomic).
@@ -86,13 +124,261 @@ class AIAssistantState extends State<AIAssistant> {
   static const _surpriseMin = Duration(seconds: 3);
   static const _surpriseSpan = Duration(seconds: 2);
 
+  // ── Client-side retrieval (keyword / lightweight TF-IDF) ───────────────
+  final Map<String, int> _docFreq = {};
+  bool _idfReady = false;
+
+  void _ensureIdf() {
+    if (_idfReady) return;
+    for (final doc in nonoCorpus) {
+      for (final term in _tokenize(doc.body).toSet()) {
+        _docFreq[term] = (_docFreq[term] ?? 0) + 1;
+      }
+    }
+    _idfReady = true;
+  }
+
+  static final Set<String> _stopwords = {
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of',
+    'with', 'by', 'from', 'as', 'is', 'are', 'was', 'were', 'be', 'been',
+    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'i', 'you', 'me', 'my', 'your', 'his', 'her', 'its', 'our',
+    'their', 'this', 'that', 'these', 'those', 'it', 'not', 'no', 'yes',
+    'can', 'about',
+  };
+
+  List<String> _tokenize(String text) =>
+      text.toLowerCase().split(RegExp(r'\W+')).where((t) {
+        if (t.isEmpty) return false;
+        return !_stopwords.contains(t);
+      }).toList();
+
+  double _idf(String term) {
+    final df = _docFreq[term] ?? 0;
+    if (nonoCorpus.isEmpty) return 0;
+    return math.log(nonoCorpus.length / (df + 1)) + 1;
+  }
+
+  /// Returns the top-k corpus documents most relevant to `query`.
+  List<NonoDocument> _retrieve(String query, {int topK = 5}) {
+    _ensureIdf();
+    final qTerms = _tokenize(query);
+    if (qTerms.isEmpty) return const [];
+
+    final scored = <NonoDocument, double>{};
+    for (final doc in nonoCorpus) {
+      final docTerms = _tokenize(doc.body);
+      if (docTerms.isEmpty) continue;
+      var score = 0.0;
+      for (final t in qTerms) {
+        final tf = docTerms.where((d) => d == t).length / docTerms.length;
+        score += tf * _idf(t);
+      }
+      // Topic-tag boost: query terms that appear in a doc's topic tags.
+      for (final t in qTerms) {
+        if (doc.topics.contains(t)) score += 0.5;
+      }
+      if (score > 0) scored[doc] = score;
+    }
+
+    final sorted = scored.keys.toList()
+      ..sort((a, b) => scored[b]!.compareTo(scored[a]!));
+    return sorted.take(topK).toList();
+  }
+
+  // ── Networking ─────────────────────────────────────────────────────────
+  static const _askNonoEndpoint =
+      'https://ask-nono.omaradel.pages.dev/ask-nono';
+
+  /// Send a user message: retrieve context, append messages, POST to Worker.
+  Future<void> _send() async {
+    if (_isLoading || _inputValue.trim().isEmpty) return;
+    final query = _inputValue.trim();
+
+    // Retrieve relevant context from Omar's corpus (client-side, zero network).
+    final docs = _retrieve(query, topK: 5);
+    final context = docs.map((d) => d.body).join('\n\n---\n\n');
+    final sources = docs.map((d) => d.title).toList();
+
+    setState(() {
+      _messages.add(_Message(role: 'user', text: query));
+      _messages.add(_Message(
+        role: 'assistant',
+        text: '',
+        sources: sources,
+        isStreaming: true,
+      ));
+      _isLoading = true;
+      _error = null;
+      _inputValue = '';
+      _sseBuffer = '';
+    });
+
+    final body = jsonEncode({'query': query, 'context': context});
+
+    try {
+      final headers = web.Headers();
+      headers.set('Content-Type', 'application/json');
+
+      final response = await web.window.fetch(
+        _askNonoEndpoint.toJS,
+        web.RequestInit(
+          method: 'POST',
+          headers: headers,
+          body: body.toJS,
+        ),
+      ).toDart;
+
+      if (!response.ok) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = 'Server error (${response.status}).';
+        });
+        return;
+      }
+
+      final bodyStream = response.body;
+      if (bodyStream == null) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = 'Empty response from Nono.';
+        });
+        return;
+      }
+
+      _utf8DecodedLength = 0;
+      _reader = bodyStream.getReader() as web.ReadableStreamDefaultReader;
+      final textSink = _StringSink();
+      _byteSink = utf8.decoder.startChunkedConversion(textSink);
+
+      try {
+        while (true) {
+          final result = await _reader!.read().toDart;
+          if (result.done) break;
+          final value = result.value;
+          if (value == null) continue;
+          final chunkBytes = (value as JSUint8Array).toDart;
+          _byteSink!.add(chunkBytes);
+          final allDecoded = textSink.value;
+          final newText = allDecoded.substring(_utf8DecodedLength);
+          _utf8DecodedLength = allDecoded.length;
+          if (newText.isNotEmpty && mounted) {
+            _processSseChunk(newText);
+          }
+        }
+      } finally {
+        _byteSink!.close();
+        _byteSink = null;
+        _reader!.releaseLock();
+        _reader = null;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        final idx = _messages.lastIndexWhere((m) => m.role == 'assistant');
+        if (idx >= 0 && _messages[idx].isStreaming) {
+          _messages[idx] = _Message(
+            role: 'assistant',
+            text: _messages[idx].text,
+            sources: _messages[idx].sources,
+            isStreaming: false,
+          );
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _reader = null;
+        _byteSink = null;
+        _error = 'Error sending message: $e';
+      });
+    }
+  }
+
+  /// Parse incremental SSE data and update the streaming assistant message.
+  void _processSseChunk(String chunk) {
+    if (!mounted) return;
+    _sseBuffer += chunk;
+    while (_sseBuffer.contains('\n\n')) {
+      final idx = _sseBuffer.indexOf('\n\n');
+      final block = _sseBuffer.substring(0, idx);
+      _sseBuffer = _sseBuffer.substring(idx + 2);
+      String? payload;
+      for (final line in block.split('\n')) {
+        if (line.startsWith('data: ')) {
+          payload = line.substring(6);
+        }
+      }
+      if (payload == null) continue;
+      if (payload == '[DONE]') {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          final idx = _messages.lastIndexWhere((m) => m.role == 'assistant');
+          if (idx >= 0) {
+            _messages[idx] = _Message(
+              role: 'assistant',
+              text: _messages[idx].text,
+              sources: _messages[idx].sources,
+              isStreaming: false,
+            );
+          }
+        });
+        return;
+      }
+      try {
+        final decoded = jsonDecode(payload) as Map<String, dynamic>;
+        final delta = decoded['text'] as String?;
+        if (delta != null && delta.isNotEmpty) _onStreamDelta(delta);
+      } catch (_) {
+        // Ignore malformed SSE payloads.
+      }
+    }
+  }
+
+  void _onStreamDelta(String delta) {
+    if (!mounted) return;
+    final idx = _messages.lastIndexWhere((m) => m.role == 'assistant');
+    if (idx < 0) return;
+    final last = _messages[idx];
+    _messages[idx] = _Message(
+      role: 'assistant',
+      text: last.text + delta,
+      sources: last.sources,
+      isStreaming: true,
+    );
+    setState(() {});
+  }
+
+  /// Send a prompt-chip question.
+  void _sendChip(String question) {
+    setState(() => _inputValue = question);
+    _send();
+  }
+
+  void _abortXhr() {
+    _reader?.cancel();
+    _reader = null;
+    _byteSink?.close();
+    _byteSink = null;
+    _utf8DecodedLength = 0;
+    _sseBuffer = '';
+  }
+
   void _toggle() {
     _onInteraction();
     setState(() => _isOpen = !_isOpen);
   }
 
   void _close() {
-    if (_isOpen) setState(() => _isOpen = false);
+    if (_isOpen) {
+      _abortXhr();
+      setState(() => _isOpen = false);
+    }
   }
 
   /// Global keyboard shortcuts: Ctrl+/ or Ctrl+\ (Cmd on Mac) toggles the
@@ -227,6 +513,7 @@ class AIAssistantState extends State<AIAssistant> {
 
   @override
   void dispose() {
+    _abortXhr();
     _attentionTimer?.cancel();
     _attentionEndTimer?.cancel();
     _idleTimer?.cancel();
@@ -279,49 +566,105 @@ class AIAssistantState extends State<AIAssistant> {
               events: {'click': (e) => e.stopPropagation()},
               [
                 div(classes: 'ai-modal-header', [
-              h3(classes: 'ai-modal-title', [Component.text('Ask Nono')]),
-              button(
-                classes: 'ai-modal-close',
-                onClick: _close,
-                attributes: {'aria-label': 'Close'},
-                [Component.text('×')],
-              ),
-            ]),
-            div(classes: 'ai-modal-body', [
-              div(classes: 'ai-prompt-chips', [
-                for (final chip in [
-                  'What technologies do you use?',
-                  'Show me your Flutter projects',
-                  'Tell me about your AI integrations',
-                  'How do you approach clean architecture?',
-                ])
+                  h3(classes: 'ai-modal-title', [Component.text('Ask Nono')]),
                   button(
-                    classes: 'ai-prompt-chip',
-                    onClick: () {},
-                    [Component.text(chip)],
+                    classes: 'ai-modal-close',
+                    onClick: _close,
+                    attributes: {'aria-label': 'Close'},
+                    [Component.text('×')],
                   ),
-              ]),
-              div(classes: 'ai-input-area', [
-                input(
-                  classes: 'ai-input',
-                  attributes: {
-                    'placeholder': 'Ask about Nono…',
-                    'aria-label': 'Nono assistant input',
-                  },
-                ),
-                button(
-                  classes: 'ai-send-btn',
-                  onClick: () {},
-                  [Component.text('Send')],
-                ),
-              ]),
-              div(classes: 'ai-hint', [
-                Component.text('Shortcuts: Ctrl+/ or Ctrl+\\ to open · Esc to close'),
-              ]),
-            ]),
-          ]),
-        ]),
-
+                ]),
+                div(classes: 'ai-modal-body', [
+                  // Chat message history (empty until the first exchange).
+                  if (_messages.isNotEmpty)
+                    div(classes: 'ai-messages', [
+                      for (final msg in _messages)
+                        div(
+                          classes: 'ai-message ai-message-${msg.role}',
+                          [
+                            div(classes: 'ai-message-text', [
+                              Component.text(
+                                msg.text + (msg.isStreaming ? ' …' : ''),
+                              ),
+                            ]),
+                            if (msg.role == 'assistant' &&
+                                msg.sources.isNotEmpty)
+                              div(
+                                classes: 'ai-sources',
+                                [
+                                  Component.text(
+                                    'Sources: ${msg.sources.join(', ')}',
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                    ]),
+                  // Error banner (shown when the Worker is unreachable).
+                  if (_error != null)
+                    div(
+                      classes: 'ai-error',
+                      [Component.text('! $_error')],
+                    ),
+                  // Suggested starter questions.
+                  div(classes: 'ai-prompt-chips', [
+                    for (final chip in [
+                      'What Flutter projects have you built?',
+                      "What's your tech stack?",
+                      'Tell me about your AI experience',
+                      'How can I contact you?',
+                    ])
+                      button(
+                        classes: 'ai-prompt-chip',
+                        onClick: () => _sendChip(chip),
+                        [Component.text(chip)],
+                      ),
+                  ]),
+                  // Message input + send.
+                  div(classes: 'ai-input-area', [
+                    input(
+                      classes: 'ai-input',
+                      attributes: {
+                        'placeholder': 'Ask about Nono…',
+                        'aria-label': 'Nono assistant input',
+                        'value': _inputValue,
+                        if (_isLoading) 'disabled': 'disabled',
+                      },
+                      events: {
+                        'input': (event) {
+                          if (event.target is web.HTMLInputElement) {
+                            setState(() => _inputValue =
+                                (event.target as web.HTMLInputElement).value);
+                          }
+                        },
+                        'keydown': (event) {
+                          if (event is web.KeyboardEvent &&
+                              event.key == 'Enter' &&
+                              !event.shiftKey) {
+                            event.preventDefault();
+                            _send();
+                          }
+                        },
+                      },
+                    ),
+                    button(
+                      classes: 'ai-send-btn',
+                      onClick: _send,
+                      attributes: {
+                        if (_isLoading) 'disabled': 'disabled',
+                      },
+                      [Component.text(_isLoading ? 'Sending…' : 'Send')],
+                    ),
+                  ]),
+                  div(classes: 'ai-hint', [
+                    Component.text(
+                        'Shortcuts: Ctrl+/ or Ctrl+\\ to open · Esc to close'),
+                  ]),
+                ]),
+              ],
+            ),
+          ],
+        ),
     ]);
   }
 
@@ -460,6 +803,49 @@ class AIAssistantState extends State<AIAssistant> {
       fontSize: 12.px,
       color: cMute,
       textAlign: TextAlign.center,
+    ),
+
+    css('.ai-messages').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      gap: Gap.all(12.px),
+      raw: const {'overflow-y': 'auto'},
+      maxHeight: 240.px,
+      padding: Padding.only(bottom: 8.px),
+    ),
+    css('.ai-message').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      gap: Gap.all(4.px),
+      padding: .symmetric(vertical: 8.px, horizontal: 12.px),
+      radius: .all(.circular(radiusMd.px)),
+    ),
+    css('.ai-message.user').styles(
+      alignItems: AlignItems.end,
+      raw: const {'background-color': 'var(--primary-soft)'},
+    ),
+    css('.ai-message.assistant').styles(
+      alignItems: AlignItems.start,
+      raw: const {'background-color': 'var(--soft)'},
+    ),
+    css('.ai-message-text').styles(
+      fontSize: 14.px,
+      lineHeight: 1.5.em,
+      color: cInk,
+      margin: .zero,
+    ),
+    css('.ai-sources').styles(
+      fontSize: 11.px,
+      color: cMute,
+      margin: .zero,
+    ),
+    css('.ai-error').styles(
+      fontSize: 12.px,
+      color: cAccentRed,
+      backgroundColor: cAccentRedSoft,
+      padding: Padding.all(8.px),
+      radius: .all(.circular(radiusMd.px)),
+      margin: .only(bottom: 8.px),
     ),
 
     css.keyframes('aiFadeIn', {

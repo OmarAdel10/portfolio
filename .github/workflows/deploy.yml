@@ -1,10 +1,10 @@
-name: Build & Deploy to Cloudflare Pages
+name: Build & Deploy to Cloudflare Pages and Workers
 
 on:
   push:
-    branches: [master]
+    branches: [master, development]
   pull_request:
-    branches: [master]
+    branches: [master, development]
   workflow_dispatch:
 
 jobs:
@@ -29,6 +29,29 @@ jobs:
         with:
           name: jaspr-build
           path: build/jaspr
+
+  deploy-worker:
+    name: Deploy Cloudflare Worker
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/development')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Worker to production
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: wrangler deploy
+        if: github.ref == 'refs/heads/master'
+
+      - name: Deploy Worker to staging
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: wrangler deploy --env staging
+        if: github.ref == 'refs/heads/development'
 
   deploy-production:
     name: Deploy to Cloudflare Pages (production)
@@ -67,3 +90,21 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy build/jaspr --project-name=omaradel --branch=${{ github.head_ref }}
+
+  deploy-development-pages:
+    name: Deploy to Cloudflare Pages (development preview)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/development' && github.event_name == 'push'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: jaspr-build
+          path: build/jaspr
+
+      - name: Publish development preview to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/jaspr --project-name=omaradel --branch=development

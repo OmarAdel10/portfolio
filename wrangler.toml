@@ -1,0 +1,32 @@
+# Ask Nono — Cloudflare Worker proxy
+#
+# Receives { query, context } from the portfolio client, builds a RAG prompt
+# grounded in Omar's published content, calls Cloudflare Workers AI, and
+# streams the answer back as SSE.
+#
+# Deploy: npx wrangler deploy
+
+name = "ask-nono"
+main = "src/index.js"
+compatibility_date = "2026-10-30"
+
+[observability]
+enabled = true
+
+# Workers AI binding — exposes `env.AI` in the Worker (no API key needed).
+[ai]
+binding = "AI"
+
+[vars]
+# Free-tier Workers AI instruct model. Change here to swap models.
+MODEL = "@cf/meta/llama-3.2-3b-instruct"
+
+[env.staging]
+name = "ask-nono-staging"
+compatibility_date = "2026-10-30"
+
+[env.staging.ai]
+binding = "AI"
+
+[env.staging.vars]
+MODEL = "@cf/meta/llama-3.2-3b-instruct"
