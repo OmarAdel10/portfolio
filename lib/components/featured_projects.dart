@@ -17,7 +17,7 @@ class FeaturedProjects extends StatelessComponent {
           ]),
         ]),
         div(classes: 'projects-grid', [
-          for (final project in mainProjects) ProjectCard(project: project, isFeatured: true),
+          for (final project in mainProjects) ProjectCard(project: project),
         ]),
       ]),
     ]);

@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+import 'package:universal_web/js_interop.dart';
+import 'package:universal_web/web.dart' as web;
 
 import '../constants/theme.dart';
 import 'hero.dart';
@@ -10,7 +12,8 @@ import 'logo.dart';
 
 /// Conversational Nono assistant placeholder UI.
 ///
-/// Keyboard shortcut: Ctrl+/ (or Cmd+/) to open.
+/// Keyboard shortcut: Ctrl+/ (or Cmd+/) — or Ctrl+\ (or Cmd+\) — to open;
+/// Esc to close.
 /// No backend integration yet — UI only placeholder to reserve space and convey
 /// future intent.
 ///
@@ -40,6 +43,7 @@ class AIAssistantState extends State<AIAssistant> {
   Timer? _blinkEndTimer;
   Timer? _selfWakeTimer;
   Timer? _surpriseEndTimer;
+  web.EventListener? _keyListener;
 
   final _random = Random();
 
@@ -91,6 +95,26 @@ class AIAssistantState extends State<AIAssistant> {
     if (_isOpen) setState(() => _isOpen = false);
   }
 
+  /// Global keyboard shortcuts: Ctrl+/ or Ctrl+\ (Cmd on Mac) toggles the
+  /// assistant; Esc closes it. Ignored while typing in an editable field so
+  /// visitors aren't interrupted mid-input.
+  void _onKeyDown(web.Event raw) {
+    if (raw is! web.KeyboardEvent) return;
+    final ke = raw;
+    final target = ke.target;
+    if (target is web.Element) {
+      final tag = target.tagName;
+      if (tag == 'INPUT' || tag == 'TEXTAREA') return;
+    }
+    final hasModifier = ke.ctrlKey || ke.metaKey;
+    if (!hasModifier) return;
+    if (ke.key == '/' || ke.key == '\\') {
+      _toggle();
+    } else if (ke.key == 'Escape' && _isOpen) {
+      _close();
+    }
+  }
+
   /// Any user interaction (hover, click) wakes the mascot and restarts the
   /// idle countdown before it falls asleep again.
   void _onInteraction() {
@@ -129,9 +153,7 @@ class AIAssistantState extends State<AIAssistant> {
 
   void _scheduleAttention({bool first = false}) {
     _attentionTimer?.cancel();
-    final delay = first
-        ? _firstAttentionDelay
-        : _attentionMin + _attentionSpan * _random.nextDouble();
+    final delay = first ? _firstAttentionDelay : _attentionMin + _attentionSpan * _random.nextDouble();
     _attentionTimer = Timer(delay, _playAttention);
   }
 
@@ -159,8 +181,7 @@ class AIAssistantState extends State<AIAssistant> {
       // Stay asleep: no more attention sequences until something wakes it.
       _attentionTimer?.cancel();
       // But if nobody shows up, it startles awake on its own after a while.
-      final sleepFor =
-          _sleepBeforeSelfWake + _sleepBeforeSelfWakeSpan * _random.nextDouble();
+      final sleepFor = _sleepBeforeSelfWake + _sleepBeforeSelfWakeSpan * _random.nextDouble();
       _selfWakeTimer = Timer(sleepFor, _selfWake);
     });
   }
@@ -199,6 +220,8 @@ class AIAssistantState extends State<AIAssistant> {
       _scheduleAttention(first: true);
       _scheduleBlink();
       _resetIdleTimer();
+      _keyListener = _onKeyDown.toJS;
+      web.window.addEventListener('keydown', _keyListener);
     }
   }
 
@@ -211,12 +234,17 @@ class AIAssistantState extends State<AIAssistant> {
     _blinkEndTimer?.cancel();
     _selfWakeTimer?.cancel();
     _surpriseEndTimer?.cancel();
+    if (_keyListener != null) {
+      web.window.removeEventListener('keydown', _keyListener);
+      _keyListener = null;
+    }
     super.dispose();
   }
 
   @override
   Component build(BuildContext context) {
-    final fabClasses = 'ai-fab logo-fab'
+    final fabClasses =
+        'ai-fab logo-fab'
         '${_isAnimating ? ' attention' : ''}'
         '${_isSleeping ? ' sleeping' : ''}'
         '${_isSurprised ? ' surprised' : ''}'
@@ -237,11 +265,20 @@ class AIAssistantState extends State<AIAssistant> {
         ],
       ),
 
-      // Modal (hidden when closed)
+      // Modal overlay (hidden when closed). Dimmed page behind it doubles as
+      // the backdrop; clicking anywhere outside the modal card closes it.
       if (_isOpen)
-        div(classes: 'ai-modal-overlay', [
-          div(classes: 'ai-modal', [
-            div(classes: 'ai-modal-header', [
+        div(
+          classes: 'ai-modal-overlay',
+          events: {'click': (_) => _close()},
+          [
+            div(
+              classes: 'ai-modal',
+              // Keep clicks *inside* the card from bubbling to the overlay
+              // and re-closing the modal while the visitor is interacting.
+              events: {'click': (e) => e.stopPropagation()},
+              [
+                div(classes: 'ai-modal-header', [
               h3(classes: 'ai-modal-title', [Component.text('Ask Nono')]),
               button(
                 classes: 'ai-modal-close',
@@ -279,14 +316,12 @@ class AIAssistantState extends State<AIAssistant> {
                 ),
               ]),
               div(classes: 'ai-hint', [
-                Component.text('Keyboard shortcut: Ctrl+/ (or Cmd+/) to open'),
+                Component.text('Shortcuts: Ctrl+/ or Ctrl+\\ to open · Esc to close'),
               ]),
             ]),
           ]),
         ]),
 
-      // Backdrop to close modal on outside click
-      if (_isOpen) div(classes: 'ai-backdrop', []),
     ]);
   }
 
@@ -311,7 +346,7 @@ class AIAssistantState extends State<AIAssistant> {
       padding: Padding.all(24.px),
       animation: Animation(
         name: 'aiFadeIn',
-        duration: Duration(milliseconds: 250),
+        duration: durControl,
         curve: Curve.easeOut,
       ),
     ),
@@ -327,7 +362,7 @@ class AIAssistantState extends State<AIAssistant> {
       raw: const {'box-shadow': '0 24px 48px -16px rgba(35, 37, 29, 0.35)'},
       animation: Animation(
         name: 'aiSlideUp',
-        duration: Duration(milliseconds: 250),
+        duration: durControl,
         curve: Curve.easeOut,
       ),
     ),
@@ -381,7 +416,7 @@ class AIAssistantState extends State<AIAssistant> {
       cursor: .pointer,
       transition: Transition(
         'all',
-        duration: Duration(milliseconds: 150),
+        duration: durMicro,
         curve: Curve.easeOut,
       ),
     ),
@@ -425,12 +460,6 @@ class AIAssistantState extends State<AIAssistant> {
       fontSize: 12.px,
       color: cMute,
       textAlign: TextAlign.center,
-    ),
-
-    css('.ai-backdrop').styles(
-      position: Position.fixed(),
-      raw: const {'inset': '0'},
-      zIndex: ZIndex(9998),
     ),
 
     css.keyframes('aiFadeIn', {

@@ -5,6 +5,7 @@
 // Generated with jaspr_builder
 
 import 'package:jaspr/server.dart';
+import 'package:portfolio/components/about.dart' as _about;
 import 'package:portfolio/components/ai_assistant.dart' as _ai_assistant;
 import 'package:portfolio/components/all_projects.dart' as _all_projects;
 import 'package:portfolio/components/contact.dart' as _contact;
@@ -43,6 +44,7 @@ ServerOptions get defaultServerOptions => ServerOptions(
     ..._theme.styles,
     ..._app.AppState.styles,
     ..._app.MarqStrip.styles,
+    ..._about.About.styles,
     ..._ai_assistant.AIAssistantState.styles,
     ..._all_projects.AllProjects.styles,
     ..._contact.Contact.styles,
@@ -50,7 +52,7 @@ ServerOptions get defaultServerOptions => ServerOptions(
     ..._expertise.Expertise.styles,
     ..._featured_project.FeaturedProject.styles,
     ..._footer.Footer.styles,
-    ..._header.HeaderState.styles,
+    ..._header.Header.styles,
     ..._hero.HeroState.styles,
     ..._project_card.ProjectCard.styles,
     ..._testimonials.Testimonials.styles,
