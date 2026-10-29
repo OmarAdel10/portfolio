@@ -975,6 +975,14 @@ List<StyleRule> get styles => [
       'align-items': 'start',
     },
   ),
+  css.media(MediaQuery.all(maxWidth: 899.px), [
+    css('html.js-enabled .scene-stage .expertise .skills-grid').styles(
+      raw: const {
+        'grid-template-columns': '1fr',
+        'gap': '32px',
+      },
+    ),
+  ]),
   // Columns reveal one at a time; the rack-focus blur clears as each arrives.
   css('html.js-enabled .scene-stage .skill-card').styles(
     raw: const {
