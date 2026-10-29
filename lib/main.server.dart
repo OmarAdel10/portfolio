@@ -321,8 +321,28 @@ const String _motionJs = """
     applySectionCrossfade();
   }
   function applySectionCrossfade(){
-    if(reduce || !sectionEls) return;
+    if(reduce || !sectionEls || sectionEls.length === 0) return;
     var vh = window.innerHeight || d.clientHeight;
+    var scrollY = window.pageYOffset || d.scrollTop;
+
+    // Single shared scroll progress p for the whole site (like hero->expertise).
+    // p = 0 at top of first crossfade section, p = 1 at bottom of last.
+    var firstEl = sectionEls[0];
+    var lastEl = sectionEls[sectionEls.length - 1];
+    if(!firstEl || !lastEl) return;
+    var firstRect, lastRect;
+    try{
+      firstRect = firstEl.getBoundingClientRect();
+      lastRect = lastEl.getBoundingClientRect();
+    }catch(e){
+      return;
+    }
+    var siteTop = firstRect.top + scrollY;
+    var siteBottom = lastRect.bottom + scrollY;
+    var siteHeight = siteBottom - siteTop;
+    var p = siteHeight > 0 ? clamp01((scrollY - siteTop) / siteHeight) : 0;
+
+    // Opacity crossfade stays viewport-based (sectionOut/sectionIn).
     for(var i=0;i<sectionEls.length;i++){
       var el = sectionEls[i];
       var r = el.getBoundingClientRect();
@@ -334,25 +354,48 @@ const String _motionJs = """
       var sectionIn = top < vh ? easeOutCubic(clamp01((vh - top) / (vh * 0.4))) : 0;
       var opacity = Math.min(sectionIn, 1 - sectionOut);
       el.style.setProperty('--section-opacity', opacity.toFixed(3));
-      // Section recedes as it leaves the top: blur 0->4px, scale 1->0.95.
-      // sectionOut = exit progress (0 = still visible, 1 = fully left top).
-      el.style.setProperty('--section-blur', (4 * sectionOut).toFixed(2) + 'px');
-      el.style.setProperty('--section-scale', (1 - 0.05 * sectionOut).toFixed(4));
-      // Children unblur + scale up card-by-card as the section enters from bottom.
-      // sectionIn = entry progress (0 = not entered, 1 = fully entered).
-      var children = el.querySelectorAll('.reveal');
-      for(var c=0;c<children.length;c++){
-        var child = children[c];
-        var st = child.getAttribute('data-stagger-index');
-        var childIdx = st !== null ? parseInt(st, 10) : c;
-        var childReveal = easeOutCubic(clamp01((sectionIn - childIdx * 0.12) / 0.18));
-        var childBlur = 4 * (1 - childReveal);
-        child.style.setProperty('--child-reveal', childReveal.toFixed(3));
-        child.style.setProperty('--child-blur', childBlur.toFixed(2) + 'px');
-        child.style.setProperty('--child-scale', (1 - 0.05 * (1 - childReveal)).toFixed(4));
+    }
+
+    // Blur/scale/reveal driven by single shared p, divided into per-section chunks.
+    // Within each chunk: first half = children reveal (unblur+scale up card-by-card),
+    // second half = section recedes (blur+scale down). Sequential: section reveals
+    // then recedes, then next section reveals — matches hero->expertise choreography.
+    var n = sectionEls.length;
+    var sectionSize = 1 / n;
+    for(var i=0;i<n;i++){
+      var el = sectionEls[i];
+      var sectionStartP = i * sectionSize;
+      var sectionP = clamp01((p - sectionStartP) / sectionSize);
+
+      if(sectionP < 0.5){
+        // Reveal phase: section entering — children unblur + scale up card-by-card.
+        var revealP = sectionP * 2;
+        var children = el.querySelectorAll('.reveal');
+        for(var c=0;c<children.length;c++){
+          var child = children[c];
+          var st = child.getAttribute('data-stagger-index');
+          var childIdx = st !== null ? parseInt(st, 10) : c;
+          var childReveal = easeOutCubic(clamp01((revealP - childIdx * 0.12) / 0.18));
+          var childBlur = 4 * (1 - childReveal);
+          child.style.setProperty('--child-reveal', childReveal.toFixed(3));
+          child.style.setProperty('--child-blur', childBlur.toFixed(2) + 'px');
+          child.style.setProperty('--child-scale', (1 - 0.05 * (1 - childReveal)).toFixed(4));
+        }
+        el.style.setProperty('--section-blur', '0px');
+        el.style.setProperty('--section-scale', '1');
+      } else {
+        // Recede phase: section leaving — blur + scale down.
+        var recedeP = (sectionP - 0.5) * 2;
+        el.style.setProperty('--section-blur', (4 * recedeP).toFixed(2) + 'px');
+        el.style.setProperty('--section-scale', (1 - 0.05 * recedeP).toFixed(4));
       }
     }
   }
+
+  // Kick off section crossfade right away if the body is already parsed
+  // (e.g. this IIFE runs after DOMContentLoaded). If not, the DOMContentLoaded
+  // handler above will call initSectionEls() instead.
+  if(document.body){ initSectionEls(); }
 
   // ---- Email fallback (mailto -> Gmail) ----
   var EMAIL = 'omaradel1.dev@gmail.com';
