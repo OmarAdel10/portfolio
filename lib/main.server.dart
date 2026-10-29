@@ -334,23 +334,18 @@ const String _motionJs = """
       var sectionIn = top < vh ? easeOutCubic(clamp01((vh - top) / (vh * 0.4))) : 0;
       var opacity = Math.min(sectionIn, 1 - sectionOut);
       el.style.setProperty('--section-opacity', opacity.toFixed(3));
-      // Section spotlight: blur + scale based on distance from viewport center.
-      // Centered: crisp + scale 1. At either viewport edge: blur 4px + scale 0.95.
-      var sectionCenterY = top + r.height / 2;
-      var viewportCenterY = vh / 2;
-      var offset = Math.abs(sectionCenterY - viewportCenterY);
-      var maxOffset = vh / 2 + r.height / 2;
-      var blurScale = clamp01(offset / maxOffset);
-      el.style.setProperty('--section-blur', (4 * blurScale).toFixed(2) + 'px');
-      el.style.setProperty('--section-scale', (1 - 0.05 * blurScale).toFixed(4));
-      // Per-child stagger: reveal + blur + scale as the section crosses the viewport.
-      var sectionProgress = clamp01((vh - top + r.height * 0.25) / (vh + r.height * 0.5));
+      // Section recedes as it leaves the top: blur 0->4px, scale 1->0.95.
+      // sectionOut = exit progress (0 = still visible, 1 = fully left top).
+      el.style.setProperty('--section-blur', (4 * sectionOut).toFixed(2) + 'px');
+      el.style.setProperty('--section-scale', (1 - 0.05 * sectionOut).toFixed(4));
+      // Children unblur + scale up card-by-card as the section enters from bottom.
+      // sectionIn = entry progress (0 = not entered, 1 = fully entered).
       var children = el.querySelectorAll('.reveal');
       for(var c=0;c<children.length;c++){
         var child = children[c];
         var st = child.getAttribute('data-stagger-index');
         var childIdx = st !== null ? parseInt(st, 10) : c;
-        var childReveal = easeOutCubic(clamp01((sectionProgress - childIdx * 0.12) / 0.18));
+        var childReveal = easeOutCubic(clamp01((sectionIn - childIdx * 0.12) / 0.18));
         var childBlur = 4 * (1 - childReveal);
         child.style.setProperty('--child-reveal', childReveal.toFixed(3));
         child.style.setProperty('--child-blur', childBlur.toFixed(2) + 'px');
