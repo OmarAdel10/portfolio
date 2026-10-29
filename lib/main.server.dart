@@ -221,11 +221,9 @@ const String _motionJs = """
   function request(){ if(!ticking){ ticking = true; requestAnimationFrame(sceneTick); } }
 
   function applyNoScene(){
-    // The pinned scene needs room for the hero and the three columns: below
-    // 700px tall the page falls back to the normal stacked document. Width is
-    // intentionally not gated so the scene runs on mobile viewports too.
-    var noScene = reduce
-      || (window.innerHeight || d.clientHeight) < 700;
+    // The pinned scene runs at all widths so the hero scroll animation works
+    // on mobile viewports too. It is only disabled under prefers-reduced-motion.
+    var noScene = reduce;
     d.classList.toggle('no-scene', noScene);
     var wantActive = !noScene;
     if(wantActive !== sceneActive){
