@@ -147,6 +147,24 @@ class AIAssistantState extends State<AIAssistant> {
     'can', 'about',
   };
 
+  /// Query terms expanded with their common equivalents, so a visitor's
+  /// everyday wording still reaches the documents that use Omar's own terms —
+  /// "who is this developer" has to find the "Software Engineer" bio.
+  static const Map<String, List<String>> _synonyms = {
+    'developer': ['engineer', 'software', 'omar', 'about'],
+    'engineer': ['developer', 'software', 'omar', 'about'],
+    'stack': ['tech', 'technology', 'flutter', 'dotnet', 'python', 'typescript'],
+    'tech': ['stack', 'technology', 'flutter', 'dotnet'],
+    'ai': ['artificial', 'intelligence', 'agents', 'claude', 'codex', 'gemini'],
+    'contact': ['email', 'reach', 'hire', 'available', 'whatsapp', 'linkedin'],
+    'reach': ['contact', 'email', 'available'],
+    'hire': ['available', 'work', 'contact'],
+    'projects': ['project', 'built', 'apps', 'flutter'],
+    'experience': ['experienced', 'background', 'expertise'],
+    'flutter': ['dart', 'mobile', 'cross-platform'],
+    'backend': ['dotnet', 'python', 'cloud', 'workers'],
+  };
+
   List<String> _tokenize(String text) =>
       text.toLowerCase().split(RegExp(r'\W+')).where((t) {
         if (t.isEmpty) return false;
@@ -164,18 +182,23 @@ class AIAssistantState extends State<AIAssistant> {
     _ensureIdf();
     final qTerms = _tokenize(query);
     if (qTerms.isEmpty) return const [];
+    // Widen the query with synonyms before scoring.
+    final expanded = <String>[...qTerms];
+    for (final t in qTerms) {
+      expanded.addAll(_synonyms[t] ?? const []);
+    }
 
     final scored = <NonoDocument, double>{};
     for (final doc in nonoCorpus) {
       final docTerms = _tokenize(doc.body);
       if (docTerms.isEmpty) continue;
       var score = 0.0;
-      for (final t in qTerms) {
+      for (final t in expanded) {
         final tf = docTerms.where((d) => d == t).length / docTerms.length;
         score += tf * _idf(t);
       }
       // Topic-tag boost: query terms that appear in a doc's topic tags.
-      for (final t in qTerms) {
+      for (final t in expanded) {
         if (doc.topics.contains(t)) score += 0.5;
       }
       if (score > 0) scored[doc] = score;
@@ -280,12 +303,18 @@ class AIAssistantState extends State<AIAssistant> {
         _isLoading = false;
         final idx = _messages.lastIndexWhere((m) => m.role == 'assistant');
         if (idx >= 0 && _messages[idx].isStreaming) {
+          final text = _messages[idx].text;
           _messages[idx] = _Message(
             role: 'assistant',
-            text: _messages[idx].text,
+            text: text,
             sources: _messages[idx].sources,
             isStreaming: false,
           );
+          // A finished stream with no text means Nono had nothing to say —
+          // say so instead of leaving an empty bubble.
+          if (text.trim().isEmpty) {
+            _error = 'Nono could not produce an answer. Please try again.';
+          }
         }
       });
     } catch (e) {
@@ -332,6 +361,15 @@ class AIAssistantState extends State<AIAssistant> {
       }
       try {
         final decoded = jsonDecode(payload) as Map<String, dynamic>;
+        final error = decoded['error'] as String?;
+        if (error != null && error.isNotEmpty) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _error = error;
+          });
+          return;
+        }
         final delta = decoded['text'] as String?;
         if (delta != null && delta.isNotEmpty) _onStreamDelta(delta);
       } catch (_) {

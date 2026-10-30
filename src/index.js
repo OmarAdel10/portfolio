@@ -45,6 +45,85 @@ function corsHeaders(origin) {
   };
 }
 
+/**
+ * Turns the Workers AI streaming response into plain text deltas.
+ *
+ * `env.AI.run(model, { stream: true })` hands back the model's own
+ * server-sent-event stream, so the frames arrive as raw bytes and have to be
+ * decoded and parsed here — reading `chunk.response` directly yields nothing
+ * and the visitor gets an empty answer. Some runtimes yield pre-parsed
+ * objects instead, so both shapes are accepted.
+ *
+ * Yields the text of every frame. Upstream error frames are thrown as Errors
+ * so the caller can report them instead of silently truncating the answer.
+ */
+async function* aiTextDeltas(aiResponse) {
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  function* parseFrame(frame) {
+    for (const line of frame.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const payload = trimmed.startsWith('data:')
+        ? trimmed.slice(5).trim()
+        : trimmed;
+      if (!payload || payload === '[DONE]') continue;
+      let obj;
+      try {
+        obj = JSON.parse(payload);
+      } catch (_) {
+        continue; // Ignore malformed frames.
+      }
+      if (obj && obj.error) {
+        throw new Error(
+          typeof obj.error === 'string' ? obj.error : JSON.stringify(obj.error),
+        );
+      }
+      const delta = obj.response ?? obj.delta ?? obj.text;
+      if (typeof delta === 'string' && delta.length > 0) yield delta;
+    }
+  }
+
+  for await (const chunk of aiResponse) {
+    // Parsed-object shape: { response: "..." }.
+    if (chunk && typeof chunk === 'object' && !(chunk instanceof Uint8Array)) {
+      if (chunk.error) {
+        throw new Error(
+          typeof chunk.error === 'string'
+            ? chunk.error
+            : JSON.stringify(chunk.error),
+        );
+      }
+      const delta = chunk.response ?? chunk.delta ?? chunk.text;
+      if (typeof delta === 'string' && delta.length > 0) yield delta;
+      continue;
+    }
+
+    // Raw-byte / string shape: the model's SSE frames.
+    let text;
+    if (typeof chunk === 'string') {
+      text = chunk;
+    } else if (chunk instanceof Uint8Array) {
+      text = decoder.decode(chunk, { stream: true });
+    } else {
+      continue;
+    }
+
+    buffer += text;
+    let idx;
+    while ((idx = buffer.indexOf('\n\n')) !== -1) {
+      const frame = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      yield* parseFrame(frame);
+    }
+  }
+
+  // Flush a trailing frame that never got its blank-line terminator.
+  const tail = buffer.trim();
+  if (tail) yield* parseFrame(tail);
+}
+
 /** System instruction grounding Nono in Omar's published content only. */
 const SYSTEM_PROMPT = `You are Nono, Omar Adel's portfolio assistant.
 
@@ -120,7 +199,8 @@ export default {
       const model = env.MODEL || '@cf/meta/llama-3.2-3b-instruct';
 
       // Call Workers AI with streaming enabled.
-      // `aiResponse` is an async iterable of { response: "delta text" } chunks.
+      // The streaming binding returns the model's own SSE stream, so the
+      // frames have to be parsed — see `aiTextDeltas`.
       const aiResponse = await env.AI.run(model, {
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
@@ -129,6 +209,20 @@ export default {
         stream: true,
       });
 
+      // `?debug=1` returns the upstream Workers AI stream verbatim, so the
+      // exact frame format can be inspected with curl. Rate limited like any
+      // other request.
+      if (url.searchParams.get('debug') === '1') {
+        return new Response(aiResponse, {
+          status: 200,
+          headers: {
+            ...corsHeaders(origin),
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache, no-transform',
+          },
+        });
+      }
+
       // Stream the AI response back to the client as SSE.
       const stream = new TransformStream();
       const writer = stream.writable.getWriter();
@@ -136,20 +230,30 @@ export default {
 
       const producer = (async () => {
         try {
-          for await (const chunk of aiResponse) {
-            const delta = chunk && chunk.response ? chunk.response : '';
-            if (delta) {
-              await writer.write(
-                encoder.encode(`data: ${JSON.stringify({ text: delta })}\n\n`),
-              );
-            }
+          for await (const delta of aiTextDeltas(aiResponse)) {
+            await writer.write(
+              encoder.encode(`data: ${JSON.stringify({ text: delta })}\n\n`),
+            );
           }
           await writer.write(encoder.encode('data: [DONE]\n\n'));
         } catch (err) {
+          // Tell the visitor what went wrong instead of leaving the answer
+          // silently truncated.
           try {
-            await writer.abort(err);
+            await writer.write(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  error: String(err.message || err),
+                })}\n\n`,
+              ),
+            );
+            await writer.close();
           } catch (_) {
-            // ignore abort errors
+            try {
+              await writer.abort(err);
+            } catch (_) {
+              // ignore abort errors
+            }
           }
         } finally {
           try {
