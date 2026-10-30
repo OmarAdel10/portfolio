@@ -8,7 +8,7 @@
 
 name = "ask-nono"
 main = "src/index.js"
-compatibility_date = "2026-10-30"
+compatibility_date = "2026-10-29"
 
 [observability]
 enabled = true
@@ -23,7 +23,7 @@ MODEL = "@cf/meta/llama-3.2-3b-instruct"
 
 [env.staging]
 name = "ask-nono-staging"
-compatibility_date = "2026-10-30"
+compatibility_date = "2026-10-29"
 
 [env.staging.ai]
 binding = "AI"
