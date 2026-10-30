@@ -16,6 +16,31 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost:8080',
 ]);
 
+// Every Cloudflare Pages deployment of this project — production, the
+// `development` branch, and per-branch / per-commit previews — is served
+// from a `*.omaradel.pages.dev` host. The host names of previews are
+// generated at deploy time, so they cannot be listed individually.
+const PAGES_ORIGIN_SUFFIX = '.omaradel.pages.dev';
+
+/**
+ * True when the origin may talk to this Worker.
+ *
+ * The Pages suffix match is safe because `pages.dev` subdomains are only
+ * creatable from the Cloudflare account that owns this project.
+ */
+function isAllowedOrigin(origin) {
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return (
+      protocol === 'https:' &&
+      hostname.endsWith(PAGES_ORIGIN_SUFFIX)
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
 // ── Rate limiting (fixed window per client IP) ───────────────────────────
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 20; // max requests per window per IP
@@ -36,7 +61,7 @@ function checkRateLimit(ip) {
 }
 
 function corsHeaders(origin) {
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://omaradel.pages.dev';
+  const allow = isAllowedOrigin(origin) ? origin : 'https://omaradel.pages.dev';
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
