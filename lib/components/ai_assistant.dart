@@ -147,20 +147,44 @@ class AIAssistantState extends State<AIAssistant> {
     'can', 'about',
   };
 
+  /// Terms that identify Omar himself. Visitors ask "who is he?" and "tell me
+  /// about yourself" with words that appear nowhere in the corpus, so these
+  /// pronouns and vague words are expanded into the corpus's own vocabulary.
+  static const List<String> _identityTerms = [
+    'omar',
+    'engineer',
+    'software',
+    'developer',
+    'bio',
+    'about',
+  ];
+
   /// Query terms expanded with their common equivalents, so a visitor's
   /// everyday wording still reaches the documents that use Omar's own terms —
   /// "who is this developer" has to find the "Software Engineer" bio.
   static const Map<String, List<String>> _synonyms = {
     'developer': ['engineer', 'software', 'omar', 'about'],
     'engineer': ['developer', 'software', 'omar', 'about'],
+    'who': _identityTerms,
+    'whom': _identityTerms,
+    'him': _identityTerms,
+    'he': _identityTerms,
+    'yourself': _identityTerms,
+    'bio': ['about', 'omar', 'background', 'story'],
     'stack': ['tech', 'technology', 'flutter', 'dotnet', 'python', 'typescript'],
     'tech': ['stack', 'technology', 'flutter', 'dotnet'],
+    'skills': ['expertise', 'stack', 'flutter', 'dotnet', 'python', 'typescript'],
     'ai': ['artificial', 'intelligence', 'agents', 'claude', 'codex', 'gemini'],
     'contact': ['email', 'reach', 'hire', 'available', 'whatsapp', 'linkedin'],
     'reach': ['contact', 'email', 'available'],
     'hire': ['available', 'work', 'contact'],
+    'hiring': ['available', 'hire', 'contact'],
+    'job': ['available', 'hire', 'contact', 'role'],
+    'work': ['available', 'hire', 'contact'],
     'projects': ['project', 'built', 'apps', 'flutter'],
     'experience': ['experienced', 'background', 'expertise'],
+    'resume': ['experience', 'education', 'bsc', 'certification'],
+    'cv': ['experience', 'education', 'bsc', 'certification'],
     'flutter': ['dart', 'mobile', 'cross-platform'],
     'backend': ['dotnet', 'python', 'cloud', 'workers'],
   };
@@ -198,8 +222,12 @@ class AIAssistantState extends State<AIAssistant> {
         score += tf * _idf(t);
       }
       // Topic-tag boost: query terms that appear in a doc's topic tags.
+      // Multi-word tags are split so "software-engineer" matches the query
+      // terms "software" and "engineer", and "omar-adel" matches "omar".
       for (final t in expanded) {
-        if (doc.topics.contains(t)) score += 0.5;
+        if (doc.topics.any((tag) => tag == t || tag.split('-').contains(t))) {
+          score += 0.5;
+        }
       }
       if (score > 0) scored[doc] = score;
     }
@@ -219,9 +247,25 @@ class AIAssistantState extends State<AIAssistant> {
     final query = _inputValue.trim();
 
     // Retrieve relevant context from Omar's corpus (client-side, zero network).
-    final docs = _retrieve(query, topK: 5);
-    final context = docs.map((d) => d.body).join('\n\n---\n\n');
-    final sources = docs.map((d) => d.title).toList();
+    final retrieved = _retrieve(query, topK: 5);
+
+    // The identity and contact documents ride along with every request, so
+    // Nono always knows who Omar is and how to reach him — even when the
+    // visitor's wording matches no document at all ("hi", "what does he do?").
+    // Retrieved documents come last so the most relevant text sits closest
+    // to the question.
+    final core = nonoCoreDocuments;
+    final seen = <String>{};
+    final contextDocs = <NonoDocument>[
+      for (final doc in [...core, ...retrieved])
+        if (seen.add(doc.id)) doc,
+    ];
+    final context = contextDocs.map((d) => d.body).join('\n\n---\n\n');
+
+    // Cite what the answer leaned on: the retrieved documents when there
+    // were any, otherwise the always-present core documents.
+    final sources =
+        (retrieved.isEmpty ? core : retrieved).map((d) => d.title).toList();
 
     setState(() {
       _messages.add(_Message(role: 'user', text: query));

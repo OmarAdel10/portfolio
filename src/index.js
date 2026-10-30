@@ -152,7 +152,29 @@ async function* aiTextDeltas(aiResponse) {
 /** System instruction grounding Nono in Omar's published content only. */
 const SYSTEM_PROMPT = `You are Nono, Omar Adel's portfolio assistant.
 
-Answer ONLY using the provided context from Omar's portfolio (about, expertise, projects, experience, contact, testimonials). If the answer is not in the context, say you don't have that information and suggest the visitor contact Omar via the channels listed. Never invent projects, skills, or contact details. Cite sources by section name (e.g. "According to the Projects section…"). Keep answers concise. Do not answer questions unrelated to Omar Adel or his work.`;
+Answer using ONLY the context below, which is drawn from Omar Adel's published portfolio (About, Expertise, Projects, Experience, Contact, How I work). Never invent projects, skills, experience, or contact details.
+
+Rules:
+- Cite the section you used, e.g. "According to the Projects section…".
+- If the context does not cover the question, say what you do know from the context and name the topics you can cover (Omar's projects, his stack, his experience, how to contact him). Never reply that you have "no context" or "no information" — the context is always present.
+- Never output placeholders or template text such as "[insert link]", "[contact information]", or "[your name]". If a detail is missing, say plainly that it is not listed.
+- For a greeting, or any question without a specific subject, reply in two or three sentences: introduce yourself as Nono, say who Omar is and what he builds, and offer a few things you can tell the visitor about.
+- Keep answers concise. Stay on topic: Omar Adel and his work only.`;
+
+/**
+ * Context used when the request arrives without any retrieved content.
+ *
+ * That happens for a stale cached client bundle, or for a direct API call.
+ * Without it the model has nothing to ground a reply on and answers "I don't
+ * have any context" — which reads as a broken assistant rather than a scoped
+ * one. Keep this in sync with the About and Contact sections of the corpus
+ * (lib/data/nono_corpus.dart), which is the authoritative source.
+ */
+const FALLBACK_CONTEXT =
+  'Omar Adel is a Software Engineer who builds cross-platform apps with ' +
+  'Flutter and .NET, plus Python and TypeScript services. Portfolio ' +
+  'sections available: About, Expertise, Projects, Experience, Contact, ' +
+  'How I work.';
 
 export default {
   async fetch(request, env, ctx) {
@@ -218,8 +240,12 @@ export default {
       }
 
       // Build the RAG user message: retrieved context + visitor's question.
+      // An empty context falls back to a minimal grounding blurb, so the model
+      // always has something to answer from instead of refusing outright.
+      const retrieved =
+        typeof context === 'string' && context.trim() ? context.trim() : '';
       const userMessage =
-        `Context from Omar's portfolio:\n${context || '(no matching context)'}\n\n---\n\nVisitor question: ${query}`;
+        `Context from Omar's portfolio:\n${retrieved || FALLBACK_CONTEXT}\n\n---\n\nVisitor question: ${query}`;
 
       const model = env.MODEL || '@cf/meta/llama-3.2-3b-instruct';
 
