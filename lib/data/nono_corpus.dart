@@ -32,6 +32,15 @@ class NonoDocument {
   /// External link for further reading (GitHub repo, etc.).
   final String? url;
 
+  /// When true, this document is sent with *every* request, regardless of
+  /// what the visitor asked.
+  ///
+  /// The core documents carry Omar's identity and his contact channels. They
+  /// ride along so Nono can still answer "hi", "who is he?" or "how do I get
+  /// in touch?" — queries whose wording matches no specific document, and
+  /// which would otherwise leave the model with an empty context.
+  final bool core;
+
   NonoDocument({
     required this.id,
     required this.title,
@@ -40,6 +49,7 @@ class NonoDocument {
     this.sourceAnchor,
     this.topics = const [],
     this.url,
+    this.core = false,
   });
 }
 
@@ -74,6 +84,7 @@ final List<NonoDocument> nonoCorpus = <NonoDocument>[
     sourceSection: 'about',
     sourceAnchor: '#about',
     topics: ['about', 'role', 'stack', 'currently'],
+    core: true,
     body:
         "Role: Software Engineer. "
         "Stack: Flutter, .NET, Python, TypeScript. "
@@ -257,6 +268,7 @@ final List<NonoDocument> nonoCorpus = <NonoDocument>[
     sourceSection: 'contact',
     sourceAnchor: '#contact',
     topics: ['contact', 'email', 'github', 'linkedin', 'whatsapp', 'phone', 'available-for-work'],
+    core: true,
     body:
         "Available for work. Send an email, or reach out on whichever channel suits you — I read every message. "
         "GitHub: github.com/OmarAdel10. "
@@ -286,6 +298,7 @@ final List<NonoDocument> nonoCorpus = <NonoDocument>[
     sourceSection: 'hero',
     sourceAnchor: '#top',
     topics: ['hero', 'role', 'stack', 'software-engineer', 'flutter', 'dotnet', 'ai'],
+    core: true,
     body:
         "Omar Adel — Software Engineer. Cross-platform apps, the backend and cloud behind them, and the AI tooling that speeds it up. Stack: Flutter, .NET, AI, mobile, web, desktop.",
   ),
@@ -308,3 +321,13 @@ final List<NonoDocument> nonoCorpus = <NonoDocument>[
 final Map<String, String> nonoCorpusById = {
   for (final doc in nonoCorpus) doc.id: doc.body,
 };
+
+/// The documents that are always included in the context sent to the model.
+///
+/// Order is the corpus order: identity first, then contact channels, then the
+/// hero line. Together they cover "who is Omar", "what does he build" and
+/// "how do I reach him" without any keyword match.
+final List<NonoDocument> nonoCoreDocuments = <NonoDocument>[
+  for (final doc in nonoCorpus)
+    if (doc.core) doc,
+];
