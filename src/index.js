@@ -212,7 +212,10 @@ export default {
       // `?debug=1` returns the upstream Workers AI stream verbatim, so the
       // exact frame format can be inspected with curl. Rate limited like any
       // other request.
-      if (url.searchParams.get('debug') === '1') {
+      //
+      // Only active when the `DEBUG=1` Worker var is set — enabled for
+      // staging, so production never exposes the raw upstream stream.
+      if (url.searchParams.get('debug') === '1' && env.DEBUG === '1') {
         return new Response(aiResponse, {
           status: 200,
           headers: {
