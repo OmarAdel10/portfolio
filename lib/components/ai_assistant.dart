@@ -188,7 +188,7 @@ class AIAssistantState extends State<AIAssistant> {
 
   // ── Networking ─────────────────────────────────────────────────────────
   static const _askNonoEndpoint =
-      'https://ask-nono.omaradel.pages.dev/ask-nono';
+      'https://ask-nono.omaradel.workers.dev/ask-nono';
 
   /// Send a user message: retrieve context, append messages, POST to Worker.
   Future<void> _send() async {
@@ -681,7 +681,7 @@ class AIAssistantState extends State<AIAssistant> {
 
     css('.ai-modal-overlay').styles(
       position: Position.fixed(),
-      raw: const {'inset': '0', 'background-color': 'rgba(35, 37, 29, 0.4)'},
+      raw: const {'inset': '0', 'background-color': 'rgba(35, 37, 29, 0.4)', 'overscroll-behavior': 'contain', 'touch-action': 'none'},
       display: Display.flex,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
@@ -739,7 +739,7 @@ class AIAssistantState extends State<AIAssistant> {
       display: Display.flex,
       flexDirection: FlexDirection.column,
       gap: Gap.all(16.px),
-      raw: const {'overflow-y': 'auto'},
+      raw: const {'overflow-y': 'auto', 'overscroll-behavior': 'contain'},
       maxHeight: 400.px,
     ),
 
