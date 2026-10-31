@@ -11,12 +11,10 @@ import 'package:jaspr/server.dart';
 // Imports the [App] component.
 import 'app.dart';
 
+import 'constants/site.dart';
+
 // This file is generated automatically by Jaspr, do not remove or edit.
 import 'main.server.options.dart';
-
-/// Production origin used for canonical links, sitemap and Open Graph — swap to
-/// your real domain after attaching it in Cloudflare Pages.
-const String productionUrl = 'https://omaradel.pages.dev';
 
 /// Applies the saved theme before first paint so the site never flashes from
 /// light to dark. The default (no saved value) is the light PostHog theme.
@@ -578,8 +576,8 @@ const String _bgJs = """
 /// Structured-data Person markup for search engines.
 const String _jsonLd =
     '{"@context":"https://schema.org","@type":"Person",'
-    '"name":"Omar Adel","url":"https://omaradel.dev",'
-    '"image":"https://omaradel.dev/images/avatar.jpg",'
+    '"name":"Omar Adel","url":"$productionUrl",'
+    '"image":"$productionUrl/images/avatar.jpg",'
     '"jobTitle":"Software Engineer",'
     '"email":"mailto:omaradel1.dev@gmail.com",'
     '"sameAs":["https://github.com/OmarAdel10","https://www.linkedin.com/in/omaradel10"]}';

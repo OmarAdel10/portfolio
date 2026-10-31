@@ -10,6 +10,8 @@
  * fragile and source attribution unreliable.
  */
 
+import '../constants/site.dart';
+
 class NonoDocument {
   /// Stable identifier for the document (debugging / logging).
   final String id;
@@ -310,7 +312,7 @@ final List<NonoDocument> nonoCorpus = <NonoDocument>[
     sourceSection: 'profile',
     sourceAnchor: '#top',
     topics: ['profile', 'software-engineer', 'omar-adel', 'about'],
-    url: 'https://omaradel.dev',
+    url: productionUrl,
     body:
         "Omar Adel is a Software Engineer building cross-platform apps with Flutter and C# .NET, edge-backend services, and practical AI tooling. Available for work via email, GitHub, LinkedIn, WhatsApp, and phone.",
   ),
