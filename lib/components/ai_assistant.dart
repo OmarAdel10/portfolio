@@ -85,6 +85,26 @@ class AIAssistantState extends State<AIAssistant> {
   Sink<List<int>>? _byteSink;
   int _utf8DecodedLength = 0;
 
+  /// Whether the root scroller is currently locked behind the open overlay.
+  bool _pageScrollLocked = false;
+
+  /// Whether a scroll-to-bottom frame is already queued.
+  bool _scrollFramePending = false;
+
+  /// Whether that queued frame must pin the conversation to the bottom,
+  /// because a question was just sent.
+  bool _scrollFrameForce = false;
+
+  /// Whether that queued frame should follow an answer that is streaming in.
+  bool _scrollFrameFollow = false;
+
+  /// Where the conversation was left the last time it was pinned, so a reader
+  /// who scrolls up afterwards is not dragged back down.
+  double? _pinnedScrollTop;
+
+  /// Handle of the queued frame, so it can be cancelled on dispose.
+  int? _scrollFrame;
+
   /// How often the mascot plays its attention sequence (90–120s, randomized
   /// so it feels organic rather than metronomic).
   static const _attentionMin = Duration(seconds: 90);
@@ -281,6 +301,9 @@ class AIAssistantState extends State<AIAssistant> {
       _sseBuffer = '';
     });
 
+    // Bring the new question into view before the answer starts streaming in.
+    _scheduleScrollToBottom(force: true);
+
     final body = jsonEncode({'query': query, 'context': context});
 
     try {
@@ -427,6 +450,9 @@ class AIAssistantState extends State<AIAssistant> {
     final idx = _messages.lastIndexWhere((m) => m.role == 'assistant');
     if (idx < 0) return;
     final last = _messages[idx];
+    // Measured before the rebuild: once the new text is in the DOM the reader
+    // is no longer at the bottom, and the check would answer wrongly.
+    final follow = _isNearBottom();
     _messages[idx] = _Message(
       role: 'assistant',
       text: last.text + delta,
@@ -434,6 +460,7 @@ class AIAssistantState extends State<AIAssistant> {
       isStreaming: true,
     );
     setState(() {});
+    _scheduleScrollToBottom(follow: follow);
   }
 
   /// Send a prompt-chip question.
@@ -453,14 +480,112 @@ class AIAssistantState extends State<AIAssistant> {
 
   void _toggle() {
     _onInteraction();
-    setState(() => _isOpen = !_isOpen);
+    final willOpen = !_isOpen;
+    if (willOpen) {
+      _lockPageScroll();
+    } else {
+      _unlockPageScroll();
+    }
+    setState(() => _isOpen = willOpen);
   }
 
   void _close() {
     if (_isOpen) {
       _abortXhr();
+      _unlockPageScroll();
       setState(() => _isOpen = false);
     }
+  }
+
+  // ── Overlay: page scroll lock and message pinning ───────────────────────
+
+  /// Lock the page behind the open overlay.
+  ///
+  /// The overlay is `position: fixed` with `overflow: visible`, so it is not
+  /// a scroll container and `overscroll-behavior` on it cannot contain the
+  /// scroll: the document stays the scroller and the page moves under the
+  /// overlay. Locking the root scroller is what actually stops it.
+  ///
+  /// Hiding the root scrollbar also takes its width away from the viewport,
+  /// which reflows the page by that much. The same width is added back as
+  /// `padding-right`, so the layout stays pixel-identical while locked.
+  void _lockPageScroll() {
+    if (!kIsWeb || _pageScrollLocked) return;
+    final root = _rootElement();
+    if (root == null) return;
+    final gap = web.window.innerWidth - root.clientWidth;
+    root.style.setProperty('overflow-y', 'hidden');
+    if (gap > 0) root.style.setProperty('padding-right', '${gap}px');
+    _pageScrollLocked = true;
+  }
+
+  /// Release the page scroll taken by [_lockPageScroll].
+  void _unlockPageScroll() {
+    if (!kIsWeb || !_pageScrollLocked) return;
+    final root = _rootElement();
+    root?.style.removeProperty('overflow-y');
+    root?.style.removeProperty('padding-right');
+    _pageScrollLocked = false;
+  }
+
+  /// The `<html>` element, which is where the root scroller is locked.
+  ///
+  /// `documentElement` is typed as the generic `Element`; the inline style
+  /// declaration lives on `HTMLElement`, so the view is narrowed here.
+  web.HTMLElement? _rootElement() {
+    final root = web.document.documentElement;
+    if (root == null) return null;
+    return root as web.HTMLElement;
+  }
+
+  /// Whether the reader is close enough to the bottom of the message list
+  /// that the next message should keep the view there.
+  bool _isNearBottom() {
+    if (!kIsWeb) return true;
+    final list = web.document.querySelector('.ai-messages');
+    if (list == null) return true;
+    final distance = list.scrollHeight - list.scrollTop - list.clientHeight;
+    return distance <= 80;
+  }
+
+  /// Pin the conversation to the newest message.
+  ///
+  /// The scroll waits for the next animation frame so it runs after the
+  /// rebuild that `setState` queued — the new message has to be in the DOM
+  /// before the list can be scrolled to it. Frames are coalesced, because
+  /// streaming asks for this on every token.
+  ///
+  /// [force] is for a question that was just sent: it always brings the
+  /// newest message into view. [follow] is for an answer that is streaming
+  /// in, and only applies while the reader is at the bottom.
+  void _scheduleScrollToBottom({bool force = false, bool follow = false}) {
+    if (!kIsWeb) return;
+    _scrollFrameForce = _scrollFrameForce || force;
+    _scrollFrameFollow = _scrollFrameFollow || follow;
+    if (_scrollFramePending) return;
+    _scrollFramePending = true;
+    _scrollFrame = web.window.requestAnimationFrame(_onScrollFrame.toJS);
+  }
+
+  void _onScrollFrame(double _) {
+    _scrollFramePending = false;
+    _scrollFrame = null;
+    final force = _scrollFrameForce;
+    final follow = _scrollFrameFollow;
+    _scrollFrameForce = false;
+    _scrollFrameFollow = false;
+    if (!force && !follow) return;
+    final list = web.document.querySelector('.ai-messages');
+    if (list == null) return;
+    // A reader who scrolled up after the decision was made keeps their place:
+    // only a newly sent question overrides that.
+    if (!force &&
+        _pinnedScrollTop != null &&
+        list.scrollTop < _pinnedScrollTop! - 4) {
+      return;
+    }
+    list.scrollTop = list.scrollHeight.toDouble();
+    _pinnedScrollTop = list.scrollTop;
   }
 
   /// Global keyboard shortcuts: Ctrl+/ or Ctrl+\ (Cmd on Mac) toggles the
@@ -607,6 +732,12 @@ class AIAssistantState extends State<AIAssistant> {
       web.window.removeEventListener('keydown', _keyListener);
       _keyListener = null;
     }
+    if (_scrollFrame != null) {
+      web.window.cancelAnimationFrame(_scrollFrame!);
+      _scrollFrame = null;
+    }
+    // Never leave the page locked behind a panel that is gone.
+    _unlockPageScroll();
     super.dispose();
   }
 
@@ -657,9 +788,20 @@ class AIAssistantState extends State<AIAssistant> {
                   ),
                 ]),
                 div(classes: 'ai-modal-body', [
-                  // Chat message history (empty until the first exchange).
-                  if (_messages.isNotEmpty)
-                    div(classes: 'ai-messages', [
+                  // Chat message history. The list is always present so the
+                  // panel keeps a stable shape; before the first exchange it
+                  // holds one line saying what Nono can answer.
+                  div(
+                    classes: _messages.isEmpty
+                        ? 'ai-messages ai-messages-empty'
+                        : 'ai-messages',
+                    [
+                      if (_messages.isEmpty)
+                        div(classes: 'ai-messages-intro', [
+                          Component.text(
+                            "I answer questions about Omar's work from his own notes, so the details are exact.",
+                          ),
+                        ]),
                       for (final msg in _messages)
                         div(
                           classes: 'ai-message ai-message-${msg.role}',
@@ -681,7 +823,8 @@ class AIAssistantState extends State<AIAssistant> {
                               ),
                           ],
                         ),
-                    ]),
+                    ],
+                  ),
                   // Error banner (shown when the Worker is unreachable).
                   if (_error != null)
                     div(
@@ -763,7 +906,17 @@ class AIAssistantState extends State<AIAssistant> {
 
     css('.ai-modal-overlay').styles(
       position: Position.fixed(),
-      raw: const {'inset': '0', 'background-color': 'rgba(35, 37, 29, 0.4)', 'overscroll-behavior': 'contain', 'touch-action': 'none'},
+      // `touch-action: none` stops a touch drag on the backdrop from scrolling
+      // the page. A wheel over the backdrop is stopped by locking the root
+      // scroller in `_lockPageScroll` — `overscroll-behavior` cannot do it
+      // here, because the overlay is `overflow: visible` and therefore not
+      // a scroll container.
+      raw: const {
+        'inset': '0',
+        'background-color': 'rgba(35, 37, 29, 0.4)',
+        'overscroll-behavior': 'contain',
+        'touch-action': 'none',
+      },
       display: Display.flex,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
@@ -779,12 +932,17 @@ class AIAssistantState extends State<AIAssistant> {
     css('.ai-modal').styles(
       backgroundColor: cCanvas,
       radius: .all(.circular(radiusLg.px)),
-      width: 420.px,
+      width: 560.px,
       maxWidth: 90.percent,
-      maxHeight: 80.percent,
+      maxHeight: 88.percent,
       display: Display.flex,
       flexDirection: FlexDirection.column,
-      raw: const {'box-shadow': '0 24px 48px -16px rgba(35, 37, 29, 0.35)'},
+      raw: const {
+        'box-shadow': '0 24px 48px -16px rgba(35, 37, 29, 0.35)',
+        // A floor so the card reads as a roomy panel before the first
+        // question is asked, and the cap above keeps it inside the viewport.
+        'min-height': 'min(460px, 60vh)',
+      },
       animation: Animation(
         name: 'aiSlideUp',
         duration: durControl,
@@ -821,23 +979,30 @@ class AIAssistantState extends State<AIAssistant> {
       display: Display.flex,
       flexDirection: FlexDirection.column,
       gap: Gap.all(16.px),
-      raw: const {'overflow-y': 'auto', 'overscroll-behavior': 'contain'},
-      maxHeight: 400.px,
+      raw: const {
+        'overflow-y': 'auto',
+        'overscroll-behavior': 'contain',
+        // Fill the card, and stay shrinkable: when the conversation outgrows
+        // the panel, the message list is the part that gives way.
+        'flex': '1 1 auto',
+        'min-height': '0',
+      },
     ),
 
     css('.ai-prompt-chips').styles(
       display: Display.flex,
       flexWrap: FlexWrap.wrap,
-      gap: Gap.all(8.px),
+      gap: Gap.all(6.px),
+      raw: const {'flex': 'none'},
     ),
     css('.ai-prompt-chip').styles(
       backgroundColor: cSoft,
       color: cBody,
       border: Border.all(color: cHairline, width: 1.px),
       radius: .all(.circular(radiusFull.px)),
-      padding: .symmetric(vertical: 8.px, horizontal: 14.px),
-      fontSize: 13.px,
-      fontWeight: FontWeight.w600,
+      padding: .symmetric(vertical: 5.px, horizontal: 10.px),
+      fontSize: 12.px,
+      fontWeight: FontWeight.w500,
       cursor: .pointer,
       transition: Transition(
         'all',
@@ -853,6 +1018,7 @@ class AIAssistantState extends State<AIAssistant> {
     css('.ai-input-area').styles(
       display: Display.flex,
       gap: Gap.all(8.px),
+      raw: const {'flex': 'none'},
     ),
     css('.ai-input').styles(
       flex: Flex.grow(1),
@@ -885,15 +1051,36 @@ class AIAssistantState extends State<AIAssistant> {
       fontSize: 12.px,
       color: cMute,
       textAlign: TextAlign.center,
+      raw: const {'flex': 'none'},
     ),
 
     css('.ai-messages').styles(
       display: Display.flex,
       flexDirection: FlexDirection.column,
       gap: Gap.all(12.px),
-      raw: const {'overflow-y': 'auto'},
-      maxHeight: 240.px,
+      raw: const {
+        'overflow-y': 'auto',
+        'overscroll-behavior': 'contain',
+        // The message list is the one scrolling region inside the card, so it
+        // takes the space the conversation needs and yields the rest.
+        'flex': '1 1 auto',
+        'min-height': '0',
+      },
       padding: Padding.only(bottom: 8.px),
+    ),
+    // Before the first exchange the list holds a short line instead of
+    // messages, and centres it in the space the conversation will take.
+    css('.ai-messages.ai-messages-empty').styles(
+      justifyContent: JustifyContent.center,
+      alignItems: AlignItems.center,
+    ),
+    css('.ai-messages-intro').styles(
+      fontSize: 14.px,
+      lineHeight: 1.5.em,
+      color: cMute,
+      maxWidth: 380.px,
+      textAlign: TextAlign.center,
+      margin: .zero,
     ),
     css('.ai-message').styles(
       display: Display.flex,
