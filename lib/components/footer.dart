@@ -16,7 +16,9 @@ class Footer extends StatefulComponent {
   static List<StyleRule> get styles => [
     css('.site-footer', [
       css('&').styles(
-        backgroundColor: cCanvas,
+        // Transparent, like the hero: the fixed background layer shows
+        // through to the bottom of the page.
+        backgroundColor: Colors.transparent,
         border: Border.only(
           top: BorderSide.solid(color: cHairline, width: 1.px),
         ),

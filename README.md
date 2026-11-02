@@ -50,7 +50,7 @@ Rendered top to bottom by `App.build()` in `lib/app.dart`:
 - **Light/dark theme** — toggled from the header, persisted in `localStorage` under `portfolio-theme`. An inline head script applies the saved theme before first paint so the page never flashes light-to-dark.
 - **Mobile navigation** — below 900px the desktop nav is replaced by a hamburger drawer with the theme toggle available in the header row.
 - **Scroll-reveal animations** — elements marked `.reveal` fade/rise in as they enter the viewport; driven by an rAF-throttled scroll/resize handler plus a `MutationObserver` for hydration-time DOM changes. Content is fully visible without JavaScript (reveals only hide when the `js-enabled` class is present).
-- **Interactive dot-matrix background** — a fixed canvas of drifting dots that react to the pointer within a 140px radius; dot color follows the current `--ink` token and re-reads it on theme switches. Renders a single static frame on touch devices.
+- **Vanta.js globe background** — a full-page animated backdrop: a wireframe globe over a receding grid plane, rendered with WebGL by [Vanta](https://github.com/tengbao/vanta) on top of three.js. It sits behind the whole site in a fixed layer, follows the pointer, and is rebuilt when the theme changes so its colours match `--ink`/`--canvas`. If Vanta cannot load or WebGL is unavailable, the site falls back to the original interactive dot-matrix canvas. Both are hidden under `prefers-reduced-motion: reduce`.
 - **Custom cursor** — a snapping dot with an eased trailing ring that grows over links, buttons, and cards. Enabled only for fine pointers (disabled on touch/coarse pointers).
 - **Email fallback** — links carrying the `.email-fallback` class try `mailto:` first and, if the tab still has focus after 1.5s (i.e. no mail app opened), open Gmail web compose instead. Applied to the Contact card's email link.
 - **Project filtering** — pill buttons filter the project grid by category with a live count and an empty state.
@@ -74,7 +74,7 @@ Rendered top to bottom by `App.build()` in `lib/app.dart`:
 Jaspr renders the same component tree in two environments; `pubspec.yaml` sets static mode so `jaspr build` emits pre-rendered HTML plus the client bundle.
 
 - `lib/main.server.dart` — **server entrypoint**, executed at pre-render time. Builds the whole `Document`:
-  - `<head>`: title, description/keywords/author metas, Open Graph and Twitter metas, JSON-LD `Person` markup, canonical link, favicon links, PWA manifest, and the three inline scripts (theme init, motion/reveal + email fallback, background canvas + cursor).
+  - `<head>`: title, description/keywords/author metas, Open Graph and Twitter metas, JSON-LD `Person` markup, canonical link, favicon links, PWA manifest, the three inline scripts (theme init, motion/reveal + email fallback, background layer + cursor), and the deferred `three.js` + `vanta.globe.min.js` tags that back the animated background.
   - `<body>`: the app shell (custom-cursor elements + `App`).
 - `lib/main.client.dart` — **client entrypoint**; initializes Jaspr and runs `ClientApp`, which hydrates the `@client`-annotated components.
 - `lib/app.dart` — root `App` component, annotated `@client` (pre-rendered on the server, hydrated on the client). Owns the page layout and the `MarqStrip` ticker.
@@ -111,6 +111,9 @@ Jaspr renders the same component tree in two environments; `pubspec.yaml` sets s
 │   └── models/
 │       └── project.dart          # Project model
 ├── web/                          # static assets copied verbatim into the build
+│   ├── assets/
+│   │   ├── Resume.pdf            # downloadable CV
+│   │   └── vendor/               # pinned three.js + vanta.globe for the background
 │   ├── favicon.ico               # mascot favicon
 │   ├── robots.txt                # crawl rules + sitemap pointer
 │   ├── sitemap.xml               # single-URL sitemap
