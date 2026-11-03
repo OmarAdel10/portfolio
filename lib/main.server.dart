@@ -422,10 +422,18 @@ const String _motionJs = """
 })();
 """;
 
-/// Full-page animated background via Vanta.globe (globe style), with the
-/// original dot-matrix as fallback if Vanta fails to load. Animates with or
-/// without cursor movement. Custom cursor (dot + trailing ring) is layered
-/// on top. Both are disabled on touch/coarse pointers and under reduced motion.
+/// Full-page animated background: a Vanta.js **globe** (a wireframe sphere
+/// over a receding grid plane) behind the whole site, with the original
+/// dot-matrix as the fallback when Vanta can't load or initialise.
+///
+/// Vanta appends its own WebGL canvas to whatever `el` points at, so it needs
+/// a *container* element — handing it the `<canvas>` directly is what left the
+/// previous attempt with a blank background. The layer is therefore a `<div>`
+/// holding two children: `#bg-vanta` (Vanta's container) and `#bg-canvas`
+/// (the dot-matrix fallback's canvas).
+///
+/// Custom cursor (dot + trailing ring) is layered on top. Both are disabled
+/// on touch/coarse pointers and under reduced motion.
 const String _bgJs = """
 (function(){
   function boot(){
@@ -459,30 +467,43 @@ const String _bgJs = """
       document.addEventListener('mouseout',function(e){ var t=e.target; if(t&&t.closest&&t.closest('a,button,.card,input,textarea')) ring.classList.remove('is-hover'); });
     }
 
-    // ---- Background canvas ----
+    // ---- Background layer ----
+    // One fixed, full-viewport layer behind the app. It holds the Vanta
+    // container and the dot-matrix fallback side by side.
+    var layer=document.getElementById('bg-layer');
+    if(!layer&&document.body){
+      layer=document.createElement('div');
+      layer.id='bg-layer'; layer.className='bg-layer'; layer.setAttribute('aria-hidden','true');
+      document.body.insertBefore(layer,document.body.firstChild);
+    }
+    if(!layer) return;
+    var vantaEl=document.getElementById('bg-vanta');
+    if(!vantaEl){
+      vantaEl=document.createElement('div');
+      vantaEl.id='bg-vanta'; vantaEl.className='bg-vanta';
+      layer.appendChild(vantaEl);
+    }
     var cv=document.getElementById('bg-canvas');
-    if(!cv&&document.body){ cv=document.createElement('canvas'); cv.id='bg-canvas'; cv.className='bg-canvas'; cv.setAttribute('aria-hidden','true'); document.body.insertBefore(cv,document.body.firstChild); }
-    if(!cv) return;
+    if(!cv){
+      cv=document.createElement('canvas');
+      cv.id='bg-canvas'; cv.className='bg-canvas'; cv.setAttribute('aria-hidden','true');
+      layer.appendChild(cv);
+    }
 
     var vantaObj=null;
-    var INK='#23251d', CANVAS='#eeefe9';
-    function refreshColors(){
-      var cs=getComputedStyle(d);
-      INK=cs.getPropertyValue('--ink').trim()||INK;
-      CANVAS=cs.getPropertyValue('--canvas').trim()||CANVAS;
-      if(vantaObj){
-        vantaObj.setOptions({highlightColor: hexNum(INK), baseColor: hexNum(CANVAS), backgroundColor: hexNum(CANVAS)});
-      }
-    }
-    refreshColors();
-    new MutationObserver(refreshColors).observe(d,{attributes:true,attributeFilter:['data-theme']});
-
     function hexToRgb(h){ h=h.replace('#',''); if(h.length===3){ h=h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2); } var n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
     function hexNum(hex){ var rgb=hexToRgb(hex); return (rgb[0]<<16)|(rgb[1]<<8)|rgb[2]; }
+    function themeColors(){
+      var cs=getComputedStyle(d);
+      return {
+        ink: cs.getPropertyValue('--ink').trim() || '#23251d',
+        canvas: cs.getPropertyValue('--canvas').trim() || '#eeefe9'
+      };
+    }
 
     // ---- Dot-matrix fallback (only if Vanta is unavailable) ----
     var SP=touch?42:28, W=0, H=0, dots=[], mouse2={x:-99999,y:-99999};
-    var ctx=null, canvasRaf=0;
+    var ctx=null, canvasRaf=0, dotsBound=false;
     function resizeDots(){
       var dpr=Math.min(window.devicePixelRatio||1,1.5);
       var cw=window.innerWidth, ch=window.innerHeight;
@@ -495,14 +516,25 @@ const String _bgJs = """
       for(var i=0;i<ix;i++)for(var j=0;j<iy;j++)
         dots.push({x:i*SP+SP/2+(Math.random()-0.5)*5, y:j*SP+SP/2+(Math.random()-0.5)*5, ph:Math.random()*6.2832});
     }
-    function startDotMatrix(){
-      if(vantaObj||!cv.getContext) return;
-      ctx=cv.getContext('2d');
-      resizeDots();
+    function bindDots(){
+      if(dotsBound) return;
+      dotsBound=true;
       window.addEventListener('resize',resizeDots);
       window.addEventListener('mousemove',function(e){ mouse2.x=e.clientX; mouse2.y=e.clientY; },{passive:true});
       window.addEventListener('mouseout',function(e){ if(!e.relatedTarget){mouse2.x=-99999;mouse2.y=-99999;} });
-      canvasRaf=requestAnimationFrame(drawDots);
+    }
+    function startDotMatrix(){
+      if(vantaObj||!cv.getContext) return;
+      cv.style.display='';
+      ctx=cv.getContext('2d');
+      resizeDots();
+      bindDots();
+      if(!canvasRaf) canvasRaf=requestAnimationFrame(drawDots);
+    }
+    function stopDotMatrix(){
+      if(canvasRaf){ cancelAnimationFrame(canvasRaf); canvasRaf=0; }
+      if(ctx) ctx.clearRect(0,0,W,H);
+      cv.style.display='none';
     }
     function drawDots(t){
       canvasRaf=0;
@@ -511,6 +543,7 @@ const String _bgJs = """
       if(t===undefined)t=performance.now();
       ctx.clearRect(0,0,W,H);
       var RD=140, time=t;
+      var rgb=hexToRgb(themeColors().ink);
       for(var i=0;i<dots.length;i++){ var p=dots[i];
         p.x+=Math.sin(time*0.00012+p.ph)*0.02;
         p.y+=Math.cos(time*0.00017+p.ph)*0.02;
@@ -520,48 +553,131 @@ const String _bgJs = """
         var a=0.10+n*0.55;
         var s=1+n*3.2;
         ctx.beginPath(); ctx.arc(p.x,p.y,s,0,6.2832);
-        var rgb=hexToRgb(INK);
         ctx.fillStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+Math.min(1,a)+')';
         ctx.fill();
       }
       canvasRaf=requestAnimationFrame(drawDots);
     }
 
+    // ---- Vanta globe ----
+    function stopVanta(){
+      if(!vantaObj) return;
+      var obj=vantaObj;
+      vantaObj=null;
+      try{ obj.destroy(); }catch(e){}
+    }
     function startVanta(){
-      if(vantaObj){ vantaObj.destroy(); vantaObj=null; }
+      stopVanta();
       if(reduced()){ return; }
-      if(typeof window.VANTA==='undefined'){ startDotMatrix(); return; }
+      if(typeof window.VANTA==='undefined'||!window.VANTA.GLOBE){ startDotMatrix(); return; }
+      var c=themeColors();
       try{
         vantaObj=window.VANTA.GLOBE({
-          el: cv,
-          mouseControls: true,
+          // A container element, not a canvas: Vanta appends its own WebGL
+          // canvas to `el` and sizes itself from that element's box.
+          el: vantaEl,
+          // The globe is a backdrop, not a toy: it shouldn't chase the
+          // cursor. Vanta multiplies the pointer's influence by these
+          // coefficients, so dropping them to a quarter cuts the swing and
+          // the tilt to a quarter of what a full-strength follow gives.
+          mouseControls: !touch,
+          mouseCoeffX: 0.25,
+          mouseCoeffY: 0.25,
           touchControls: false,
+          gyroControls: false,
           minHeight: 200.00,
           minWidth: 200.00,
-          highlightColor: hexNum(INK),
-          baseColor: hexNum(CANVAS),
-          backgroundColor: hexNum(CANVAS),
-          points: 700,
-          maxDistance: 40000,
-          speed: 1.0,
+          // Vanta renders at (devicePixelRatio / scale). This backdrop is soft
+          // enough that a half-resolution buffer is invisible and much
+          // cheaper to composite over the whole viewport.
+          scale: 1.5,
+          scaleMobile: 2.0,
+          color: hexNum(c.ink),
+          color2: hexNum(c.ink),
+          backgroundColor: hexNum(c.canvas),
+          // A transparent canvas lets the page background show through, so a
+          // theme switch only has to change the line colours.
+          backgroundAlpha: 0,
+          // Grid resolution of the plane. Vanta sizes its line buffers as
+          // (points^2 * 2)^2, so this stays small on purpose.
+          points: 10,
+          spacing: 18,
+          maxDistance: 20,
+          showDots: false,
         });
       }catch(e){
         vantaObj=null;
-        startDotMatrix();
       }
+      // Vanta re-aims the camera every frame and frames the globe by viewport
+      // width: -10 below 480px, -20 below 720px, -40 above. A more negative
+      // target pushes the globe further right, so the target is the dial.
+      //
+      // Wide screens need a bigger push than Vanta's own -40: the content
+      // column is centred with margin on both sides, and the globe has to
+      // clear it rather than sit behind the body copy. Narrow screens are
+      // the opposite — the content spans the full width, so the globe is
+      // pulled back toward the middle. Pushed to the edge it would be cut
+      // off by the viewport, which is how it used to read on a phone.
+      //
+      // The width is read inside the callback rather than captured at init:
+      // Vanta calls lookAt every frame, so this re-frames the globe when the
+      // viewport changes (a phone rotating into landscape, a window
+      // dragged wider) without having to tear the instance down.
+      // `vantaObj.camera` is guarded: Vanta catches its own init errors and
+      // returns a half-built instance, so the camera can be missing. Touching
+      // it unguarded would throw past the fallback below and leave the page
+      // with no background at all.
+      if(vantaObj && vantaObj.camera){
+        var cam = vantaObj.camera;
+        var orig = cam.lookAt.bind(cam);
+        cam.lookAt = function(v){
+          var w = window.innerWidth;
+          var lookX = w >= 1400 ? -54 : (w >= 1100 ? -40 : (w >= 700 ? -14 : -4));
+          orig(new THREE.Vector3(lookX, v.y, v.z));
+        };
+        // Size the globe down 25% by widening the field of view rather than
+        // scaling the canvas. A pinhole camera magnifies by 1/tan(fov/2), so
+        // going from Vanta's 20 degrees to 26.48 (tan(10)/0.75) shrinks the
+        // whole scene by exactly a quarter. Scaling the canvas instead would
+        // shrink it *and* crop the scene to the middle 75% of the viewport,
+        // slicing the globe off with a hard edge at 87.5% of the width.
+        //
+        // Vanta's resize() sets camera.aspect and calls updateProjectionMatrix()
+        // but never touches fov, so this survives a viewport resize.
+        cam.fov = 26.48;
+        cam.updateProjectionMatrix();
+      }
+      // Vanta swallows its own init errors and falls back to a flat
+      // background colour, so "no exception thrown" does not mean "a globe
+      // is on screen". The canvas it appends is the proof.
+      if(!vantaObj||!vantaEl.querySelector('canvas')){
+        stopVanta();
+        startDotMatrix();
+        return;
+      }
+      stopDotMatrix();
     }
+
+    // ---- Follow the theme while the page is open ----
+    // Vanta picks its blend mode once, at init, from the colours it was
+    // handed, so a theme switch rebuilds the instance rather than just
+    // re-colouring it.
+    new MutationObserver(function(){
+      if(reduced()) return;
+      startVanta();
+    }).observe(d,{attributes:true,attributeFilter:['data-theme']});
 
     // ---- Follow the motion preference while the page is open ----
     function applyMotion(){
       if(reduced()){
-        if(vantaObj){ vantaObj.destroy(); vantaObj=null; }
-        if(canvasRaf){ cancelAnimationFrame(canvasRaf); canvasRaf=0; }
+        stopVanta();
+        stopDotMatrix();
         if(cursorRaf){ cancelAnimationFrame(cursorRaf); cursorRaf=0; }
-        cv.style.display='none';
+        layer.style.display='none';
         d.classList.remove('has-custom-cursor');
         return;
       }
-      cv.style.display='';
+      layer.style.display='';
       if(usable){ d.classList.add('has-custom-cursor'); }
       startVanta();
       startCursor();
@@ -634,10 +750,16 @@ void main() {
         script(content: _introHoldJs),
         script(content: _motionJs),
         // three.js + Vanta.globe for the animated full-page background.
-        // Loaded via CDN; _bgJs falls back to the dot-matrix if they don't arrive.
-        script(attributes: {'src': 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'defer': ''}),
-        script(attributes: {'src': 'https://cdn.jsdelivr.net/npm/vanta@0.0.8/dist/vanta.globe.min.js', 'defer': ''}),
-        script(attributes: {'defer': ''}, content: _bgJs),
+        // Both are vendored under web/assets/vendor/ and served from this
+        // origin: the previous CDN pins broke silently (vanta@0.0.8 was
+        // pulled from npm, so the script 404'd and the background never
+        // started). _bgJs falls back to the dot-matrix if they don't load.
+        script(attributes: {'src': '/assets/vendor/three.r134.min.js', 'defer': ''}),
+        script(attributes: {'src': '/assets/vendor/vanta.globe.min.js', 'defer': ''}),
+        // Inline scripts ignore `defer`, but that is fine: this one only
+        // registers a DOMContentLoaded listener, and deferred scripts have
+        // finished by the time that event fires.
+        script(content: _bgJs),
         // Open Graph metas must carry `property` attributes (OGP spec); the
         // `meta` map above emits `name`, so they are rendered here instead.
         for (final entry in _ogMeta.entries) meta(attributes: {'property': entry.key, 'content': entry.value}),
