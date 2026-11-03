@@ -559,7 +559,10 @@ class HeroState extends State<Hero> {
         padding: Padding.symmetric(vertical: 48.px),
         display: Display.flex,
         alignItems: AlignItems.center,
-        backgroundColor: cCanvas,
+        // Transparent, so the fixed background layer (the Vanta globe, or the
+        // dot-matrix fallback) shows through the hero instead of being
+        // painted over by an opaque cream band.
+        backgroundColor: Colors.transparent,
         overflow: .hidden,
       ),
       css('.hero-inner').styles(

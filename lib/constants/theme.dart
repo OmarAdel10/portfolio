@@ -613,16 +613,51 @@ List<StyleRule> get styles => [
     '100%': Styles(raw: {'transform': 'translateX(-33.333%)'}),
   }),
 
-  // ---------- Interactive background canvas (dot-matrix constellation) ----------
+  // ---------- Animated background layer (Vanta globe) ----------
   css('.app-shell').styles(raw: const {'position': 'relative', 'min-height': '100vh'}),
-  css('.bg-canvas').styles(
+  // One fixed, full-viewport layer behind the app. It holds the Vanta
+  // container and the dot-matrix fallback canvas side by side.
+  css('.bg-layer').styles(
     raw: const {
       'position': 'fixed',
       'inset': '0',
       'z-index': '0',
       'pointer-events': 'none',
+      // The globe is a backdrop, not the subject: keep it well under the
+      // content so text contrast never moves.
+      'opacity': '0.22',
+      'transition': 'opacity var(--dur-control) var(--ease-out)',
+    },
+  ),
+  // Vanta's container. It has to stay empty — Vanta appends its own WebGL
+  // canvas here and sizes the scene from this element's box.
+  //
+  // The globe is sized 25% down through the camera's field of view, not a
+  // CSS transform: a transform would scale the canvas box too and crop the
+  // scene to the middle 75% of the viewport, slicing the globe off with a
+  // hard edge. The FOV keeps the canvas full-bleed.
+  css('.bg-vanta').styles(
+    raw: const {
+      'position': 'absolute',
+      'inset': '0',
+      'width': '100%',
+      'height': '100%',
+    },
+  ),
+  // The dot-matrix fallback's canvas.
+  css('.bg-canvas').styles(
+    raw: const {
+      'position': 'absolute',
+      'inset': '0',
+      'width': '100%',
+      'height': '100%',
       'display': 'block',
     },
+  ),
+  // Dark theme: the globe's lines are light on a dark canvas, so they read
+  // brighter than the light theme's dark-on-cream lines. Pull it back.
+  css('html[data-theme="dark"] .bg-layer').styles(
+    raw: const {'opacity': '0.20'},
   ),
   // Section crossfade: as one section leaves the viewport top it fades out;
   // as the next enters from the bottom it fades in. Driven by --section-opacity
@@ -853,7 +888,11 @@ List<StyleRule> get styles => [
       // One stage, two overlapping layers. The expertise panel is painted
       // above the hero because it comes later in the DOM.
       'display': 'block',
-      'background-color': 'var(--canvas)',
+      // Transparent: the stage used to paint the canvas colour so the dot
+      // matrix would not bleed into the empty right half while the scene was
+      // pinned. The background layer is the page background now, so the
+      // stage must not paint over it.
+      'background-color': 'transparent',
       'overflow': 'hidden',
     },
   ),
