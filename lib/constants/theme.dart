@@ -631,6 +631,11 @@ List<StyleRule> get styles => [
   ),
   // Vanta's container. It has to stay empty — Vanta appends its own WebGL
   // canvas here and sizes the scene from this element's box.
+  //
+  // The globe is sized 25% down through the camera's field of view, not a
+  // CSS transform: a transform would scale the canvas box too and crop the
+  // scene to the middle 75% of the viewport, slicing the globe off with a
+  // hard edge. The FOV keeps the canvas full-bleed.
   css('.bg-vanta').styles(
     raw: const {
       'position': 'absolute',

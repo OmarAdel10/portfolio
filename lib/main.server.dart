@@ -576,7 +576,13 @@ const String _bgJs = """
           // A container element, not a canvas: Vanta appends its own WebGL
           // canvas to `el` and sizes itself from that element's box.
           el: vantaEl,
+          // The globe is a backdrop, not a toy: it shouldn't chase the
+          // cursor. Vanta multiplies the pointer's influence by these
+          // coefficients, so dropping them to a quarter cuts the swing and
+          // the tilt to a quarter of what a full-strength follow gives.
           mouseControls: !touch,
+          mouseCoeffX: 0.25,
+          mouseCoeffY: 0.25,
           touchControls: false,
           gyroControls: false,
           minHeight: 200.00,
@@ -602,13 +608,44 @@ const String _bgJs = """
       }catch(e){
         vantaObj=null;
       }
-      // Keep the globe off the centred content column on wide screens so its
-      // lines don't fall across body copy; at 1200px and below Vanta's default
-      // framing already keeps it at the edge/off-screen, so leave it alone.
-      if(vantaObj && window.innerWidth >= 1200){
+      // Vanta re-aims the camera every frame and frames the globe by viewport
+      // width: -10 below 480px, -20 below 720px, -40 above. A more negative
+      // target pushes the globe further right, so the target is the dial.
+      //
+      // Wide screens need a bigger push than Vanta's own -40: the content
+      // column is centred with margin on both sides, and the globe has to
+      // clear it rather than sit behind the body copy. Narrow screens are
+      // the opposite — the content spans the full width, so the globe is
+      // pulled back toward the middle. Pushed to the edge it would be cut
+      // off by the viewport, which is how it used to read on a phone.
+      //
+      // The width is read inside the callback rather than captured at init:
+      // Vanta calls lookAt every frame, so this re-frames the globe when the
+      // viewport changes (a phone rotating into landscape, a window
+      // dragged wider) without having to tear the instance down.
+      // `vantaObj.camera` is guarded: Vanta catches its own init errors and
+      // returns a half-built instance, so the camera can be missing. Touching
+      // it unguarded would throw past the fallback below and leave the page
+      // with no background at all.
+      if(vantaObj && vantaObj.camera){
         var cam = vantaObj.camera;
         var orig = cam.lookAt.bind(cam);
-        cam.lookAt = function(v){ orig(new THREE.Vector3(v.x - 14, v.y, v.z)); };
+        cam.lookAt = function(v){
+          var w = window.innerWidth;
+          var lookX = w >= 1400 ? -54 : (w >= 1100 ? -40 : (w >= 700 ? -14 : -4));
+          orig(new THREE.Vector3(lookX, v.y, v.z));
+        };
+        // Size the globe down 25% by widening the field of view rather than
+        // scaling the canvas. A pinhole camera magnifies by 1/tan(fov/2), so
+        // going from Vanta's 20 degrees to 26.48 (tan(10)/0.75) shrinks the
+        // whole scene by exactly a quarter. Scaling the canvas instead would
+        // shrink it *and* crop the scene to the middle 75% of the viewport,
+        // slicing the globe off with a hard edge at 87.5% of the width.
+        //
+        // Vanta's resize() sets camera.aspect and calls updateProjectionMatrix()
+        // but never touches fov, so this survives a viewport resize.
+        cam.fov = 26.48;
+        cam.updateProjectionMatrix();
       }
       // Vanta swallows its own init errors and falls back to a flat
       // background colour, so "no exception thrown" does not mean "a globe
